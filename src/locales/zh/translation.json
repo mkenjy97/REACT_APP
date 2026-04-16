@@ -1,0 +1,82 @@
+{
+  "app_name": "baseapp",
+  "navigation": {
+    "home": "首页",
+    "search": "搜索",
+    "support": "支持",
+    "profile": "个人资料和设置",
+    "notifications": "通知"
+  },
+  "dashboard": {
+    "title": "仪表板",
+    "subtitle": "这是您最新的概述。",
+    "item_title": "项目概述",
+    "item_desc": "Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.",
+    "view_details": "查看详情"
+  },
+  "search": {
+    "placeholder": "搜索...",
+    "start_typing": "开始输入以搜索",
+    "desc": "您可以跨所有文档、联系人和设置进行搜索。",
+    "filters": {
+      "all": "全部",
+      "recent": "近期",
+      "favorites": "收藏",
+      "archived": "已存档"
+    }
+  },
+  "profile": {
+    "appearance": "外观",
+    "theme": "主题",
+    "theme_desc": "切换浅色或深色模式",
+    "palette": "调色板",
+    "palette_desc": "自定义您的应用颜色",
+    "preferences": "首选项",
+    "language": "语言",
+    "language_desc": "选择您的首选语言",
+    "dev_role": "开发者：更改角色",
+    "dev_role_desc": "模拟不同的用户角色",
+    "logout": "注销"
+  },
+  "support": {
+    "title": "需要帮助吗？",
+    "subtitle": "浏览常见问题解答或通过下方与我们联系。",
+    "email_us": "发给我们邮件",
+    "call_us": "致电我们",
+    "faq": {
+      "q1": "如何更改我的主主题颜色？",
+      "a1": "进入个人资料页面。在外观设置下可以修改颜色。",
+      "q2": "我可以使用社交登录吗？",
+      "a2": "目前，社交登录正在开发中。",
+      "q3": "不同的用户角色有哪些？",
+      "a3": "有三种角色：用户，经理和管理员。"
+    }
+  },
+  "auth": {
+    "welcome_back": "欢迎回来",
+    "create_account": "创建账号",
+    "enter_details": "输入您的详情以登录",
+    "sign_up_start": "注册以开始使用",
+    "full_name": "全名",
+    "email": "邮件地址",
+    "password": "密码",
+    "sign_in": "登录",
+    "sign_up": "注册",
+    "or_continue": "或继续使用",
+    "no_account": "没有账户？注册",
+    "have_account": "已有账户？登录",
+    "invalid_email": "无效邮件格式",
+    "password_min": "密码至少需6个字符"
+  },
+  "notifications_page": {
+    "system_update": "系统更新",
+    "update_desc": "您的应用程序已更新。",
+    "hours_ago": "{{count}} 小时前",
+    "hours_ago_plural": "{{count}} 小时前"
+  },
+  "not_found": {
+    "title": "页面未找到",
+    "desc": "由于未知原因，该页面不存在或已被移除。",
+    "back": "返回主页"
+  }
+}

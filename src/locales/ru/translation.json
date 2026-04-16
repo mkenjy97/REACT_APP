@@ -1,0 +1,82 @@
+{
+  "app_name": "baseapp",
+  "navigation": {
+    "home": "Главная",
+    "search": "Поиск",
+    "support": "Поддержка",
+    "profile": "Профиль и настройки",
+    "notifications": "Уведомления"
+  },
+  "dashboard": {
+    "title": "Панель управления",
+    "subtitle": "Вот ваш последний обзор.",
+    "item_title": "Обзор элемента",
+    "item_desc": "Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.",
+    "view_details": "Подробнее"
+  },
+  "search": {
+    "placeholder": "Искать что угодно...",
+    "start_typing": "Начните вводить текст для поиска",
+    "desc": "Вы можете искать по всем документам и настройкам.",
+    "filters": {
+      "all": "Все",
+      "recent": "Недавние",
+      "favorites": "Избранное",
+      "archived": "Архив"
+    }
+  },
+  "profile": {
+    "appearance": "Внешний вид",
+    "theme": "Тема",
+    "theme_desc": "Переключить светлый или темный режим",
+    "palette": "Цветовая палитра",
+    "palette_desc": "Настройте цвета приложения",
+    "preferences": "Предпочтения",
+    "language": "Язык",
+    "language_desc": "Выберите язык",
+    "dev_role": "Разраб: Изменить Роль",
+    "dev_role_desc": "Симуляция ролей",
+    "logout": "Выйти"
+  },
+  "support": {
+    "title": "Помощь",
+    "subtitle": "Смотрите FAQ или свяжитесь с нами.",
+    "email_us": "Отправить email",
+    "call_us": "Позвонить",
+    "faq": {
+      "q1": "Как изменить цвет?",
+      "a1": "Зайдите во вкладку Профиль.",
+      "q2": "Можно войти через соцсети?",
+      "a2": "В разработке.",
+      "q3": "Какие есть роли?",
+      "a3": "Пользователь, Менеджер, Администратор."
+    }
+  },
+  "auth": {
+    "welcome_back": "С возвращением",
+    "create_account": "Создать аккаунт",
+    "enter_details": "Введите данные",
+    "sign_up_start": "Зарегистрируйтесь",
+    "full_name": "Имя",
+    "email": "Email",
+    "password": "Пароль",
+    "sign_in": "Войти",
+    "sign_up": "Зарегистрироваться",
+    "or_continue": "или продолжить через",
+    "no_account": "Нет аккаунта? Зарегистрироваться",
+    "have_account": "Уже есть аккаунт? Войти",
+    "invalid_email": "Неверный email",
+    "password_min": "Минимум 6 символов"
+  },
+  "notifications_page": {
+    "system_update": "Обновление",
+    "update_desc": "Приложение обновлено.",
+    "hours_ago": "{{count}} час назад",
+    "hours_ago_plural": "{{count}} часов назад"
+  },
+  "not_found": {
+    "title": "Страница не найдена",
+    "desc": "Эта страница была перемещена или удалена.",
+    "back": "На главную"
+  }
+}

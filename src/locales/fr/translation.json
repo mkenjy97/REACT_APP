@@ -1,0 +1,82 @@
+{
+  "app_name": "baseapp",
+  "navigation": {
+    "home": "Accueil",
+    "search": "Rechercher",
+    "support": "Support",
+    "profile": "Profil & Paramètres",
+    "notifications": "Notifications"
+  },
+  "dashboard": {
+    "title": "Tableau de Bord",
+    "subtitle": "Voici votre dernier aperçu.",
+    "item_title": "Aperçu de l'élément",
+    "item_desc": "Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.",
+    "view_details": "Voir les Détails"
+  },
+  "search": {
+    "placeholder": "Rechercher...",
+    "start_typing": "Commencez à taper pour rechercher",
+    "desc": "Vous pouvez rechercher parmi tous vos documents, contacts et paramètres.",
+    "filters": {
+      "all": "Tout",
+      "recent": "Récent",
+      "favorites": "Favoris",
+      "archived": "Archivé"
+    }
+  },
+  "profile": {
+    "appearance": "Apparence",
+    "theme": "Thème",
+    "theme_desc": "Basculer entre le mode clair ou sombre",
+    "palette": "Palette de Couleurs",
+    "palette_desc": "Personnalisez les couleurs de votre application",
+    "preferences": "Préférences",
+    "language": "Langue",
+    "language_desc": "Choisissez votre langue préférée",
+    "dev_role": "Dév: Changer de Rôle",
+    "dev_role_desc": "Simuler différents rôles d'utilisateur",
+    "logout": "Se Déconnecter"
+  },
+  "support": {
+    "title": "Comment pouvons-nous vous aider?",
+    "subtitle": "Parcourez la FAQ ou contactez-nous ci-dessous.",
+    "email_us": "Envoyez-nous un Email",
+    "call_us": "Appelez-nous",
+    "faq": {
+      "q1": "Comment changer la couleur de mon thème principal?",
+      "a1": "Allez dans l'onglet Profil. Sous les paramètres d'Apparence, choisissez une couleur personnalisée.",
+      "q2": "Puis-je utiliser des connexions sociales?",
+      "a2": "Actuellement, les connexions sociales (Google, Apple, Github) sont en cours de développement.",
+      "q3": "Quels sont les différents rôles d'utilisateur?",
+      "a3": "Il y a trois rôles: Utilisateur, Gestionnaire et Administrateur."
+    }
+  },
+  "auth": {
+    "welcome_back": "De Retour",
+    "create_account": "Créer un Compte",
+    "enter_details": "Entrez vos coordonnées pour vous connecter",
+    "sign_up_start": "Inscrivez-vous pour commencer",
+    "full_name": "Nom Complet",
+    "email": "Adresse Email",
+    "password": "Mot de Passe",
+    "sign_in": "Se Connecter",
+    "sign_up": "S'inscrire",
+    "or_continue": "ou continuer avec",
+    "no_account": "Pas de compte? S'inscrire",
+    "have_account": "Déjà un compte? Se connecter",
+    "invalid_email": "Adresse email invalide",
+    "password_min": "Le mot de passe doit comporter au moins 6 caractères"
+  },
+  "notifications_page": {
+    "system_update": "Mise à Jour du Système",
+    "update_desc": "Votre application a été mise à jour avec de nouvelles fonctionnalités.",
+    "hours_ago": "Il y a {{count}} heure",
+    "hours_ago_plural": "Il y a {{count}} heures"
+  },
+  "not_found": {
+    "title": "Page Introuvable",
+    "desc": "La page que vous recherchez a peut-être été supprimée ou est temporairement indisponible.",
+    "back": "Retour à l'Accueil"
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "app_name": "baseapp",
+  "navigation": {
+    "home": "Home",
+    "search": "Cerca",
+    "support": "Supporto",
+    "profile": "Profilo e Impostazioni",
+    "notifications": "Notifiche"
+  },
+  "dashboard": {
+    "title": "Bacheca",
+    "subtitle": "Ecco la tua panoramica aggiornata.",
+    "item_title": "Panoramica elemento",
+    "item_desc": "Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.",
+    "view_details": "Vedi Dettagli"
+  },
+  "search": {
+    "placeholder": "Cerca qualsiasi cosa...",
+    "start_typing": "Inizia a digitare per cercare",
+    "desc": "Puoi cercare tra tutti i tuoi documenti, contatti e impostazioni.",
+    "filters": {
+      "all": "Tutti",
+      "recent": "Recenti",
+      "favorites": "Preferiti",
+      "archived": "Archiviati"
+    }
+  },
+  "profile": {
+    "appearance": "Aspetto",
+    "theme": "Tema",
+    "theme_desc": "Attiva la modalità scura o chiara",
+    "palette": "Tavolozza Colori",
+    "palette_desc": "Personalizza i colori dell'applicazione",
+    "preferences": "Preferenze",
+    "language": "Lingua",
+    "language_desc": "Scegli la tua lingua preferita",
+    "dev_role": "Dev: Cambia Ruolo",
+    "dev_role_desc": "Simula ruoli utente diversi",
+    "logout": "Esci"
+  },
+  "support": {
+    "title": "Come possiamo aiutarti?",
+    "subtitle": "Sfoglia le FAQ o contattaci qui sotto.",
+    "email_us": "Scrivici",
+    "call_us": "Chiamaci",
+    "faq": {
+      "q1": "Come cambio il colore principale del tema?",
+      "a1": "Vai nella scheda Profilo. Sotto le impostazioni dell'Aspetto, troverai una sezione 'Tavolozza Colori' dove puoi scegliere un colore personalizzato.",
+      "q2": "Posso usare il login social?",
+      "a2": "Al momento, i login social (Google, Apple, Github, Microsoft) sono in fase di sviluppo e verranno attivati in un prossimo aggiornamento.",
+      "q3": "Quali sono i diversi ruoli utente?",
+      "a3": "Ci sono tre ruoli: User, Manager e Admin. Gli Admin hanno accesso alle impostazioni globali, i Manager possono modificare i dati dell'app e gli User hanno un accesso in sola lettura."
+    }
+  },
+  "auth": {
+    "welcome_back": "Bentornato",
+    "create_account": "Crea Account",
+    "enter_details": "Inserisci i tuoi dati per accedere",
+    "sign_up_start": "Registrati per iniziare",
+    "full_name": "Nome e Cognome",
+    "email": "Email",
+    "password": "Password",
+    "sign_in": "Accedi",
+    "sign_up": "Registrati",
+    "or_continue": "oppure continua con",
+    "no_account": "Non hai un account? Registrati",
+    "have_account": "Hai già un account? Accedi",
+    "invalid_email": "Indirizzo email non valido",
+    "password_min": "La password deve contenere almeno 6 caratteri"
+  },
+  "notifications_page": {
+    "system_update": "Aggiornamento di Sistema",
+    "update_desc": "La tua applicazione è stata aggiornata con le ultime funzionalità.",
+    "hours_ago": "{{count}} ora fa",
+    "hours_ago_plural": "{{count}} ore fa"
+  },
+  "not_found": {
+    "title": "Pagina Non Trovata",
+    "desc": "La pagina che stai cercando potrebbe essere stata rimossa, aver cambiato nome o essere temporaneamente non disponibile.",
+    "back": "Torna alla Home"
+  }
+}

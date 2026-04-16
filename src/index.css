@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  
+  --color-background: var(--bg-color);
+  --color-surface: var(--surface-color);
+  --color-text: var(--text-color);
+  --color-text-muted: var(--text-muted);
+  
+  --color-glass-border: var(--glass-border);
+  --color-glass-bg: var(--glass-bg);
+}
+
+@layer base {
+  :root {
+    /* Primary Color Palette Custom / Default */
+    --primary-50: #ebf1ed;
+    --primary-100: #b9cabe;
+    --primary-200: #81938a;
+    --primary-300: #50605a;
+    --primary-400: #2d2e2b;
+    --primary-500: #121212;
+
+    /* Light Theme Settings */
+    --bg-color: #f7f9f8;
+    --surface-color: #ffffff;
+    --text-color: #121212;
+    --text-muted: #50605a;
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --glass-bg: rgba(255, 255, 255, 0.6);
+  }
+
+  .dark {
+    /* Primary Color Palette Custom / Default - Retained or changed if user changes it via Settings */
+    --primary-50: #121212;
+    --primary-100: #2d2e2b;
+    --primary-200: #50605a;
+    --primary-300: #81938a;
+    --primary-400: #b9cabe;
+    --primary-500: #ebf1ed;
+
+    /* Dark Theme Settings */
+    --bg-color: #0b0c0b;
+    --surface-color: #151816;
+    --text-color: #ebf1ed;
+    --text-muted: #81938a;
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-bg: rgba(45, 46, 43, 0.4);
+  }
+
+  body {
+    @apply bg-background text-text antialiased transition-colors duration-300 tracking-wide;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply backdrop-blur-md bg-glass-bg border border-glass-border shadow-lg rounded-2xl;
+  }
+  
+  .glass-button {
+    @apply backdrop-blur-md bg-glass-bg border border-glass-border hover:bg-glass-border transition-all duration-300 rounded-full font-medium active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
+}

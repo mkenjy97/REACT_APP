@@ -1,0 +1,82 @@
+{
+  "app_name": "baseapp",
+  "navigation": {
+    "home": "Home",
+    "search": "Search",
+    "support": "Support",
+    "profile": "Profile & Settings",
+    "notifications": "Notifications"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Here's your latest overview.",
+    "item_title": "Item overview",
+    "item_desc": "Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.",
+    "view_details": "View Details"
+  },
+  "search": {
+    "placeholder": "Search anything...",
+    "start_typing": "Start typing to search",
+    "desc": "You can search across all your documents, contacts, and settings.",
+    "filters": {
+      "all": "All",
+      "recent": "Recent",
+      "favorites": "Favorites",
+      "archived": "Archived"
+    }
+  },
+  "profile": {
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "theme_desc": "Toggle dark or light mode",
+    "palette": "Color Palette",
+    "palette_desc": "Customize your application colors",
+    "preferences": "Preferences",
+    "language": "Language",
+    "language_desc": "Choose your preferred language",
+    "dev_role": "Dev: Change Role",
+    "dev_role_desc": "Simulate different user roles",
+    "logout": "Log Out"
+  },
+  "support": {
+    "title": "How can we help?",
+    "subtitle": "Browse the FAQ or get in touch below.",
+    "email_us": "Email Us",
+    "call_us": "Call Us",
+    "faq": {
+      "q1": "How do I change my primary theme color?",
+      "a1": "Go to your Profile tab. Under Appearance settings, you'll find a 'Primary Color' section where you can choose a preset or pick a custom color.",
+      "q2": "Can I use social logins?",
+      "a2": "Currently, social logins (Google, Apple, Github, Microsoft) are in development and will be activated in a future update.",
+      "q3": "What are the different user roles?",
+      "a3": "There are three roles: User, Manager, and Admin. Admins have access to global settings, Managers can edit app data, and Users have basic read access to app data."
+    }
+  },
+  "auth": {
+    "welcome_back": "Welcome Back",
+    "create_account": "Create Account",
+    "enter_details": "Enter your details to sign in",
+    "sign_up_start": "Sign up to get started",
+    "full_name": "Full Name",
+    "email": "Email",
+    "password": "Password",
+    "sign_in": "Sign In",
+    "sign_up": "Sign Up",
+    "or_continue": "or continue with",
+    "no_account": "Don't have an account? Sign up",
+    "have_account": "Already have an account? Sign in",
+    "invalid_email": "Invalid email address",
+    "password_min": "Password must be at least 6 characters"
+  },
+  "notifications_page": {
+    "system_update": "System Update",
+    "update_desc": "Your application has been updated with the newest features.",
+    "hours_ago": "{{count}} hour ago",
+    "hours_ago_plural": "{{count}} hours ago"
+  },
+  "not_found": {
+    "title": "Page Not Found",
+    "desc": "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
+    "back": "Back to Home"
+  }
+}

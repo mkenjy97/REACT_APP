@@ -1,0 +1,82 @@
+{
+  "app_name": "baseapp",
+  "navigation": {
+    "home": "Inicio",
+    "search": "Buscar",
+    "support": "Soporte",
+    "profile": "Perfil y Ajustes",
+    "notifications": "Notificaciones"
+  },
+  "dashboard": {
+    "title": "Panel de Control",
+    "subtitle": "Aquí tienes tu resumen reciente.",
+    "item_title": "Resumen del elemento",
+    "item_desc": "Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.",
+    "view_details": "Ver Detalles"
+  },
+  "search": {
+    "placeholder": "Buscar...",
+    "start_typing": "Empieza a escribir para buscar",
+    "desc": "Puedes buscar en todos tus documentos, contactos y configuraciones.",
+    "filters": {
+      "all": "Todo",
+      "recent": "Reciente",
+      "favorites": "Favoritos",
+      "archived": "Archivado"
+    }
+  },
+  "profile": {
+    "appearance": "Apariencia",
+    "theme": "Tema",
+    "theme_desc": "Cambiar entre modo claro u oscuro",
+    "palette": "Paleta de Colores",
+    "palette_desc": "Personaliza los colores de la aplicación",
+    "preferences": "Preferencias",
+    "language": "Idioma",
+    "language_desc": "Elige tu idioma preferido",
+    "dev_role": "Dev: Cambiar Rol",
+    "dev_role_desc": "Simular diferentes roles de usuario",
+    "logout": "Cerrar Sesión"
+  },
+  "support": {
+    "title": "¿Cómo podemos ayudarte?",
+    "subtitle": "Navega por las preguntas frecuentes o contáctanos a continuación.",
+    "email_us": "Envíanos un Correo",
+    "call_us": "Llámanos",
+    "faq": {
+      "q1": "¿Cómo cambiar el color de mi tema principal?",
+      "a1": "Ve a la pestaña Perfil. Bajo Configuración de apariencia, puedes elegir un color.",
+      "q2": "¿Puedo usar inicios de sesión sociales?",
+      "a2": "Actualmente, los inicios de sesión sociales están en desarrollo.",
+      "q3": "¿Cuáles son los diferentes roles de usuario?",
+      "a3": "Hay tres roles: Usuario, Gestor y Administrador."
+    }
+  },
+  "auth": {
+    "welcome_back": "Bienvenido de nuevo",
+    "create_account": "Crear Cuenta",
+    "enter_details": "Ingresa tus datos para iniciar sesión",
+    "sign_up_start": "Regístrate para empezar",
+    "full_name": "Nombre Completo",
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "sign_in": "Iniciar Sesión",
+    "sign_up": "Regístrarse",
+    "or_continue": "o continuar con",
+    "no_account": "¿No tienes cuenta? Regístrate",
+    "have_account": "¿Ya tienes cuenta? Inicia sesión",
+    "invalid_email": "Correo electrónico inválido",
+    "password_min": "La contraseña debe tener al menos 6 caracteres"
+  },
+  "notifications_page": {
+    "system_update": "Actualización del Sistema",
+    "update_desc": "Tu aplicación ha sido actualizada con nuevas funciones.",
+    "hours_ago": "Hace {{count}} hora",
+    "hours_ago_plural": "Hace {{count}} horas"
+  },
+  "not_found": {
+    "title": "Página No Encontrada",
+    "desc": "La página que estás buscando podría haber sido eliminada o no está disponible temporalmente.",
+    "back": "Volver al Inicio"
+  }
+}

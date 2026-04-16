@@ -1,0 +1,51 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Function to check if user is signed in
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Function to fetch user role from their profile document
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    // Helper roles
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'Admin';
+    }
+
+    function isManager() {
+      return isAuthenticated() && (getUserRole() == 'Manager' || getUserRole() == 'Admin');
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 1. Users can read and write only their OWN user profile document
+    // 2. Admins can read and write ALL user profiles
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // 3. Global settings collection
+    // Read: All authenticated users
+    // Write: Only Admins
+    match /globalSettings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // Example Application Data
+    match /appData/{dataId} {
+      allow read: if isAuthenticated();
+      allow write: if isManager(); // Managers and Admins can write
+    }
+
+  }
+}

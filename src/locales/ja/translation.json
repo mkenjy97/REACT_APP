@@ -1,0 +1,82 @@
+{
+  "app_name": "baseapp",
+  "navigation": {
+    "home": "ホーム",
+    "search": "検索",
+    "support": "サポート",
+    "profile": "プロフィールと設定",
+    "notifications": "通知"
+  },
+  "dashboard": {
+    "title": "ダッシュボード",
+    "subtitle": "最新の概要です。",
+    "item_title": "アイテム概要",
+    "item_desc": "Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.",
+    "view_details": "詳細を見る"
+  },
+  "search": {
+    "placeholder": "検索...",
+    "start_typing": "文字を入力して検索を開始",
+    "desc": "すべてのドキュメントや設定を検索できます。",
+    "filters": {
+      "all": "すべて",
+      "recent": "最近",
+      "favorites": "お気に入り",
+      "archived": "アーカイブ"
+    }
+  },
+  "profile": {
+    "appearance": "外観",
+    "theme": "テーマ",
+    "theme_desc": "ライトモードまたはダークモードの切り替え",
+    "palette": "カラーパレット",
+    "palette_desc": "アプリの色をカスタマイズ",
+    "preferences": "設定",
+    "language": "言語",
+    "language_desc": "言語を選択してください",
+    "dev_role": "開発：役割の変更",
+    "dev_role_desc": "異なるユーザー役割のシミュレート",
+    "logout": "ログアウト"
+  },
+  "support": {
+    "title": "サポート",
+    "subtitle": "FAQをご覧になるか、ご連絡ください。",
+    "email_us": "メールを送信",
+    "call_us": "電話をかける",
+    "faq": {
+      "q1": "テーマ色の変更方法は？",
+      "a1": "プロフィールタブから設定できます。",
+      "q2": "ソーシャルログインは可能ですか？",
+      "a2": "現在開発中です。",
+      "q3": "ユーザーの役割は？",
+      "a3": "ユーザー、マネージャー、管理者の3つです。"
+    }
+  },
+  "auth": {
+    "welcome_back": "お帰りなさい",
+    "create_account": "アカウント作成",
+    "enter_details": "詳細を入力してログイン",
+    "sign_up_start": "サインアップして開始",
+    "full_name": "氏名",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "sign_in": "ログイン",
+    "sign_up": "サインアップ",
+    "or_continue": "または以下で続行",
+    "no_account": "アカウントがない場合：サインアップ",
+    "have_account": "アカウントがある場合：ログイン",
+    "invalid_email": "無効なメールアドレス",
+    "password_min": "パスワードは6文字以上"
+  },
+  "notifications_page": {
+    "system_update": "システム更新",
+    "update_desc": "アプリが更新されました。",
+    "hours_ago": "{{count}} 時間前",
+    "hours_ago_plural": "{{count}} 時間前"
+  },
+  "not_found": {
+    "title": "ページが見つかりません",
+    "desc": "お探しのページは削除されたか、利用できません。",
+    "back": "ホームに戻る"
+  }
+}
