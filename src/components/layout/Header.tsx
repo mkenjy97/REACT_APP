@@ -46,7 +46,7 @@ export function Header() {
               className={`w-9 h-9 rounded-full border-2 overflow-hidden bg-surface flex items-center justify-center ${borderColors[user.role]}`}
             >
               <span className="text-xs font-bold text-text-muted uppercase">
-                {user.email.substring(0, 2)}
+                {user?.displayName?.substring(0, 2) || user?.email?.substring(0, 2) || 'U'}
               </span>
             </div>
           </Link>

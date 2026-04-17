@@ -7,17 +7,26 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Globe, Apple, Code } from 'lucide-react';
+import { Mail, Globe, Apple, Code, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile as firebaseUpdateProfile,
+} from 'firebase/auth';
+import { auth } from '@/services/firebase';
 
 export function Auth() {
   const [step, setStep] = useState<'login' | 'register'>('login');
+  const [isLoading, setIsLoading] = useState(false);
+  const [firebaseError, setFirebaseError] = useState<string | null>(null);
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   const loginSchema = z.object({
+    fullName: z.string().optional(),
     email: z.string().email(t('auth.invalid_email')),
     password: z.string().min(6, t('auth.password_min')),
   });
@@ -28,20 +37,60 @@ export function Auth() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = (data: LoginForm) => {
-    // Mock Firebase login
-    login({
-      uid: 'mock-uid-123',
-      email: data.email,
-      role: 'User',
-      displayName: data.email.split('@')[0],
-    });
-    navigate('/');
+  const getFirebaseErrorMessage = (code: string): string => {
+    switch (code) {
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':
+        return t('auth.invalid_credentials') || 'Email o password non corretti.';
+      case 'auth/email-already-in-use':
+        return t('auth.email_in_use') || 'Questa email è già registrata.';
+      case 'auth/too-many-requests':
+        return t('auth.too_many_requests') || 'Troppi tentativi. Riprova più tardi.';
+      case 'auth/network-request-failed':
+        return t('auth.network_error') || 'Errore di rete. Controlla la connessione.';
+      default:
+        return t('auth.generic_error') || 'Si è verificato un errore. Riprova.';
+    }
+  };
+
+  const onSubmit = async (data: LoginForm) => {
+    setIsLoading(true);
+    setFirebaseError(null);
+    try {
+      if (step === 'login') {
+        const cred = await signInWithEmailAndPassword(auth, data.email, data.password);
+        login({
+          uid: cred.user.uid,
+          email: cred.user.email!,
+          role: 'User',
+          displayName: cred.user.displayName || cred.user.email!.split('@')[0],
+          phoneNumber: cred.user.phoneNumber || undefined,
+        });
+      } else {
+        const cred = await createUserWithEmailAndPassword(auth, data.email, data.password);
+        if (data.fullName) {
+          await firebaseUpdateProfile(cred.user, { displayName: data.fullName });
+        }
+        login({
+          uid: cred.user.uid,
+          email: cred.user.email!,
+          role: 'User',
+          displayName: data.fullName || cred.user.email!.split('@')[0],
+        });
+      }
+      navigate('/');
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code ?? '';
+      setFirebaseError(getFirebaseErrorMessage(code));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
@@ -60,11 +109,17 @@ export function Auth() {
             <AnimatePresence mode="popLayout">
               {step === 'register' && (
                 <motion.div
+                  key="fullname"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                 >
-                  <Input label={t('auth.full_name')} placeholder="John Doe" />
+                  <Input
+                    label={t('auth.full_name')}
+                    placeholder="Mario Rossi"
+                    {...register('fullName')}
+                    error={errors.fullName?.message}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -83,36 +138,57 @@ export function Auth() {
               {...register('password')}
               error={errors.password?.message}
             />
-            
-            <Button type="submit" className="mt-4 w-full">
+
+            {/* Firebase error banner */}
+            <AnimatePresence>
+              {firebaseError && (
+                <motion.div
+                  key="fb-error"
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+                >
+                  {firebaseError}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <Button type="submit" className="mt-2 w-full" disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 size={18} className="animate-spin mr-2" />
+              ) : null}
               {step === 'login' ? t('auth.sign_in') : t('auth.sign_up')}
             </Button>
           </form>
 
+          {/* Divider */}
           <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-glass-border"></div>
+            <div className="flex-grow border-t border-glass-border" />
             <span className="flex-shrink-0 mx-4 text-text-muted text-sm">{t('auth.or_continue')}</span>
-            <div className="flex-grow border-t border-glass-border"></div>
+            <div className="flex-grow border-t border-glass-border" />
           </div>
 
+          {/* Social providers — always disabled */}
           <div className="grid grid-cols-2 gap-3">
-            <Button variant="glass" className="w-full grayscale opacity-50 cursor-not-allowed hidden sm:flex" disabled>
+            <Button variant="glass" className="w-full grayscale opacity-40 cursor-not-allowed hidden sm:flex" disabled>
               <Apple size={18} className="mr-2" /> Apple
             </Button>
-            <Button variant="glass" className="w-full grayscale opacity-50 cursor-not-allowed" disabled>
+            <Button variant="glass" className="w-full grayscale opacity-40 cursor-not-allowed" disabled>
               <Globe size={18} className="mr-2" /> Google
             </Button>
-            <Button variant="glass" className="w-full grayscale opacity-50 cursor-not-allowed" disabled>
+            <Button variant="glass" className="w-full grayscale opacity-40 cursor-not-allowed" disabled>
               <Mail size={18} className="mr-2" /> Microsoft
             </Button>
-            <Button variant="glass" className="w-full grayscale opacity-50 cursor-not-allowed" disabled>
+            <Button variant="glass" className="w-full grayscale opacity-40 cursor-not-allowed" disabled>
               <Code size={18} className="mr-2" /> Github
             </Button>
           </div>
 
           <div className="text-center mt-2">
             <button
-              onClick={() => setStep(step === 'login' ? 'register' : 'login')}
+              type="button"
+              onClick={() => { setStep(step === 'login' ? 'register' : 'login'); setFirebaseError(null); }}
               className="text-sm text-primary-500 hover:underline focus:outline-none"
             >
               {step === 'login' ? t('auth.no_account') : t('auth.have_account')}

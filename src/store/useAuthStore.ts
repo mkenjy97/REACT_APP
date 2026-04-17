@@ -8,6 +8,7 @@ type UserData = {
   email: string;
   role: UserRole;
   displayName?: string;
+  phoneNumber?: string;
 };
 
 type AuthState = {
@@ -16,16 +17,21 @@ type AuthState = {
   login: (userData: UserData) => void;
   logout: () => void;
   setRole: (role: UserRole) => void;
+  updateProfile: (data: Partial<Pick<UserData, 'displayName' | 'phoneNumber'>>) => void;
 };
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      isLoading: false, // In a real app, this might start true while checking session
+      isLoading: false,
       login: (userData) => set({ user: userData }),
       logout: () => set({ user: null }),
       setRole: (role) => set((state) => ({ user: state.user ? { ...state.user, role } : null })),
+      updateProfile: (data) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...data } : null,
+        })),
     }),
     {
       name: 'auth-storage',
