@@ -10,7 +10,7 @@ import { useNotificationStore } from '@/store/useNotificationStore';
 export function Header() {
   const { user } = useAuthStore();
   const { t } = useTranslation();
-  const notificationsCount = useNotificationStore((state) => state.notifications.length);
+  const notificationsCount = useNotificationStore((state) => state.notifications.length + state.unreadChatCount);
   const { appName, appIconUrl } = useThemeStore();
 
   const borderColors = {

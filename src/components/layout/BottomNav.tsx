@@ -1,6 +1,6 @@
 
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Search, HelpCircle, Map } from 'lucide-react';
+import { Home, Search, HelpCircle, Map, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 
@@ -13,6 +13,7 @@ export function BottomNav() {
     { to: '/', icon: Home, label: t('navigation.home') },
     { to: '/search', icon: Search, label: t('navigation.search') },
     { to: '/maps', icon: Map, label: t('navigation.maps') },
+    { to: '/users', icon: Users, label: t('navigation.users', { defaultValue: 'Utenti' }) },
     { to: '/support', icon: HelpCircle, label: t('navigation.support') },
   ];
 

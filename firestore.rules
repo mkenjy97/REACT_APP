@@ -27,24 +27,34 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // 1. Users can read and write only their OWN user profile document
-    // 2. Admins can read and write ALL user profiles
+    // 1. Users can read all profiles (needed for the users page)
+    // 2. Users can write their own profiles, Admins can write all
     match /users/{userId} {
-      allow read, write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
     }
 
     // 3. Global settings collection
-    // Read: All authenticated users
+    // Read: Anyone (needed for pre-login theme)
     // Write: Managers and Admins
     match /globalSettings/{settingId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow write: if isManager();
     }
     
     // 4. Places collection for Maps
+    // Read: Anyone (or isAuthenticated)
     match /places/{placeId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow write: if isManager();
+    }
+
+    // 5. Chats and Messages
+    match /chats/{chatId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /chats/{chatId}/messages/{messageId} {
+      allow read, write: if isAuthenticated();
     }
     
     // Example Application Data

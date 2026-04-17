@@ -1,8 +1,8 @@
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
-import { usePlacesStore, type Place } from '@/store/usePlacesStore';
+import { usePlacesStore } from '@/store/usePlacesStore';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, ArrowLeft, Clock, User, Tag } from 'lucide-react';
+import { MapPin, ArrowLeft, Clock, User, Tag, ExternalLink, Compass } from 'lucide-react';
 
 export function PlaceDetail() {
   const { id } = useParams<{ id: string }>();
@@ -61,6 +61,20 @@ export function PlaceDetail() {
                 {place.description}
               </p>
             )}
+
+            <div className="pt-4">
+              <Button 
+                className="w-full h-12 rounded-2xl bg-primary-500 text-white shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2 group"
+                onClick={() => {
+                  const url = `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}`;
+                  window.open(url, '_blank');
+                }}
+              >
+                <Compass size={20} className="group-hover:rotate-12 transition-transform" />
+                Apri nel Navigatore
+                <ExternalLink size={14} className="opacity-50" />
+              </Button>
+            </div>
           </div>
 
           <div className="h-px w-full bg-glass-border my-2" />

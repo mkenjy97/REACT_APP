@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { db } from '@/services/firebase';
-import { collection, doc, setDoc, deleteDoc, onSnapshot, getDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
 export const PLACE_TYPES = [
   'Bar',

@@ -75,6 +75,10 @@
     "hours_ago": "{{count}} ora fa",
     "hours_ago_plural": "{{count}} ore fa"
   },
+  "notifications": {
+    "unread_messages": "Messaggi non letti",
+    "no_unread_messages": "Nessun nuovo messaggio"
+  },
   "not_found": {
     "title": "Pagina Non Trovata",
     "desc": "La pagina che stai cercando potrebbe essere stata rimossa, aver cambiato nome o essere temporaneamente non disponibile.",

@@ -7,6 +7,10 @@ import { Toaster } from 'sonner';
 import { useEffect } from 'react';
 import { subscribeToTheme, unsubscribeTheme } from '@/store/useThemeStore';
 import { subscribeToPlaces, unsubscribePlaces } from '@/store/usePlacesStore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '@/services/firebase';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useNotificationStore } from '@/store/useNotificationStore';
 
 import { Auth } from '@/pages/Auth';
 import { Home } from '@/pages/Home';
@@ -18,18 +22,39 @@ import { Notifications } from '@/pages/Notifications';
 import { Maps } from '@/pages/Maps';
 import { PlaceDetail } from '@/pages/PlaceDetail';
 import { FullScreenLayout } from '@/components/layout/FullScreenLayout';
+import { ChatLayout } from '@/components/layout/ChatLayout';
+import { Users } from '@/pages/Users';
+import { Messages } from '@/pages/Messages';
 
 function App() {
+  const { user } = useAuthStore();
+  const setUnreadChatCount = useNotificationStore((state) => state.setUnreadChatCount);
+
   useEffect(() => {
     // Inizializza i listeners di Firestore
     subscribeToTheme();
     subscribeToPlaces();
     
+    let unsubChats: (() => void) | null = null;
+
+    if (user?.uid) {
+      const q = query(
+        collection(db, 'chats'),
+        where('unreadBy', 'array-contains', user.uid)
+      );
+      unsubChats = onSnapshot(q, (snapshot) => {
+        setUnreadChatCount(snapshot.size);
+      });
+    } else {
+      setUnreadChatCount(0);
+    }
+    
     return () => {
       unsubscribeTheme();
       unsubscribePlaces();
+      if (unsubChats) unsubChats();
     };
-  }, []);
+  }, [user?.uid, setUnreadChatCount]);
 
   return (
     <>
@@ -47,9 +72,13 @@ function App() {
               <Route path="/support" element={<Support />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/places/:id" element={<PlaceDetail />} />
+              <Route path="/users" element={<Users />} />
             </Route>
             <Route element={<FullScreenLayout />}>
               <Route path="/maps" element={<Maps />} />
+            </Route>
+            <Route element={<ChatLayout />}>
+              <Route path="/messages/:userId" element={<Messages />} />
             </Route>
           </Route>
 

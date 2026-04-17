@@ -67,13 +67,14 @@ export function Auth() {
     try {
       if (step === 'login') {
         const cred = await signInWithEmailAndPassword(auth, data.email, data.password);
-        const userObj = {
+        const userObj: any = {
           uid: cred.user.uid,
           email: cred.user.email!,
           role: 'User' as const,
           displayName: cred.user.displayName || cred.user.email!.split('@')[0],
-          phoneNumber: cred.user.phoneNumber || undefined,
         };
+        if (cred.user.phoneNumber) userObj.phoneNumber = cred.user.phoneNumber;
+        
         // Assicura che l'utente esista in Firestore al login
         await setDoc(doc(db, 'users', cred.user.uid), userObj, { merge: true });
         login(userObj);
@@ -94,6 +95,7 @@ export function Auth() {
       }
       navigate('/');
     } catch (err: unknown) {
+      console.error('Auth Error Details:', err);
       const code = (err as { code?: string })?.code ?? '';
       setFirebaseError(getFirebaseErrorMessage(code));
     } finally {

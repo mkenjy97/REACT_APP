@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
@@ -6,7 +6,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useThemeStore } from '@/store/useThemeStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { usePlacesStore, type Place, PLACE_TYPES, type PlaceType, haversineKm } from '@/store/usePlacesStore';
+import { usePlacesStore, PLACE_TYPES, type PlaceType, haversineKm } from '@/store/usePlacesStore';
 import { Input } from '@/components/ui/Input';
 import { Plus, List, Search, MapPin, X, Navigation } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -77,7 +77,9 @@ export function Maps() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setUserLocation([pos.coords.latitude, pos.coords.longitude]);
+          const loc: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+          setUserLocation(loc);
+          setMapCenter({ pos: loc, t: Date.now() });
         },
         () => {
           console.warn('Geolocalizzazione negata o non disponibile.');
@@ -422,12 +424,13 @@ export function Maps() {
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium text-text-muted ml-2">Indirizzo / CAP (Opzionale)</label>
                     <div className="flex gap-2">
-                       <Input 
-                         value={newAddress} 
-                         onChange={e => setNewAddress(e.target.value)} 
-                         placeholder="Es. Via Roma 1, Roma" 
-                         wrapperClassName="flex-1"
-                       />
+                       <div className="flex-1">
+                         <Input 
+                           value={newAddress} 
+                           onChange={e => setNewAddress(e.target.value)} 
+                           placeholder="Es. Via Roma 1, Roma" 
+                         />
+                       </div>
                        <Button 
                          type="button"
                          size="sm" 

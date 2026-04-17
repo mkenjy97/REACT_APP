@@ -3,10 +3,54 @@ import { useTranslation } from 'react-i18next';
 import { Bell, X, CheckCircle2 } from 'lucide-react';
 import { useNotificationStore } from '@/store/useNotificationStore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { db } from '@/services/firebase';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useNavigate } from 'react-router-dom';
+import { MessageSquare } from 'lucide-react';
 
 export function Notifications() {
   const { t } = useTranslation();
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
   const { notifications, removeNotification, clearAll } = useNotificationStore();
+  const [unreadChats, setUnreadChats] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const q = query(
+      collection(db, 'chats'),
+      where('unreadBy', 'array-contains', user.uid)
+    );
+
+    const unsub = onSnapshot(q, async (snapshot) => {
+      const chats = await Promise.all(snapshot.docs.map(async (chatDoc) => {
+        const data = chatDoc.data();
+        const otherUserId = data.participants.find((id: string) => id !== user.uid);
+        
+        // Fetch sender details
+        let senderName = 'Utente';
+        if (otherUserId) {
+          const userSnap = await getDoc(doc(db, 'users', otherUserId));
+          if (userSnap.exists()) {
+            senderName = userSnap.data().displayName || userSnap.data().email || 'Utente';
+          }
+        }
+
+        return {
+          id: chatDoc.id,
+          otherUserId,
+          senderName,
+          ...data
+        };
+      }));
+      setUnreadChats(chats);
+    });
+
+    return () => unsub();
+  }, [user?.uid]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -21,6 +65,40 @@ export function Notifications() {
           </button>
         )}
       </header>
+      
+      {/* Sezione Messaggi Non Letti */}
+      {unreadChats.length > 0 && (
+        <section className="mb-6 animate-fade-in">
+          <h2 className="text-sm font-bold text-primary-500 uppercase tracking-wider mb-3 ml-1 flex items-center gap-2">
+             <MessageSquare size={16} />
+             {t('notifications.unread_messages', { defaultValue: 'Messaggi non letti' })}
+          </h2>
+          <div className="flex flex-col gap-3">
+             {unreadChats.map(chat => (
+               <GlassCard 
+                 key={chat.id} 
+                 className="p-4 flex items-center gap-4 cursor-pointer hover:border-primary-300 transition-all border-l-4 border-l-primary-500"
+                 onClick={() => navigate(`/messages/${chat.otherUserId}`)}
+               >
+                 <div className="w-12 h-12 rounded-full bg-primary-500/10 text-primary-500 flex items-center justify-center font-bold text-lg shrink-0">
+                    {chat.senderName.charAt(0).toUpperCase()}
+                 </div>
+                 <div className="flex-1 overflow-hidden">
+                    <div className="flex justify-between items-center mb-1">
+                       <h3 className="font-bold truncate">{chat.senderName}</h3>
+                       <span className="text-[10px] text-text-muted">
+                          {chat.lastMessageAt?.toDate ? chat.lastMessageAt.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
+                       </span>
+                    </div>
+                    <p className="text-sm text-text-muted truncate italic">
+                      "{chat.lastMessageText || '...'}"
+                    </p>
+                 </div>
+               </GlassCard>
+             ))}
+          </div>
+        </section>
+      )}
 
       <div className="flex flex-col gap-4">
         <AnimatePresence initial={false}>
