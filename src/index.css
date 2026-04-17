@@ -56,6 +56,10 @@
 
   body {
     @apply bg-background text-text antialiased transition-colors duration-300 tracking-wide;
+    touch-action: pan-x pan-y; /* Previene il pinch-to-zoom e double-tap */
+    -webkit-text-size-adjust: none; /* Previene l'auto-zoom del testo su iOS */
+    text-size-adjust: none;
+    overscroll-behavior: none; /* Previene l'effetto bounce e pull-to-refresh */
   }
 }
 
