@@ -1,6 +1,6 @@
 
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Search, HelpCircle } from 'lucide-react';
+import { Home, Search, HelpCircle, Map } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 
@@ -12,6 +12,7 @@ export function BottomNav() {
   const links = [
     { to: '/', icon: Home, label: t('navigation.home') },
     { to: '/search', icon: Search, label: t('navigation.search') },
+    { to: '/maps', icon: Map, label: t('navigation.maps') },
     { to: '/support', icon: HelpCircle, label: t('navigation.support') },
   ];
 
@@ -19,7 +20,9 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 h-20 z-50 pb-safe sm:pb-0 glass-panel !rounded-none !border-b-0 !border-l-0 !border-r-0">
       <div className="flex h-full items-center justify-around px-2 pb-2">
         {links.map(({ to, icon: Icon, label }) => {
-          const isActive = currentPath === to;
+          const isActive = to === '/maps'
+            ? currentPath.startsWith('/maps')
+            : currentPath === to;
           return (
             <NavLink
               key={to}

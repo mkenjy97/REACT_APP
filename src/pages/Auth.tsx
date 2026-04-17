@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Globe, Apple, Code, Loader2 } from 'lucide-react';
+import { Mail, Globe, Apple, Code, Loader2, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
@@ -21,6 +21,8 @@ export function Auth() {
   const [step, setStep] = useState<'login' | 'register'>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [firebaseError, setFirebaseError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -33,7 +35,11 @@ export function Auth() {
 
   type LoginForm = z.infer<typeof loginSchema>;
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
 
@@ -88,6 +94,17 @@ export function Auth() {
     }
   };
 
+  const EyeToggle = (
+    <button
+      type="button"
+      onClick={() => setShowPassword((v) => !v)}
+      className="text-text-muted hover:text-text transition-colors p-1"
+      aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
+    >
+      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+    </button>
+  );
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <motion.div
@@ -131,10 +148,12 @@ export function Auth() {
               {...register('email')}
               error={errors.email?.message}
             />
+
             <Input
               label={t('auth.password')}
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
+              rightElement={EyeToggle}
               {...register('password')}
               error={errors.password?.message}
             />
@@ -155,9 +174,7 @@ export function Auth() {
             </AnimatePresence>
 
             <Button type="submit" className="mt-2 w-full" disabled={isLoading}>
-              {isLoading ? (
-                <Loader2 size={18} className="animate-spin mr-2" />
-              ) : null}
+              {isLoading && <Loader2 size={18} className="animate-spin mr-2" />}
               {step === 'login' ? t('auth.sign_in') : t('auth.sign_up')}
             </Button>
           </form>
@@ -188,7 +205,11 @@ export function Auth() {
           <div className="text-center mt-2">
             <button
               type="button"
-              onClick={() => { setStep(step === 'login' ? 'register' : 'login'); setFirebaseError(null); }}
+              onClick={() => {
+                setStep(step === 'login' ? 'register' : 'login');
+                setFirebaseError(null);
+                setShowPassword(false);
+              }}
               className="text-sm text-primary-500 hover:underline focus:outline-none"
             >
               {step === 'login' ? t('auth.no_account') : t('auth.have_account')}

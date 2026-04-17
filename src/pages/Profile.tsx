@@ -6,7 +6,7 @@ import { RoleBadge } from '@/components/ui/RoleBadge';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useThemeStore, type Palette } from '@/store/useThemeStore';
 import {
-  Moon, Sun, LogOut, User, Phone, Mail, Lock, Check, X, Loader2,
+  Moon, Sun, LogOut, User, Phone, Mail, Lock, Check, X, Loader2, Link as LinkIcon, Edit3
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export function Profile() {
   const { user, logout, setRole, updateProfile } = useAuthStore();
-  const { isDark, toggleTheme, language, setLanguage, palette, setPaletteColor } = useThemeStore();
+  const { isDark, toggleTheme, language, setLanguage, palette, setPaletteColor, appName, setAppName, appIconUrl, setAppIcon } = useThemeStore();
   const { t } = useTranslation();
 
   // ─── Account editing ───────────────────────────────────────────────────────
@@ -320,6 +320,40 @@ export function Profile() {
         {/* Appearance */}
         <div className="flex flex-col gap-4">
           <h3 className="font-semibold text-lg">{t('profile.appearance')}</h3>
+
+          {user?.role !== 'User' && (
+            <GlassCard className="flex flex-col gap-4 p-4 mt-4 mb-4">
+              <h4 className="font-medium">App Branding (Admin/Manager)</h4>
+              
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
+                  <Edit3 size={14} />
+                  Nome App
+                </label>
+                <input
+                  type="text"
+                  value={appName}
+                  onChange={(e) => setAppName(e.target.value)}
+                  placeholder="Nome dell'applicazione"
+                  className="flex h-12 w-full rounded-full border border-glass-border bg-surface px-4 py-2 text-sm text-text transition-colors placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 shadow-sm"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
+                  <LinkIcon size={14} />
+                  URL Icona App (Lascia vuoto per default)
+                </label>
+                <input
+                  type="url"
+                  value={appIconUrl || ''}
+                  onChange={(e) => setAppIcon(e.target.value || null)}
+                  placeholder="https://example.com/icon.png"
+                  className="flex h-12 w-full rounded-full border border-glass-border bg-surface px-4 py-2 text-sm text-text transition-colors placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 shadow-sm"
+                />
+              </div>
+            </GlassCard>
+          )}
 
           <GlassCard className="flex items-center justify-between p-4">
             <div>

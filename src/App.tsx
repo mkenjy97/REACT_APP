@@ -11,6 +11,9 @@ import { Profile } from '@/pages/Profile';
 import { Support } from '@/pages/Support';
 import { NotFound } from '@/pages/NotFound';
 import { Notifications } from '@/pages/Notifications';
+import { Maps } from '@/pages/Maps';
+import { PlaceDetail } from '@/pages/PlaceDetail';
+import { FullScreenLayout } from '@/components/layout/FullScreenLayout';
 
 function App() {
   return (
@@ -28,6 +31,10 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/support" element={<Support />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/places/:id" element={<PlaceDetail />} />
+            </Route>
+            <Route element={<FullScreenLayout />}>
+              <Route path="/maps" element={<Maps />} />
             </Route>
           </Route>
 

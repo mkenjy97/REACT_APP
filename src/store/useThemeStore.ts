@@ -15,9 +15,13 @@ type ThemeState = {
   isDark: boolean;
   language: string;
   palette: Palette;
+  appName: string;
+  appIconUrl: string | null; // null = use default Shield icon
   toggleTheme: () => void;
   setLanguage: (lang: string) => void;
   setPaletteColor: (shade: keyof Palette, color: string) => void;
+  setAppName: (name: string) => void;
+  setAppIcon: (url: string | null) => void;
 };
 
 const defaultPalette: Palette = {
@@ -35,6 +39,8 @@ export const useThemeStore = create<ThemeState>()(
       isDark: window.matchMedia('(prefers-color-scheme: dark)').matches,
       language: 'en',
       palette: defaultPalette,
+      appName: 'baseapp',
+      appIconUrl: null,
       toggleTheme: () =>
         set((state) => {
           const newTheme = !state.isDark;
@@ -56,6 +62,8 @@ export const useThemeStore = create<ThemeState>()(
           document.documentElement.style.setProperty(`--primary-${shade}`, color);
           return { palette: newPalette };
         }),
+      setAppName: (name: string) => set({ appName: name }),
+      setAppIcon: (url: string | null) => set({ appIconUrl: url }),
     }),
     {
       name: 'theme-storage',
