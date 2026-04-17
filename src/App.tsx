@@ -4,6 +4,10 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Toaster } from 'sonner';
 
 // Pages
+import { useEffect } from 'react';
+import { subscribeToTheme, unsubscribeTheme } from '@/store/useThemeStore';
+import { subscribeToPlaces, unsubscribePlaces } from '@/store/usePlacesStore';
+
 import { Auth } from '@/pages/Auth';
 import { Home } from '@/pages/Home';
 import { Search } from '@/pages/Search';
@@ -16,6 +20,17 @@ import { PlaceDetail } from '@/pages/PlaceDetail';
 import { FullScreenLayout } from '@/components/layout/FullScreenLayout';
 
 function App() {
+  useEffect(() => {
+    // Inizializza i listeners di Firestore
+    subscribeToTheme();
+    subscribeToPlaces();
+    
+    return () => {
+      unsubscribeTheme();
+      unsubscribePlaces();
+    };
+  }, []);
+
   return (
     <>
       <BrowserRouter>

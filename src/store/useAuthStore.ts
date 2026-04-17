@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '@/services/firebase';
 
 export type UserRole = 'User' | 'Manager' | 'Admin';
 
@@ -27,7 +29,14 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
       login: (userData) => set({ user: userData }),
       logout: () => set({ user: null }),
-      setRole: (role) => set((state) => ({ user: state.user ? { ...state.user, role } : null })),
+      setRole: (role) => set((state) => {
+        if (state.user) {
+          const newUser = { ...state.user, role };
+          setDoc(doc(db, 'users', state.user.uid), { role, email: state.user.email, displayName: state.user.displayName || '' }, { merge: true }).catch(console.error);
+          return { user: newUser };
+        }
+        return { user: null };
+      }),
       updateProfile: (data) =>
         set((state) => ({
           user: state.user ? { ...state.user, ...data } : null,

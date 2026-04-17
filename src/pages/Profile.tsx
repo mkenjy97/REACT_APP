@@ -6,7 +6,7 @@ import { RoleBadge } from '@/components/ui/RoleBadge';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useThemeStore, type Palette } from '@/store/useThemeStore';
 import {
-  Moon, Sun, LogOut, User, Phone, Mail, Lock, Check, X, Loader2, Link as LinkIcon, Edit3
+  Moon, Sun, LogOut, User, Phone, Mail, Lock, Check, X, Loader2, Link as LinkIcon, Edit3, RotateCcw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export function Profile() {
   const { user, logout, setRole, updateProfile } = useAuthStore();
-  const { isDark, toggleTheme, language, setLanguage, palette, setPaletteColor, appName, setAppName, appIconUrl, setAppIcon } = useThemeStore();
+  const { isDark, toggleTheme, language, setLanguage, palette, setPaletteColor, appName, setAppName, appIconUrl, setAppIcon, resetPalette } = useThemeStore();
   const { t } = useTranslation();
 
   // ─── Account editing ───────────────────────────────────────────────────────
@@ -370,9 +370,20 @@ export function Profile() {
 
           {user?.role !== 'User' && (
             <GlassCard className="flex flex-col gap-3 p-4">
-              <div>
-                <p className="font-medium">{t('profile.palette')}</p>
-                <p className="text-xs text-text-muted">{t('profile.palette_desc')}</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{t('profile.palette')}</p>
+                  <p className="text-xs text-text-muted">{t('profile.palette_desc')}</p>
+                </div>
+                <Button 
+                  variant="glass" 
+                  size="sm" 
+                  className="h-8 w-8 p-0 rounded-full shrink-0 text-text-muted hover:text-primary-500" 
+                  onClick={resetPalette} 
+                  title="Ripristina colori predefiniti"
+                >
+                  <RotateCcw size={16} />
+                </Button>
               </div>
               <div className="flex flex-col gap-2 mt-2">
                 {(Object.keys(palette) as unknown as (keyof Palette)[]).map((shade) => (

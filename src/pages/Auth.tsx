@@ -15,7 +15,8 @@ import {
   createUserWithEmailAndPassword,
   updateProfile as firebaseUpdateProfile,
 } from 'firebase/auth';
-import { auth } from '@/services/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '@/services/firebase';
 
 export function Auth() {
   const [step, setStep] = useState<'login' | 'register'>('login');
@@ -66,24 +67,30 @@ export function Auth() {
     try {
       if (step === 'login') {
         const cred = await signInWithEmailAndPassword(auth, data.email, data.password);
-        login({
+        const userObj = {
           uid: cred.user.uid,
           email: cred.user.email!,
-          role: 'User',
+          role: 'User' as const,
           displayName: cred.user.displayName || cred.user.email!.split('@')[0],
           phoneNumber: cred.user.phoneNumber || undefined,
-        });
+        };
+        // Assicura che l'utente esista in Firestore al login
+        await setDoc(doc(db, 'users', cred.user.uid), userObj, { merge: true });
+        login(userObj);
       } else {
         const cred = await createUserWithEmailAndPassword(auth, data.email, data.password);
         if (data.fullName) {
           await firebaseUpdateProfile(cred.user, { displayName: data.fullName });
         }
-        login({
+        const userObj = {
           uid: cred.user.uid,
           email: cred.user.email!,
-          role: 'User',
+          role: 'User' as const,
           displayName: data.fullName || cred.user.email!.split('@')[0],
-        });
+        };
+        // Registra in Firestore
+        await setDoc(doc(db, 'users', cred.user.uid), userObj, { merge: true });
+        login(userObj);
       }
       navigate('/');
     } catch (err: unknown) {

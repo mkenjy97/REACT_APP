@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import i18n from '@/i18n/config';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/services/firebase';
 
 export type Palette = {
   50: string;
@@ -16,12 +18,14 @@ type ThemeState = {
   language: string;
   palette: Palette;
   appName: string;
-  appIconUrl: string | null; // null = use default Shield icon
+  appIconUrl: string | null;
   toggleTheme: () => void;
   setLanguage: (lang: string) => void;
   setPaletteColor: (shade: keyof Palette, color: string) => void;
   setAppName: (name: string) => void;
   setAppIcon: (url: string | null) => void;
+  resetPalette: () => void;
+  _setSettingsFromCloud: (settings: { palette?: Palette; appName?: string; appIconUrl?: string | null }) => void;
 };
 
 const defaultPalette: Palette = {
@@ -33,14 +37,46 @@ const defaultPalette: Palette = {
   500: '#064e3b',
 };
 
+// Listeners status
+let unsubTheme: (() => void) | null = null;
+
+export const subscribeToTheme = () => {
+  if (unsubTheme) return; // already subscribed
+  const themeRef = doc(db, 'globalSettings', 'theme');
+  unsubTheme = onSnapshot(themeRef, (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      useThemeStore.getState()._setSettingsFromCloud({
+        palette: data.palette,
+        appName: data.appName,
+        appIconUrl: data.appIconUrl,
+      });
+      // Apply CSS variables
+      if (data.palette) {
+        Object.entries(data.palette).forEach(([shade, color]) => {
+          document.documentElement.style.setProperty(`--primary-${shade}`, color as string);
+        });
+      }
+    }
+  });
+};
+
+export const unsubscribeTheme = () => {
+  if (unsubTheme) {
+    unsubTheme();
+    unsubTheme = null;
+  }
+};
+
 export const useThemeStore = create<ThemeState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       isDark: window.matchMedia('(prefers-color-scheme: dark)').matches,
       language: 'en',
       palette: defaultPalette,
       appName: 'baseapp',
       appIconUrl: null,
+      
       toggleTheme: () =>
         set((state) => {
           const newTheme = !state.isDark;
@@ -51,22 +87,53 @@ export const useThemeStore = create<ThemeState>()(
           }
           return { isDark: newTheme };
         }),
+        
       setLanguage: (lang: string) =>
         set(() => {
           i18n.changeLanguage(lang);
           return { language: lang };
         }),
-      setPaletteColor: (shade: keyof Palette, color: string) =>
-        set((state) => {
-          const newPalette = { ...state.palette, [shade]: color };
+        
+      setPaletteColor: (shade: keyof Palette, color: string) => {
+        const currentPalette = get().palette;
+        const newPalette = { ...currentPalette, [shade]: color };
+        set({ palette: newPalette });
+        document.documentElement.style.setProperty(`--primary-${shade}`, color);
+        // Persist to Firebase
+        setDoc(doc(db, 'globalSettings', 'theme'), { palette: newPalette }, { merge: true });
+      },
+      
+      setAppName: (name: string) => {
+        set({ appName: name });
+        // Persist to Firebase
+        setDoc(doc(db, 'globalSettings', 'theme'), { appName: name }, { merge: true });
+      },
+      
+      setAppIcon: (url: string | null) => {
+        set({ appIconUrl: url });
+        // Persist to Firebase
+        setDoc(doc(db, 'globalSettings', 'theme'), { appIconUrl: url }, { merge: true });
+      },
+
+      resetPalette: () => {
+        set({ palette: defaultPalette });
+        Object.entries(defaultPalette).forEach(([shade, color]) => {
           document.documentElement.style.setProperty(`--primary-${shade}`, color);
-          return { palette: newPalette };
-        }),
-      setAppName: (name: string) => set({ appName: name }),
-      setAppIcon: (url: string | null) => set({ appIconUrl: url }),
+        });
+        setDoc(doc(db, 'globalSettings', 'theme'), { palette: defaultPalette }, { merge: true });
+      },
+
+      _setSettingsFromCloud: (settings) => {
+        set((state) => ({
+          palette: settings.palette ?? state.palette,
+          appName: settings.appName ?? state.appName,
+          appIconUrl: settings.appIconUrl !== undefined ? settings.appIconUrl : state.appIconUrl,
+        }));
+      }
     }),
     {
       name: 'theme-storage',
+      partialize: (state) => ({ isDark: state.isDark, language: state.language }), // only persist local user prefs locally
       onRehydrateStorage: () => (state) => {
         if (state) {
           if (state.isDark) {
@@ -75,11 +142,6 @@ export const useThemeStore = create<ThemeState>()(
             document.documentElement.classList.remove('dark');
           }
           i18n.changeLanguage(state.language);
-          if (state.palette) {
-            Object.entries(state.palette).forEach(([shade, color]) => {
-              document.documentElement.style.setProperty(`--primary-${shade}`, color as string);
-            });
-          }
         }
       },
     }

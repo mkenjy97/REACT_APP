@@ -35,10 +35,16 @@ service cloud.firestore {
 
     // 3. Global settings collection
     // Read: All authenticated users
-    // Write: Only Admins
+    // Write: Managers and Admins
     match /globalSettings/{settingId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow write: if isManager();
+    }
+    
+    // 4. Places collection for Maps
+    match /places/{placeId} {
+      allow read: if isAuthenticated();
+      allow write: if isManager();
     }
     
     // Example Application Data

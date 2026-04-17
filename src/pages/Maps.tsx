@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useThemeStore } from '@/store/useThemeStore';
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/Input';
 import { Plus, List, Search, MapPin, X, Navigation } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 // Fix per icona di default di leaflet in React
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -32,6 +33,17 @@ function MapClickHandler({ onLocationClick, isActive }: { onLocationClick: (latl
   return null;
 }
 
+// Componente per spostare la mappa automaticamente sul nuovo punto scelto
+function MapRecenter({ centerObj }: { centerObj: { pos: [number, number], t: number } | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (centerObj) {
+      map.flyTo(centerObj.pos, 16, { animate: true });
+    }
+  }, [centerObj, map]);
+  return null;
+}
+
 export function Maps() {
   const { isDark } = useThemeStore();
   const { user } = useAuthStore();
@@ -45,10 +57,15 @@ export function Maps() {
 
   // Form Nuovo Luogo
   const [newPlacePos, setNewPlacePos] = useState<[number, number] | null>(null);
+  const [mapCenter, setMapCenter] = useState<{ pos: [number, number], t: number } | null>(null);
+
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState<PlaceType>('Altro');
   const [newAddress, setNewAddress] = useState('');
   const [newDesc, setNewDesc] = useState('');
+  
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [isPickingMode, setIsPickingMode] = useState(false);
 
   // Filtyer e Ricerca Lista
   const [searchQuery, setSearchQuery] = useState('');
@@ -69,32 +86,80 @@ export function Maps() {
     }
   }, []);
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPlacePos) return;
 
-    addPlace({
-      name: newName,
-      type: newType,
-      lat: newPlacePos[0],
-      lng: newPlacePos[1],
-      address: newAddress,
-      description: newDesc,
-      addedBy: user?.displayName || user?.email || 'admin',
-    });
+    try {
+      await addPlace({
+        name: newName,
+        type: newType,
+        lat: newPlacePos[0],
+        lng: newPlacePos[1],
+        address: newAddress,
+        description: newDesc,
+        addedBy: user?.displayName || user?.email || 'admin',
+      });
 
-    // Reset
-    setShowAddForm(false);
-    setNewPlacePos(null);
-    setNewName('');
-    setNewAddress('');
-    setNewDesc('');
-    setNewType('Altro');
+      toast.success('Luogo aggiunto con successo!');
+      
+      // Reset
+      setShowAddForm(false);
+      setNewPlacePos(null);
+      setNewName('');
+      setNewAddress('');
+      setNewDesc('');
+      setNewType('Altro');
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Errore di salvataggio. Hai aggiornato le rules Firestore? (' + err.message + ')');
+    }
   };
 
-  // Funzione per centrare mappa
   const handleMapClick = (latlng: L.LatLng) => {
-    setNewPlacePos([latlng.lat, latlng.lng]);
+    const pos: [number, number] = [latlng.lat, latlng.lng];
+    setNewPlacePos(pos);
+    if (isPickingMode) {
+      handleReverseGeocode(pos);
+      setIsPickingMode(false);
+    }
+  };
+
+  const handleGeocode = async () => {
+    if (!newAddress.trim()) return;
+    setIsGeocoding(true);
+    try {
+      const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(newAddress)}`);
+      const data = await resp.json();
+      if (data && data.length > 0) {
+        const pos: [number, number] = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+        setNewPlacePos(pos);
+        setMapCenter({ pos, t: Date.now() });
+      } else {
+        alert('Indirizzo non trovato!');
+      }
+    } catch {
+      alert("Errore di rete durante la ricerca dell'indirizzo.");
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
+
+  const handleReverseGeocode = async (pos: [number, number]) => {
+    setIsGeocoding(true);
+    try {
+      const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos[0]}&lon=${pos[1]}`);
+      const data = await resp.json();
+      if (data && data.display_name) {
+        setNewAddress(data.display_name);
+      } else {
+        alert('Nessun indirizzo trovato per questa posizione.');
+      }
+    } catch {
+      alert("Errore del server durante il recupero dell'indirizzo.");
+    } finally {
+      setIsGeocoding(false);
+    }
   };
 
   // Ordinamento e filtro lista
@@ -131,7 +196,8 @@ export function Maps() {
         >
           <TileLayer url={tileLayerUrl} />
 
-          <MapClickHandler onLocationClick={handleMapClick} isActive={showAddForm && !newPlacePos} />
+          <MapRecenter centerObj={mapCenter} />
+          <MapClickHandler onLocationClick={handleMapClick} isActive={showAddForm} />
 
           {/* Marker Luoghi Censiti */}
           {places.map((place) => (
@@ -162,6 +228,26 @@ export function Maps() {
 
         </MapContainer>
       </div>
+
+      {/* ── Bottone per localizzazione Mappa (visibile se non si sta aggiungendo luoghi) ── */}
+      {!showList && (
+        <div className="absolute top-4 right-4 z-10">
+          <Button
+            variant="glass"
+            className="w-12 h-12 p-0 rounded-full shadow-xl bg-background/90"
+            onClick={() => {
+              if (userLocation) {
+                setMapCenter({ pos: userLocation, t: Date.now() });
+              } else {
+                alert("Posizione attuale non disponibile, abilita la localizzazione.");
+              }
+            }}
+            aria-label="Centra su di me"
+          >
+            <Navigation size={22} className="text-primary-500" />
+          </Button>
+        </div>
+      )}
 
       {/* ── Overlay Bottoni Fluttuanti in basso ── */}
       <div className="absolute bottom-6 left-0 right-0 z-10 flex items-center justify-center gap-4 px-4 pointer-events-none">
@@ -265,22 +351,52 @@ export function Maps() {
                variant="ghost" 
                size="sm" 
                className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full" 
-               onClick={() => setShowAddForm(false)}
+               onClick={() => {
+                 setShowAddForm(false);
+                 setIsPickingMode(false);
+               }}
              >
                <X size={18} />
              </Button>
              
-             {!newPlacePos ? (
+             {isPickingMode ? (
+               <div className="flex items-center justify-between py-2 pr-6">
+                 <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 bg-primary-500/20 text-primary-500 rounded-full flex items-center justify-center animate-pulse">
+                     <MapPin size={20} />
+                   </div>
+                   <div className="flex flex-col">
+                     <span className="font-bold text-sm">Scegli Posizione</span>
+                     <span className="text-xs text-text-muted">Tocca ovunque sulla mappa.</span>
+                   </div>
+                 </div>
+                 <Button variant="ghost" size="sm" onClick={() => setIsPickingMode(false)}>
+                   Annulla
+                 </Button>
+               </div>
+             ) : !newPlacePos ? (
                <div className="flex flex-col items-center py-4 text-center">
                  <div className="w-16 h-16 bg-primary-100 dark:bg-primary-500/30 text-primary-500 rounded-full flex items-center justify-center mb-3 animate-pulse">
                    <MapPin size={32} />
                  </div>
                  <h3 className="font-bold text-lg">Seleziona posizione</h3>
-                 <p className="text-sm text-text-muted mt-1">Tocca un punto sulla mappa per posizionare il segnalino del nuovo luogo.</p>
+                 <p className="text-sm text-text-muted mt-1 mb-4">Tocca un punto sulla mappa oppure cerca un indirizzo:</p>
+                 
+                 <div className="w-full flex gap-2">
+                   <Input 
+                      placeholder="Es. Colosseo, Roma" 
+                      value={newAddress} 
+                      onChange={e => setNewAddress(e.target.value)} 
+                   />
+                   <Button size="sm" onClick={handleGeocode} disabled={isGeocoding || !newAddress.trim()} className="shrink-0 h-12 w-12 p-0 rounded-xl">
+                     <Search size={18} />
+                   </Button>
+                 </div>
                </div>
              ) : (
                <form onSubmit={handleAddSubmit} className="flex flex-col gap-4 mt-2">
                   <h3 className="font-bold text-lg border-b border-glass-border pb-2">Nuovo Luogo</h3>
+
                   
                   <Input 
                     label="Nome Luogo" 
@@ -303,12 +419,46 @@ export function Maps() {
                     </select>
                   </div>
 
-                  <Input 
-                    label="Indirizzo / CAP (Opzionale)" 
-                    value={newAddress} 
-                    onChange={e => setNewAddress(e.target.value)} 
-                    placeholder="Es. Via Roma 1, 00100" 
-                  />
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-text-muted ml-2">Indirizzo / CAP (Opzionale)</label>
+                    <div className="flex gap-2">
+                       <Input 
+                         value={newAddress} 
+                         onChange={e => setNewAddress(e.target.value)} 
+                         placeholder="Es. Via Roma 1, Roma" 
+                         wrapperClassName="flex-1"
+                       />
+                       <Button 
+                         type="button"
+                         size="sm" 
+                         variant={isPickingMode ? 'primary' : 'glass'}
+                         title="Seleziona dalla mappa"
+                         onClick={() => {
+                           setIsPickingMode(!isPickingMode);
+                         }} 
+                         className={`shrink-0 h-12 w-12 p-0 rounded-xl bg-surface`}
+                       >
+                         <MapPin size={18} className={isPickingMode ? 'text-white animate-bounce' : 'text-primary-500'} />
+                       </Button>
+                       <Button 
+                         type="button"
+                         size="sm" 
+                         variant="glass"
+                         title="Usa la tua posizione attuale"
+                         disabled={isGeocoding || !userLocation}
+                         onClick={() => {
+                           if (userLocation) {
+                             setNewPlacePos(userLocation);
+                             setMapCenter({ pos: userLocation, t: Date.now() });
+                             handleReverseGeocode(userLocation);
+                           }
+                         }} 
+                         className="shrink-0 h-12 w-12 p-0 rounded-xl bg-surface"
+                       >
+                         <Navigation size={18} className="text-primary-500" />
+                       </Button>
+                    </div>
+                  </div>
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium text-text-muted ml-2">Descrizione (Opzionale)</label>
