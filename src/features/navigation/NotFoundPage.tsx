@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-export function NotFound() {
+export function NotFoundPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 

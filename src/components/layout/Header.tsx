@@ -1,11 +1,11 @@
-
-import { Bell, Shield } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useThemeStore } from '@/store/useThemeStore';
 import { RoleBadge } from '@/components/ui/RoleBadge';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNotificationStore } from '@/store/useNotificationStore';
+import { Icon } from '@/components/ui/Icon';
+import { APP_CONFIG } from '@/config/app.config';
 
 export function Header() {
   const { user } = useAuthStore();
@@ -16,7 +16,7 @@ export function Header() {
   const borderColors = {
     Admin: 'border-amber-400',
     Manager: 'border-slate-400',
-    User: 'border-blue-400',
+    User: 'border-primary-400',
   };
 
   return (
@@ -27,19 +27,21 @@ export function Header() {
           {appIconUrl ? (
             <img src={appIconUrl} alt="app icon" className="w-full h-full object-cover" />
           ) : (
-            <Shield size={16} />
+            <Icon name="Home" size={16} />
           )}
         </div>
-        <span className="font-bold text-lg text-text tracking-tight">{appName || t('app_name')}</span>
+        <span className="font-bold text-lg text-text tracking-tight">{appName || APP_CONFIG.name || t('app_name')}</span>
       </Link>
 
       <div className="flex items-center gap-4">
-        <Link to="/notifications" className="relative p-2 rounded-full hover:bg-glass-bg transition-colors" aria-label="Notifications">
-          <Bell size={20} className="text-text-muted" />
-          {notificationsCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
-          )}
-        </Link>
+        {APP_CONFIG.features.hasNotifications && (
+          <Link to="/notifications" className="relative p-2 rounded-full hover:bg-glass-bg transition-colors" aria-label="Notifications">
+            <Icon name="Notifications" size={20} className="text-text-muted" />
+            {notificationsCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
+            )}
+          </Link>
+        )}
 
         {user && (
           <Link to="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">

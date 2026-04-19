@@ -5,9 +5,11 @@ import { db } from '@/services/firebase';
 import { useAuthStore } from '@/store/useAuthStore';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
-import { Send, ArrowLeft, Check, CheckCheck } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
+import { motion } from 'framer-motion';
+import { PAGE_VARIANTS } from '@/constants/animations';
 
-export function Messages() {
+export function ChatPage() {
   const { userId } = useParams();
   const { user: currentUser } = useAuthStore();
   const location = useLocation();
@@ -28,7 +30,6 @@ export function Messages() {
   useEffect(() => {
     if (!currentUser?.uid || !userId) return;
     
-    // Simple 1-1 chat ID algorithm by sorting user IDs
     const chatId = [currentUser.uid, userId].sort().join('_');
     const q = query(
       collection(db, 'chats', chatId, 'messages'),
@@ -40,12 +41,10 @@ export function Messages() {
       setMessages(msgs);
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
       
-      // Mark as read: remove current user from unreadBy if they are in it
       updateDoc(doc(db, 'chats', chatId), {
         unreadBy: arrayRemove(currentUser.uid)
       }).catch(() => {});
 
-      // Mark individual messages as read if I am the recipient
       const unreadIncoming = snapshot.docs.filter(d => d.data().senderId !== currentUser.uid && !d.data().read);
       if (unreadIncoming.length > 0) {
         const batch = writeBatch(db);
@@ -65,7 +64,7 @@ export function Messages() {
 
     const chatId = [currentUser.uid, userId].sort().join('_');
     const content = text;
-    setText(''); // optimistic clear
+    setText('');
     
     await addDoc(collection(db, 'chats', chatId, 'messages'), {
       text: content,
@@ -74,7 +73,6 @@ export function Messages() {
       createdAt: serverTimestamp(),
     });
 
-    // Update parent chat metadata
     await setDoc(doc(db, 'chats', chatId), {
       lastMessageText: content,
       lastMessageAt: serverTimestamp(),
@@ -85,11 +83,16 @@ export function Messages() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background animate-fade-in">
-      {/* Header */}
+    <motion.div 
+      variants={PAGE_VARIANTS}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="flex flex-col h-full bg-background"
+    >
       <GlassCard className="!rounded-none !border-t-0 !border-l-0 !border-r-0 p-4 pt-safe-top flex items-center gap-3 shrink-0 z-10 sticky top-0 shadow-sm rounded-b-3xl">
          <Button variant="ghost" size="sm" className="h-10 w-10 p-0 rounded-full bg-surface" onClick={() => navigate(-1)}>
-            <ArrowLeft size={20} />
+            <Icon name="ChevronLeft" size={20} />
          </Button>
          <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-500/20 text-primary-500 flex items-center justify-center font-bold">
             {(otherUser?.displayName || otherUser?.email || 'U').charAt(0).toUpperCase()}
@@ -100,7 +103,6 @@ export function Messages() {
          </div>
       </GlassCard>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 pb-24">
          {messages.length === 0 && (
            <p className="text-center text-text-muted my-auto font-medium">Nessun messaggio. Inizia la conversazione!</p>
@@ -121,7 +123,7 @@ export function Messages() {
                     )}
                     {isMe && (
                       <div className={m.read ? 'text-blue-300' : 'text-primary-200'}>
-                        {m.read ? <CheckCheck size={12} /> : <Check size={12} />}
+                        <Icon name="Check" size={12} />
                       </div>
                     )}
                  </div>
@@ -132,7 +134,6 @@ export function Messages() {
          <div ref={bottomRef} className="h-4" />
       </div>
 
-      {/* Input */}
       <div className="fixed bottom-0 inset-x-0 p-4 pb-safe bg-background/80 backdrop-blur-xl border-t border-glass-border z-20">
          <form onSubmit={sendMessage} className="flex gap-2 max-w-3xl mx-auto w-full relative">
             <input 
@@ -143,10 +144,10 @@ export function Messages() {
               className="flex-1 h-12 rounded-full border border-glass-border bg-surface pl-5 pr-14 py-2 text-[15px] shadow-inner focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium"
             />
             <Button type="submit" className="absolute right-1 top-1 bottom-1 shrink-0 h-10 w-10 rounded-full p-0 flex items-center justify-center shadow-md bg-primary-500 text-white transition-transform active:scale-95" disabled={!text.trim()}>
-               <Send size={18} className="-translate-x-[1px] translate-y-[1px]"/>
+               <Icon name="Add" size={18} />
             </Button>
          </form>
       </div>
-    </div>
+    </motion.div>
   );
 }

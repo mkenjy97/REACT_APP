@@ -1,10 +1,13 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute';
 import { Toaster } from 'sonner';
-
-// Pages
 import { useEffect } from 'react';
+
+// Config
+import { APP_CONFIG } from '@/config/app.config';
+
+// Stores
 import { subscribeToTheme, unsubscribeTheme } from '@/store/useThemeStore';
 import { subscribeToPlaces, unsubscribePlaces } from '@/store/usePlacesStore';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -12,19 +15,22 @@ import { db } from '@/services/firebase';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNotificationStore } from '@/store/useNotificationStore';
 
-import { Auth } from '@/pages/Auth';
-import { Home } from '@/pages/Home';
-import { Search } from '@/pages/Search';
-import { Profile } from '@/pages/Profile';
-import { Support } from '@/pages/Support';
-import { NotFound } from '@/pages/NotFound';
-import { Notifications } from '@/pages/Notifications';
-import { Maps } from '@/pages/Maps';
-import { PlaceDetail } from '@/pages/PlaceDetail';
+// Feature Pages
+import { AuthPage } from '@/features/auth/AuthPage';
+import { HomePage } from '@/features/home/HomePage';
+import { MapsPage } from '@/features/maps/MapsPage';
+import { SearchPage } from '@/features/maps/SearchPage';
+import { PlaceDetailPage } from '@/features/maps/PlaceDetailPage';
+import { ChatPage } from '@/features/chat/ChatPage';
+import { NotificationsPage } from '@/features/chat/NotificationsPage';
+import { ProfilePage } from '@/features/profile/ProfilePage';
+import { UsersPage } from '@/features/profile/UsersPage';
+import { SupportPage } from '@/features/support/SupportPage';
+import { NotFoundPage } from '@/features/navigation/NotFoundPage';
+
+// Layouts
 import { FullScreenLayout } from '@/components/layout/FullScreenLayout';
 import { ChatLayout } from '@/components/layout/ChatLayout';
-import { Users } from '@/pages/Users';
-import { Messages } from '@/pages/Messages';
 
 function App() {
   const { user } = useAuthStore();
@@ -61,38 +67,60 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Public Route */}
-          <Route path="/auth" element={<Auth />} />
+          {APP_CONFIG.features.hasAuth && (
+            <Route path="/auth" element={<AuthPage />} />
+          )}
 
           {/* Protected Routes Wrapper */}
           <Route element={<ProtectedRoute />}>
             <Route element={<MainLayout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/support" element={<Support />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/places/:id" element={<PlaceDetail />} />
-              <Route path="/users" element={<Users />} />
+              <Route path="/" element={<HomePage />} />
+              
+              {APP_CONFIG.features.hasSearch && (
+                <Route path="/search" element={<SearchPage />} />
+              )}
+              
+              <Route path="/profile" element={<ProfilePage />} />
+              
+              {APP_CONFIG.features.hasSupport && (
+                <Route path="/support" element={<SupportPage />} />
+              )}
+              
+              {APP_CONFIG.features.hasNotifications && (
+                <Route path="/notifications" element={<NotificationsPage />} />
+              )}
+              
+              {APP_CONFIG.features.hasMaps && (
+                <Route path="/places/:id" element={<PlaceDetailPage />} />
+              )}
+              
+              <Route path="/users" element={<UsersPage />} />
             </Route>
-            <Route element={<FullScreenLayout />}>
-              <Route path="/maps" element={<Maps />} />
-            </Route>
-            <Route element={<ChatLayout />}>
-              <Route path="/messages/:userId" element={<Messages />} />
-            </Route>
+
+            {APP_CONFIG.features.hasMaps && (
+              <Route element={<FullScreenLayout />}>
+                <Route path="/maps" element={<MapsPage />} />
+              </Route>
+            )}
+
+            {APP_CONFIG.features.hasChat && (
+              <Route element={<ChatLayout />}>
+                <Route path="/messages/:userId" element={<ChatPage />} />
+              </Route>
+            )}
           </Route>
 
           {/* 404 Route */}
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
       
       {/* Global Toast Provider */}
       <Toaster 
-        theme="system" 
+        theme={APP_CONFIG.theme.defaultMode} 
         position="top-center" 
         toastOptions={{
-          className: 'glass-panel !border-glass-border',
+          className: APP_CONFIG.theme.glassMode ? 'glass-panel !border-glass-border' : '',
         }}
       />
     </>

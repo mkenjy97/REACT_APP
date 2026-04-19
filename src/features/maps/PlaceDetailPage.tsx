@@ -4,7 +4,7 @@ import { usePlacesStore } from '@/store/usePlacesStore';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, ArrowLeft, Clock, User, Tag, ExternalLink, Compass } from 'lucide-react';
 
-export function PlaceDetail() {
+export function PlaceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { places } = usePlacesStore();

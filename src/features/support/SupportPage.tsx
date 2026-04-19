@@ -4,7 +4,7 @@ import { ChevronDown, Mail, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 
-export function Support() {
+export function SupportPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const { t } = useTranslation();
 

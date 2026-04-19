@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 
-export function Home() {
+export function HomePage() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
 

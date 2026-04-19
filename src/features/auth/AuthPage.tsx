@@ -7,18 +7,15 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Globe, Apple, Code, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  updateProfile as firebaseUpdateProfile,
-} from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '@/services/firebase';
+import { authService } from '@/services/auth.service';
+import { dbService } from '@/services/db.service';
+import { AUTH_SCHEMAS } from '@/validation/schemas';
+import { PAGE_VARIANTS, TRANSITIONS } from '@/constants/animations';
 
-export function Auth() {
+export function AuthPage() {
   const [step, setStep] = useState<'login' | 'register'>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [firebaseError, setFirebaseError] = useState<string | null>(null);
@@ -28,20 +25,15 @@ export function Auth() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const loginSchema = z.object({
-    fullName: z.string().optional(),
-    email: z.string().email(t('auth.invalid_email')),
-    password: z.string().min(6, t('auth.password_min')),
-  });
-
-  type LoginForm = z.infer<typeof loginSchema>;
+  const currentSchema = step === 'login' ? AUTH_SCHEMAS.login : AUTH_SCHEMAS.register;
+  type AuthForm = z.infer<typeof currentSchema>;
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<AuthForm>({
+    resolver: zodResolver(currentSchema),
   });
 
   const getFirebaseErrorMessage = (code: string): string => {
@@ -61,38 +53,40 @@ export function Auth() {
     }
   };
 
-  const onSubmit = async (data: LoginForm) => {
+  const onSubmit = async (data: AuthForm) => {
     setIsLoading(true);
     setFirebaseError(null);
     try {
+      let user: any;
       if (step === 'login') {
-        const cred = await signInWithEmailAndPassword(auth, data.email, data.password);
-        const userObj: any = {
-          uid: cred.user.uid,
-          email: cred.user.email!,
-          role: 'User' as const,
-          displayName: cred.user.displayName || cred.user.email!.split('@')[0],
-        };
-        if (cred.user.phoneNumber) userObj.phoneNumber = cred.user.phoneNumber;
+        const cred = await authService.login(data.email, data.password);
+        user = await dbService.getDocument('users', cred.user.uid);
         
-        // Assicura che l'utente esista in Firestore al login
-        await setDoc(doc(db, 'users', cred.user.uid), userObj, { merge: true });
-        login(userObj);
-      } else {
-        const cred = await createUserWithEmailAndPassword(auth, data.email, data.password);
-        if (data.fullName) {
-          await firebaseUpdateProfile(cred.user, { displayName: data.fullName });
+        if (!user) {
+          user = {
+            uid: cred.user.uid,
+            email: cred.user.email!,
+            role: 'User' as const,
+            displayName: cred.user.displayName || cred.user.email!.split('@')[0],
+          };
+          await dbService.setDocument('users', cred.user.uid, user);
         }
-        const userObj = {
+      } else {
+        const registerData = data as z.infer<typeof AUTH_SCHEMAS.register>;
+        const cred = await authService.register(data.email, data.password);
+        if (registerData.fullName) {
+          await authService.updateDisplayName(registerData.fullName);
+        }
+        user = {
           uid: cred.user.uid,
           email: cred.user.email!,
           role: 'User' as const,
-          displayName: data.fullName || cred.user.email!.split('@')[0],
+          displayName: registerData.fullName || cred.user.email!.split('@')[0],
         };
-        // Registra in Firestore
-        await setDoc(doc(db, 'users', cred.user.uid), userObj, { merge: true });
-        login(userObj);
+        await dbService.setDocument('users', cred.user.uid, user);
       }
+      
+      login(user);
       navigate('/');
     } catch (err: unknown) {
       console.error('Auth Error Details:', err);
@@ -110,15 +104,17 @@ export function Auth() {
       className="text-text-muted hover:text-text transition-colors p-1"
       aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
     >
-      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+      <Icon name={showPassword ? 'Hide' : 'Show'} size={16} />
     </button>
   );
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        variants={PAGE_VARIANTS}
+        initial="initial"
+        animate="animate"
+        exit="exit"
         className="w-full max-w-md"
       >
         <GlassCard className="flex flex-col gap-8 p-8">
@@ -139,12 +135,13 @@ export function Auth() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
+                  transition={TRANSITIONS.smooth}
                 >
                   <Input
                     label={t('auth.full_name')}
                     placeholder="Mario Rossi"
-                    {...register('fullName')}
-                    error={errors.fullName?.message}
+                    {...register('fullName' as any)}
+                    error={(errors as any).fullName?.message}
                   />
                 </motion.div>
               )}
@@ -167,23 +164,19 @@ export function Auth() {
               error={errors.password?.message}
             />
 
-            {/* Firebase error banner */}
-            <AnimatePresence>
-              {firebaseError && (
-                <motion.div
-                  key="fb-error"
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-400"
-                >
-                  {firebaseError}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {firebaseError && (
+              <motion.div
+                key="fb-error"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+              >
+                {firebaseError}
+              </motion.div>
+            )}
 
             <Button type="submit" className="mt-2 w-full" disabled={isLoading}>
-              {isLoading && <Loader2 size={18} className="animate-spin mr-2" />}
+              {isLoading && <Icon name="Info" size={18} className="animate-spin mr-2" />}
               {step === 'login' ? t('auth.sign_in') : t('auth.sign_up')}
             </Button>
           </form>
@@ -195,19 +188,13 @@ export function Auth() {
             <div className="flex-grow border-t border-glass-border" />
           </div>
 
-          {/* Social providers — always disabled */}
+          {/* Social providers */}
           <div className="grid grid-cols-2 gap-3">
             <Button variant="glass" className="w-full grayscale opacity-40 cursor-not-allowed hidden sm:flex" disabled>
-              <Apple size={18} className="mr-2" /> Apple
+              <Icon name="Email" size={18} className="mr-2" /> Apple
             </Button>
             <Button variant="glass" className="w-full grayscale opacity-40 cursor-not-allowed" disabled>
-              <Globe size={18} className="mr-2" /> Google
-            </Button>
-            <Button variant="glass" className="w-full grayscale opacity-40 cursor-not-allowed" disabled>
-              <Mail size={18} className="mr-2" /> Microsoft
-            </Button>
-            <Button variant="glass" className="w-full grayscale opacity-40 cursor-not-allowed" disabled>
-              <Code size={18} className="mr-2" /> Github
+              <Icon name="Search" size={18} className="mr-2" /> Google
             </Button>
           </div>
 

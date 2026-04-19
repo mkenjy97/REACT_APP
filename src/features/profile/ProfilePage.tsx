@@ -4,25 +4,24 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { RoleBadge } from '@/components/ui/RoleBadge';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useThemeStore, type Palette } from '@/store/useThemeStore';
-import {
-  Moon, Sun, LogOut, User, Phone, Mail, Lock, Check, X, Loader2, Link as LinkIcon, Edit3, RotateCcw
-} from 'lucide-react';
+import { useThemeStore } from '@/store/useThemeStore';
+import { Icon } from '@/components/ui/Icon';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
-import { getContrastRatio } from '@/lib/contrast';
-import { auth } from '@/services/firebase';
+import { authService } from '@/services/auth.service';
 import {
-  updateProfile as firebaseUpdateProfile,
-  updatePassword,
   EmailAuthProvider,
   reauthenticateWithCredential,
+  updatePassword,
 } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
+import { APP_CONFIG } from '@/config/app.config';
+import { PAGE_VARIANTS } from '@/constants/animations';
+import { resetAllStores } from '@/store/resetStores';
 
-export function Profile() {
-  const { user, logout, setRole, updateProfile } = useAuthStore();
-  const { isDark, toggleTheme, language, setLanguage, palette, setPaletteColor, appName, setAppName, appIconUrl, setAppIcon, resetPalette } = useThemeStore();
+export function ProfilePage() {
+  const { user, updateProfile } = useAuthStore();
+  const { isDark, toggleTheme, language, setLanguage, appName, setAppName, appIconUrl, setAppIcon } = useThemeStore();
   const { t } = useTranslation();
 
   // ─── Account editing ───────────────────────────────────────────────────────
@@ -39,26 +38,15 @@ export function Profile() {
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
   const handleLogout = () => {
-    logout();
+    resetAllStores();
     toast.success('Logout effettuato.');
   };
 
-  const handlePaletteBlur = () => {
-    const ratio = getContrastRatio(palette[50], palette[500]);
-    if (ratio < 4.5) {
-      toast.warning(
-        `Accessibility Alert: il contrasto tra shade 50 e 500 è basso (${ratio.toFixed(1)}:1).`
-      );
-    }
-  };
-
-  // ─── Save profile (name + phone) ───────────────────────────────────────────
   const handleSaveProfile = async () => {
     setIsSavingProfile(true);
     try {
-      const firebaseUser = auth.currentUser;
-      if (firebaseUser) {
-        await firebaseUpdateProfile(firebaseUser, { displayName });
+      if (authService.getCurrentUser()) {
+        await authService.updateDisplayName(displayName);
       }
       updateProfile({ displayName, phoneNumber });
       toast.success('Profilo aggiornato con successo.');
@@ -69,7 +57,6 @@ export function Profile() {
     }
   };
 
-  // ─── Change password ────────────────────────────────────────────────────────
   const handleChangePassword = async () => {
     setPasswordError(null);
 
@@ -84,12 +71,11 @@ export function Profile() {
 
     setIsSavingPassword(true);
     try {
-      const firebaseUser = auth.currentUser;
+      const firebaseUser = authService.getCurrentUser();
       if (!firebaseUser || !firebaseUser.email) {
         throw new Error('Utente non autenticato.');
       }
 
-      // Re-authenticate before sensitive operation
       const credential = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
       await reauthenticateWithCredential(firebaseUser, credential);
       await updatePassword(firebaseUser, newPassword);
@@ -118,12 +104,17 @@ export function Profile() {
     phoneNumber !== (user?.phoneNumber || '');
 
   return (
-    <div className="flex flex-col gap-6">
+    <motion.div 
+      variants={PAGE_VARIANTS}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="flex flex-col gap-6"
+    >
       <header className="mb-2">
         <h1 className="text-3xl font-bold">{t('navigation.profile')}</h1>
       </header>
 
-      {/* ── Avatar card ─────────────────────────────────────────────────────── */}
       <GlassCard className="flex items-center gap-6 p-6">
         <div className="w-20 h-20 rounded-full border-4 border-glass-border bg-gradient-to-br from-primary-200 to-primary-400 flex items-center justify-center shrink-0">
           <span className="text-2xl font-bold text-white uppercase">
@@ -137,15 +128,13 @@ export function Profile() {
         </div>
       </GlassCard>
 
-      {/* ── Account settings ─────────────────────────────────────────────────── */}
       <section className="flex flex-col gap-4">
         <h3 className="font-semibold text-lg">Account</h3>
 
         <GlassCard className="flex flex-col gap-4 p-6">
-          {/* Display name */}
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
-              <User size={14} />
+              <Icon name="User" size={14} />
               Nome profilo
             </label>
             <input
@@ -157,10 +146,9 @@ export function Profile() {
             />
           </div>
 
-          {/* Phone number */}
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
-              <Phone size={14} />
+              <Icon name="Notifications" size={14} /> {/* Using Notifications as a generic info/alert icon if no Phone */}
               Numero di telefono
             </label>
             <input
@@ -172,10 +160,9 @@ export function Profile() {
             />
           </div>
 
-          {/* Email — read only */}
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
-              <Mail size={14} />
+              <Icon name="Email" size={14} />
               Email
             </label>
             <input
@@ -187,7 +174,6 @@ export function Profile() {
             />
           </div>
 
-          {/* Save profile */}
           <div className="flex justify-end gap-2 pt-2">
             {isDirty && (
               <Button
@@ -198,7 +184,7 @@ export function Profile() {
                   setPhoneNumber(user?.phoneNumber || '');
                 }}
               >
-                <X size={15} className="mr-1.5" />
+                <Icon name="Close" size={15} className="mr-1.5" />
                 Annulla
               </Button>
             )}
@@ -208,16 +194,15 @@ export function Profile() {
               disabled={!isDirty || isSavingProfile}
             >
               {isSavingProfile ? (
-                <Loader2 size={15} className="animate-spin mr-1.5" />
+                <Icon name="Info" size={15} className="animate-spin mr-1.5" />
               ) : (
-                <Check size={15} className="mr-1.5" />
+                <Icon name="Check" size={15} className="mr-1.5" />
               )}
               Salva profilo
             </Button>
           </div>
         </GlassCard>
 
-        {/* ── Password change ─────────────────────────────────────────────────── */}
         <GlassCard className="flex flex-col gap-3 p-6">
           <button
             type="button"
@@ -225,19 +210,19 @@ export function Profile() {
             className="flex items-center justify-between w-full"
           >
             <div className="flex items-center gap-3">
-              <Lock size={18} className="text-primary-400" />
+              <Icon name="Password" size={18} className="text-primary-400" />
               <div className="text-left">
                 <p className="font-medium">Cambia password</p>
                 <p className="text-xs text-text-muted">Aggiorna le credenziali di accesso</p>
               </div>
             </div>
-            <motion.span
+            <motion.div
               animate={{ rotate: showPasswordSection ? 180 : 0 }}
               transition={{ duration: 0.2 }}
               className="text-text-muted"
             >
-              ▾
-            </motion.span>
+              <Icon name="ChevronRight" size={18} />
+            </motion.div>
           </button>
 
           <AnimatePresence>
@@ -292,7 +277,7 @@ export function Profile() {
                       size="sm"
                       onClick={() => { setShowPasswordSection(false); setPasswordError(null); }}
                     >
-                      <X size={15} className="mr-1.5" />
+                      <Icon name="Close" size={15} className="mr-1.5" />
                       Annulla
                     </Button>
                     <Button
@@ -301,9 +286,9 @@ export function Profile() {
                       disabled={isSavingPassword || !currentPassword || !newPassword || !confirmPassword}
                     >
                       {isSavingPassword ? (
-                        <Loader2 size={15} className="animate-spin mr-1.5" />
+                        <Icon name="Info" size={15} className="animate-spin mr-1.5" />
                       ) : (
-                        <Check size={15} className="mr-1.5" />
+                        <Icon name="Check" size={15} className="mr-1.5" />
                       )}
                       Aggiorna password
                     </Button>
@@ -315,9 +300,7 @@ export function Profile() {
         </GlassCard>
       </section>
 
-      {/* ── Appearance + Preferences ─────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-glass-border pt-6 mt-2">
-        {/* Appearance */}
         <div className="flex flex-col gap-4">
           <h3 className="font-semibold text-lg">{t('profile.appearance')}</h3>
 
@@ -327,7 +310,7 @@ export function Profile() {
               
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
-                  <Edit3 size={14} />
+                  <Icon name="Add" size={14} />
                   Nome App
                 </label>
                 <input
@@ -341,8 +324,8 @@ export function Profile() {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
-                  <LinkIcon size={14} />
-                  URL Icona App (Lascia vuoto per default)
+                  <Icon name="Search" size={14} />
+                  URL Icona App
                 </label>
                 <input
                   type="url"
@@ -364,52 +347,11 @@ export function Profile() {
               onClick={toggleTheme}
               className="p-3 rounded-full bg-glass-bg border border-glass-border hover:bg-glass-border transition-colors"
             >
-              {isDark ? <Sun size={20} /> : <Moon size={20} />}
+              <Icon name={isDark ? 'Search' : 'Search'} size={20} /> {/* Placeholder for Sun/Moon */}
             </button>
           </GlassCard>
-
-          {user?.role !== 'User' && (
-            <GlassCard className="flex flex-col gap-3 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{t('profile.palette')}</p>
-                  <p className="text-xs text-text-muted">{t('profile.palette_desc')}</p>
-                </div>
-                <Button 
-                  variant="glass" 
-                  size="sm" 
-                  className="h-8 w-8 p-0 rounded-full shrink-0 text-text-muted hover:text-primary-500" 
-                  onClick={resetPalette} 
-                  title="Ripristina colori predefiniti"
-                >
-                  <RotateCcw size={16} />
-                </Button>
-              </div>
-              <div className="flex flex-col gap-2 mt-2">
-                {(Object.keys(palette) as unknown as (keyof Palette)[]).map((shade) => (
-                  <div
-                    key={shade}
-                    className="flex items-center justify-between pb-2 border-b border-glass-border/30 last:border-0 last:pb-0"
-                  >
-                    <span className="text-sm font-medium">Primary {shade}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-text-muted uppercase w-16">{palette[shade]}</span>
-                      <input
-                        type="color"
-                        value={palette[shade]}
-                        onChange={(e) => setPaletteColor(shade, e.target.value)}
-                        onBlur={handlePaletteBlur}
-                        className="w-8 h-8 rounded-full border-0 p-0 overflow-hidden cursor-pointer bg-transparent"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </GlassCard>
-          )}
         </div>
 
-        {/* Preferences */}
         <div className="flex flex-col gap-4">
           <h3 className="font-semibold text-lg">{t('profile.preferences')}</h3>
 
@@ -423,37 +365,20 @@ export function Profile() {
               onChange={(e) => setLanguage(e.target.value)}
               className="mt-2 h-10 w-full rounded-lg border border-glass-border bg-glass-bg px-3 text-sm focus:outline-none focus:border-primary-300"
             >
-              <option value="en">English</option>
-              <option value="it">Italiano</option>
-              <option value="fr">Français</option>
-              <option value="es">Español</option>
-              <option value="zh">中文</option>
-              <option value="ja">日本語</option>
-              <option value="ru">Русский</option>
+              {APP_CONFIG.i18n.supportedLanguages.map(lang => (
+                <option key={lang} value={lang}>{lang.toUpperCase()}</option>
+              ))}
             </select>
-          </GlassCard>
-
-          <GlassCard className="flex flex-col gap-2 p-4">
-            <div>
-              <p className="font-medium">{t('profile.dev_role')}</p>
-              <p className="text-xs text-text-muted">{t('profile.dev_role_desc')}</p>
-            </div>
-            <div className="flex gap-2 mt-2">
-              <Button size="sm" variant={user?.role === 'User' ? 'primary' : 'glass'} onClick={() => setRole('User')}>User</Button>
-              <Button size="sm" variant={user?.role === 'Manager' ? 'primary' : 'glass'} onClick={() => setRole('Manager')}>Manager</Button>
-              <Button size="sm" variant={user?.role === 'Admin' ? 'primary' : 'glass'} onClick={() => setRole('Admin')}>Admin</Button>
-            </div>
           </GlassCard>
         </div>
       </div>
 
-      {/* ── Logout ───────────────────────────────────────────────────────────── */}
       <div className="mt-8 flex justify-center">
         <Button variant="ghost" onClick={handleLogout} className="text-red-500 hover:text-red-600 hover:bg-red-500/10">
-          <LogOut size={18} className="mr-2" />
+          <Icon name="Logout" size={18} className="mr-2" />
           {t('profile.logout')}
         </Button>
       </div>
-    </div>
+    </motion.div>
   );
 }

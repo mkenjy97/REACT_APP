@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/Input';
 import { Search as SearchIcon, Filter } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-export function Search() {
+export function SearchPage() {
   const { t } = useTranslation();
   const [filter, setFilter] = useState(t('search.filters.all'));
   const filters = [

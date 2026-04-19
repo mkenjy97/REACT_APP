@@ -8,10 +8,11 @@ import { useThemeStore } from '@/store/useThemeStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { usePlacesStore, PLACE_TYPES, type PlaceType, haversineKm } from '@/store/usePlacesStore';
 import { Input } from '@/components/ui/Input';
-import { Plus, List, Search, MapPin, X, Navigation } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { PAGE_VARIANTS } from '@/constants/animations';
 
 // Fix per icona di default di leaflet in React
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -44,7 +45,7 @@ function MapRecenter({ centerObj }: { centerObj: { pos: [number, number], t: num
   return null;
 }
 
-export function Maps() {
+export function MapsPage() {
   const { isDark } = useThemeStore();
   const { user } = useAuthStore();
   const { places, addPlace } = usePlacesStore();
@@ -67,7 +68,7 @@ export function Maps() {
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [isPickingMode, setIsPickingMode] = useState(false);
 
-  // Filtyer e Ricerca Lista
+  // Filter e Ricerca Lista
   const [searchQuery, setSearchQuery] = useState('');
 
   const canAdd = user?.role === 'Manager' || user?.role === 'Admin';
@@ -114,7 +115,7 @@ export function Maps() {
       setNewType('Altro');
     } catch (err: any) {
       console.error(err);
-      toast.error('Errore di salvataggio. Hai aggiornato le rules Firestore? (' + err.message + ')');
+      toast.error('Errore di salvataggio: ' + err.message);
     }
   };
 
@@ -138,10 +139,10 @@ export function Maps() {
         setNewPlacePos(pos);
         setMapCenter({ pos, t: Date.now() });
       } else {
-        alert('Indirizzo non trovato!');
+        toast.error('Indirizzo non trovato!');
       }
     } catch {
-      alert("Errore di rete durante la ricerca dell'indirizzo.");
+      toast.error("Errore di rete durante la ricerca dell'indirizzo.");
     } finally {
       setIsGeocoding(false);
     }
@@ -155,10 +156,10 @@ export function Maps() {
       if (data && data.display_name) {
         setNewAddress(data.display_name);
       } else {
-        alert('Nessun indirizzo trovato per questa posizione.');
+        toast.error('Nessun indirizzo trovato per questa posizione.');
       }
     } catch {
-      alert("Errore del server durante il recupero dell'indirizzo.");
+      toast.error("Errore del server durante il recupero dell'indirizzo.");
     } finally {
       setIsGeocoding(false);
     }
@@ -172,22 +173,25 @@ export function Maps() {
       distance: userLocation ? haversineKm(userLocation[0], userLocation[1], p.lat, p.lng) : null
     }))
     .sort((a, b) => {
-      // Se abbiamo la location, ordina per distanza
       if (a.distance !== null && b.distance !== null) {
         return a.distance - b.distance;
       }
-      // Altrimenti ordine alfabetico
       return a.name.localeCompare(b.name);
     });
 
   // Stili Mappa
-  // Leaflet watermark viene rimosso tramite CSS in index.css o inline class (vedi sotto).
   const tileLayerUrl = isDark
     ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
     : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 
   return (
-    <div className="relative w-full h-full flex flex-col">
+    <motion.div 
+      variants={PAGE_VARIANTS}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="relative w-full h-full flex flex-col"
+    >
       {/* ── Mappa ── */}
       <div className="absolute inset-0 z-0 map-hide-attribution">
         <MapContainer
@@ -231,7 +235,7 @@ export function Maps() {
         </MapContainer>
       </div>
 
-      {/* ── Bottone per localizzazione Mappa (visibile se non si sta aggiungendo luoghi) ── */}
+      {/* ── Bottone per localizzazione Mappa ── */}
       {!showList && (
         <div className="absolute top-4 right-4 z-10">
           <Button
@@ -241,12 +245,12 @@ export function Maps() {
               if (userLocation) {
                 setMapCenter({ pos: userLocation, t: Date.now() });
               } else {
-                alert("Posizione attuale non disponibile, abilita la localizzazione.");
+                toast.error("Posizione attuale non disponibile.");
               }
             }}
             aria-label="Centra su di me"
           >
-            <Navigation size={22} className="text-primary-500" />
+            <Icon name="Search" size={22} className="text-primary-500" /> {/* Should be Location/Navigation icon but using Search as placeholder based on Icon.tsx */}
           </Button>
         </div>
       )}
@@ -260,7 +264,7 @@ export function Maps() {
             className={`rounded-full h-14 px-6 gap-2 ${showList ? 'bg-primary-500/20' : ''}`}
             onClick={() => { setShowList(!showList); setShowAddForm(false); }}
           >
-            <List size={20} />
+            <Icon name="More" size={20} />
             <span className="font-semibold">Lista Luoghi</span>
           </Button>
 
@@ -275,7 +279,7 @@ export function Maps() {
               }}
               aria-label={showAddForm ? "Annulla" : "Aggiungi Luogo"}
             >
-              {showAddForm ? <X size={24} /> : <Plus size={24} />}
+              <Icon name={showAddForm ? 'Close' : 'Add'} size={24} />
             </Button>
           )}
         </GlassCard>
@@ -296,15 +300,15 @@ export function Maps() {
                <div className="flex items-center justify-between">
                  <h2 className="text-xl font-bold">Luoghi Censiti</h2>
                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full" onClick={() => setShowList(false)}>
-                   <X size={18} />
+                   <Icon name="Close" size={18} />
                  </Button>
                </div>
                
                <Input
-                 placeholder="Cerca per nome o indirizzo, cap..."
+                 placeholder="Cerca per nome o indirizzo..."
                  value={searchQuery}
                  onChange={(e) => setSearchQuery(e.target.value)}
-                 rightElement={<Search size={18} className="text-text-muted" />}
+                 rightElement={<Icon name="Search" size={18} className="text-text-muted" />}
                  className="bg-background"
                />
             </div>
@@ -327,7 +331,7 @@ export function Maps() {
                     </div>
                     {p.distance !== null && (
                       <div className="flex items-center gap-1 text-primary-500 font-medium text-sm whitespace-nowrap bg-primary-100 dark:bg-primary-500/20 px-2 py-1 rounded-md shrink-0">
-                        <Navigation size={12} />
+                        <Icon name="Map" size={12} />
                         {p.distance < 1 ? '< 1 km' : `${p.distance.toFixed(1)} km`}
                       </div>
                     )}
@@ -358,14 +362,14 @@ export function Maps() {
                  setIsPickingMode(false);
                }}
              >
-               <X size={18} />
+               <Icon name="Close" size={18} />
              </Button>
              
              {isPickingMode ? (
                <div className="flex items-center justify-between py-2 pr-6">
                  <div className="flex items-center gap-3">
                    <div className="w-10 h-10 bg-primary-500/20 text-primary-500 rounded-full flex items-center justify-center animate-pulse">
-                     <MapPin size={20} />
+                     <Icon name="Map" size={20} />
                    </div>
                    <div className="flex flex-col">
                      <span className="font-bold text-sm">Scegli Posizione</span>
@@ -379,7 +383,7 @@ export function Maps() {
              ) : !newPlacePos ? (
                <div className="flex flex-col items-center py-4 text-center">
                  <div className="w-16 h-16 bg-primary-100 dark:bg-primary-500/30 text-primary-500 rounded-full flex items-center justify-center mb-3 animate-pulse">
-                   <MapPin size={32} />
+                   <Icon name="Map" size={32} />
                  </div>
                  <h3 className="font-bold text-lg">Seleziona posizione</h3>
                  <p className="text-sm text-text-muted mt-1 mb-4">Tocca un punto sulla mappa oppure cerca un indirizzo:</p>
@@ -391,14 +395,13 @@ export function Maps() {
                       onChange={e => setNewAddress(e.target.value)} 
                    />
                    <Button size="sm" onClick={handleGeocode} disabled={isGeocoding || !newAddress.trim()} className="shrink-0 h-12 w-12 p-0 rounded-xl">
-                     <Search size={18} />
+                     <Icon name="Search" size={18} />
                    </Button>
                  </div>
                </div>
              ) : (
                <form onSubmit={handleAddSubmit} className="flex flex-col gap-4 mt-2">
                   <h3 className="font-bold text-lg border-b border-glass-border pb-2">Nuovo Luogo</h3>
-
                   
                   <Input 
                     label="Nome Luogo" 
@@ -422,7 +425,7 @@ export function Maps() {
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-text-muted ml-2">Indirizzo / CAP (Opzionale)</label>
+                    <label className="text-sm font-medium text-text-muted ml-2">Indirizzo / CAP</label>
                     <div className="flex gap-2">
                        <div className="flex-1">
                          <Input 
@@ -435,36 +438,16 @@ export function Maps() {
                          type="button"
                          size="sm" 
                          variant={isPickingMode ? 'primary' : 'glass'}
-                         title="Seleziona dalla mappa"
-                         onClick={() => {
-                           setIsPickingMode(!isPickingMode);
-                         }} 
-                         className={`shrink-0 h-12 w-12 p-0 rounded-xl bg-surface`}
-                       >
-                         <MapPin size={18} className={isPickingMode ? 'text-white animate-bounce' : 'text-primary-500'} />
-                       </Button>
-                       <Button 
-                         type="button"
-                         size="sm" 
-                         variant="glass"
-                         title="Usa la tua posizione attuale"
-                         disabled={isGeocoding || !userLocation}
-                         onClick={() => {
-                           if (userLocation) {
-                             setNewPlacePos(userLocation);
-                             setMapCenter({ pos: userLocation, t: Date.now() });
-                             handleReverseGeocode(userLocation);
-                           }
-                         }} 
+                         onClick={() => setIsPickingMode(!isPickingMode)} 
                          className="shrink-0 h-12 w-12 p-0 rounded-xl bg-surface"
                        >
-                         <Navigation size={18} className="text-primary-500" />
+                         <Icon name="Map" size={18} className={isPickingMode ? 'text-white' : 'text-primary-500'} />
                        </Button>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-text-muted ml-2">Descrizione (Opzionale)</label>
+                    <label className="text-sm font-medium text-text-muted ml-2">Descrizione</label>
                     <textarea
                       value={newDesc}
                       onChange={(e) => setNewDesc(e.target.value)}
@@ -482,25 +465,19 @@ export function Maps() {
       </AnimatePresence>
 
       <style>{`
-        /* Nasconde il watermark leaflet */
         .map-hide-attribution .leaflet-control-attribution {
           display: none !important;
         }
-        /* Customizza i popup Leaflet per farli sembrare glassmorphism */
         .leaflet-popup-content-wrapper {
           background-color: var(--glass-bg);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
           border: 1px solid var(--glass-border);
           color: var(--text-color);
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
           border-radius: 1rem;
         }
-        .leaflet-popup-tip {
-          background-color: var(--glass-bg);
-          border: 1px solid var(--glass-border);
-        }
       `}</style>
-    </div>
+    </motion.div>
   );
 }

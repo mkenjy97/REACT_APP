@@ -8,7 +8,7 @@ import { MessageSquare, Search } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { useNavigate } from 'react-router-dom';
 
-export function Users() {
+export function UsersPage() {
   const { user: currentUser } = useAuthStore();
   const [users, setUsers] = useState<any[]>([]);
   const [search, setSearch] = useState('');

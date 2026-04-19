@@ -10,7 +10,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 
-export function Notifications() {
+export function NotificationsPage() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const navigate = useNavigate();
