@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { RoleBadge } from '@/components/ui/RoleBadge';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useThemeStore } from '@/store/useThemeStore';
+import { useThemeStore, type Palette } from '@/store/useThemeStore';
 import { Icon } from '@/components/ui/Icon';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,10 @@ import { resetAllStores } from '@/store/resetStores';
 
 export function ProfilePage() {
   const { user, updateProfile } = useAuthStore();
-  const { isDark, toggleTheme, language, setLanguage, appName, setAppName, appIconUrl, setAppIcon } = useThemeStore();
+  const { 
+    isDark, toggleTheme, language, setLanguage, 
+    lightPalette, darkPalette, setPaletteColor, resetPalettes, saveUserTheme 
+  } = useThemeStore();
   const { t } = useTranslation();
 
   // ─── Account editing ───────────────────────────────────────────────────────
@@ -36,6 +39,10 @@ export function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  // ─── Theme Personalization ──────────────────────────────────────────────────
+  const [showThemeSection, setShowThemeSection] = useState(false);
+  const [isSavingTheme, setIsSavingTheme] = useState(false);
 
   const handleLogout = () => {
     resetAllStores();
@@ -99,9 +106,29 @@ export function ProfilePage() {
     }
   };
 
+  const handleSaveTheme = async () => {
+    if (!user?.uid) return;
+    setIsSavingTheme(true);
+    try {
+      await saveUserTheme(user.uid);
+      toast.success('Colori del tema salvati!');
+    } catch {
+      toast.error('Errore nel salvataggio del tema.');
+    } finally {
+      setIsSavingTheme(false);
+    }
+  };
+
+  const handleResetTheme = () => {
+    resetPalettes();
+    toast.success('Colori resettati ai valori predefiniti.');
+  };
+
   const isDirty =
     displayName !== (user?.displayName || '') ||
     phoneNumber !== (user?.phoneNumber || '');
+
+  const shades: (keyof Palette)[] = [50, 100, 200, 300, 400, 500];
 
   return (
     <motion.div 
@@ -109,7 +136,7 @@ export function ProfilePage() {
       initial="initial"
       animate="animate"
       exit="exit"
-      className="flex flex-col gap-6"
+      className="flex flex-col gap-6 pb-10"
     >
       <header className="mb-2">
         <h1 className="text-3xl font-bold">{t('navigation.profile')}</h1>
@@ -148,7 +175,7 @@ export function ProfilePage() {
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
-              <Icon name="Notifications" size={14} /> {/* Using Notifications as a generic info/alert icon if no Phone */}
+              <Icon name="Notifications" size={14} /> 
               Numero di telefono
             </label>
             <input
@@ -157,20 +184,6 @@ export function ProfilePage() {
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="+39 000 0000000"
               className="flex h-12 w-full rounded-full border border-glass-border bg-surface px-4 py-2 text-sm text-text transition-colors placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 shadow-sm"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
-              <Icon name="Email" size={14} />
-              Email
-            </label>
-            <input
-              type="email"
-              value={user?.email || ''}
-              readOnly
-              disabled
-              className="flex h-12 w-full rounded-full border border-glass-border bg-surface px-4 py-2 text-sm text-text-muted opacity-60 cursor-not-allowed shadow-sm"
             />
           </div>
 
@@ -218,7 +231,6 @@ export function ProfilePage() {
             </div>
             <motion.div
               animate={{ rotate: showPasswordSection ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
               className="text-text-muted"
             >
               <Icon name="ChevronRight" size={18} />
@@ -228,11 +240,10 @@ export function ProfilePage() {
           <AnimatePresence>
             {showPasswordSection && (
               <motion.div
-                key="pwd-section"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="flex flex-col gap-3 overflow-hidden"
+                className="overflow-hidden"
               >
                 <div className="border-t border-glass-border pt-4 flex flex-col gap-3">
                   <Input
@@ -256,41 +267,97 @@ export function ProfilePage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                   />
-
-                  <AnimatePresence>
-                    {passwordError && (
-                      <motion.p
-                        key="pwd-error"
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        className="text-xs text-red-400 ml-2"
-                      >
-                        {passwordError}
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
-
+                  {passwordError && <p className="text-xs text-red-400 ml-2">{passwordError}</p>}
                   <div className="flex justify-end gap-2">
-                    <Button
-                      variant="glass"
-                      size="sm"
-                      onClick={() => { setShowPasswordSection(false); setPasswordError(null); }}
-                    >
-                      <Icon name="Close" size={15} className="mr-1.5" />
-                      Annulla
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleChangePassword}
-                      disabled={isSavingPassword || !currentPassword || !newPassword || !confirmPassword}
-                    >
-                      {isSavingPassword ? (
-                        <Icon name="Info" size={15} className="animate-spin mr-1.5" />
-                      ) : (
-                        <Icon name="Check" size={15} className="mr-1.5" />
-                      )}
+                    <Button size="sm" onClick={handleChangePassword} disabled={isSavingPassword}>
                       Aggiorna password
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </GlassCard>
+
+        {/* ── Personalizzazione Colori ── */}
+        <GlassCard className="flex flex-col gap-3 p-6">
+          <button
+            type="button"
+            onClick={() => setShowThemeSection((v) => !v)}
+            className="flex items-center justify-between w-full"
+          >
+            <div className="flex items-center gap-3">
+              <Icon name="Palette" size={18} className="text-primary-400" />
+              <div className="text-left">
+                <p className="font-medium">Colori App</p>
+                <p className="text-xs text-text-muted">Personalizza la palette (Chiaro/Scuro)</p>
+              </div>
+            </div>
+            <motion.div
+              animate={{ rotate: showThemeSection ? 180 : 0 }}
+              className="text-text-muted"
+            >
+              <Icon name="ChevronRight" size={18} />
+            </motion.div>
+          </button>
+
+          <AnimatePresence>
+            {showThemeSection && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="border-t border-glass-border pt-4 flex flex-col gap-6">
+                  {/* Light Palette */}
+                  <div>
+                    <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-400" /> Palette Tema Chiaro
+                    </h4>
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                      {shades.map(shade => (
+                        <div key={`light-${shade}`} className="flex flex-col gap-1 items-center">
+                          <input 
+                            type="color" 
+                            value={lightPalette[shade]} 
+                            onChange={(e) => setPaletteColor('light', shade, e.target.value)}
+                            className="w-10 h-10 rounded-full border-2 border-glass-border bg-transparent cursor-pointer overflow-hidden"
+                          />
+                          <span className="text-[10px] text-text-muted">{shade}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Dark Palette */}
+                  <div>
+                    <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-purple-400" /> Palette Tema Scuro
+                    </h4>
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                      {shades.map(shade => (
+                        <div key={`dark-${shade}`} className="flex flex-col gap-1 items-center">
+                          <input 
+                            type="color" 
+                            value={darkPalette[shade]} 
+                            onChange={(e) => setPaletteColor('dark', shade, e.target.value)}
+                            className="w-10 h-10 rounded-full border-2 border-glass-border bg-transparent cursor-pointer overflow-hidden"
+                          />
+                          <span className="text-[10px] text-text-muted">{shade}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-2 border-t border-glass-border">
+                    <Button variant="ghost" size="sm" onClick={handleResetTheme} className="text-text-muted">
+                      <Icon name="Reset" size={14} className="mr-1.5" />
+                      Reset predefiniti
+                    </Button>
+                    <Button size="sm" onClick={handleSaveTheme} disabled={isSavingTheme}>
+                      {isSavingTheme ? <Icon name="Info" size={14} className="animate-spin mr-1.5" /> : <Icon name="Check" size={14} className="mr-1.5" />}
+                      Salva Colori
                     </Button>
                   </div>
                 </div>
@@ -300,80 +367,39 @@ export function ProfilePage() {
         </GlassCard>
       </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-glass-border pt-6 mt-2">
-        <div className="flex flex-col gap-4">
-          <h3 className="font-semibold text-lg">{t('profile.appearance')}</h3>
+      <section className="flex flex-col gap-4">
+        <h3 className="font-semibold text-lg">{t('profile.appearance')}</h3>
+        <GlassCard className="flex items-center justify-between p-4">
+          <div>
+            <p className="font-medium">Tema Attuale</p>
+            <p className="text-xs text-text-muted">{isDark ? 'Modalità Scura' : 'Modalità Chiara'}</p>
+          </div>
+          <button
+            onClick={toggleTheme}
+            className="p-3 rounded-full bg-glass-bg border border-glass-border hover:bg-glass-border transition-colors text-primary-400"
+          >
+            <Icon name={isDark ? 'Show' : 'Hide'} size={20} />
+          </button>
+        </GlassCard>
 
-          {user?.role !== 'User' && (
-            <GlassCard className="flex flex-col gap-4 p-4 mt-4 mb-4">
-              <h4 className="font-medium">App Branding (Admin/Manager)</h4>
-              
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
-                  <Icon name="Add" size={14} />
-                  Nome App
-                </label>
-                <input
-                  type="text"
-                  value={appName}
-                  onChange={(e) => setAppName(e.target.value)}
-                  placeholder="Nome dell'applicazione"
-                  className="flex h-12 w-full rounded-full border border-glass-border bg-surface px-4 py-2 text-sm text-text transition-colors placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 shadow-sm"
-                />
-              </div>
+        <GlassCard className="flex flex-col gap-2 p-4">
+          <div>
+            <p className="font-medium">{t('profile.language')}</p>
+            <p className="text-xs text-text-muted">{t('profile.language_desc')}</p>
+          </div>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="mt-2 h-10 w-full rounded-lg border border-glass-border bg-glass-bg px-3 text-sm focus:outline-none focus:border-primary-300"
+          >
+            {APP_CONFIG.i18n.supportedLanguages.map(lang => (
+              <option key={lang} value={lang}>{lang.toUpperCase()}</option>
+            ))}
+          </select>
+        </GlassCard>
+      </section>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
-                  <Icon name="Search" size={14} />
-                  URL Icona App
-                </label>
-                <input
-                  type="url"
-                  value={appIconUrl || ''}
-                  onChange={(e) => setAppIcon(e.target.value || null)}
-                  placeholder="https://example.com/icon.png"
-                  className="flex h-12 w-full rounded-full border border-glass-border bg-surface px-4 py-2 text-sm text-text transition-colors placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 shadow-sm"
-                />
-              </div>
-            </GlassCard>
-          )}
-
-          <GlassCard className="flex items-center justify-between p-4">
-            <div>
-              <p className="font-medium">{t('profile.theme')}</p>
-              <p className="text-xs text-text-muted">{t('profile.theme_desc')}</p>
-            </div>
-            <button
-              onClick={toggleTheme}
-              className="p-3 rounded-full bg-glass-bg border border-glass-border hover:bg-glass-border transition-colors"
-            >
-              <Icon name={isDark ? 'Search' : 'Search'} size={20} /> {/* Placeholder for Sun/Moon */}
-            </button>
-          </GlassCard>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <h3 className="font-semibold text-lg">{t('profile.preferences')}</h3>
-
-          <GlassCard className="flex flex-col gap-2 p-4">
-            <div>
-              <p className="font-medium">{t('profile.language')}</p>
-              <p className="text-xs text-text-muted">{t('profile.language_desc')}</p>
-            </div>
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="mt-2 h-10 w-full rounded-lg border border-glass-border bg-glass-bg px-3 text-sm focus:outline-none focus:border-primary-300"
-            >
-              {APP_CONFIG.i18n.supportedLanguages.map(lang => (
-                <option key={lang} value={lang}>{lang.toUpperCase()}</option>
-              ))}
-            </select>
-          </GlassCard>
-        </div>
-      </div>
-
-      <div className="mt-8 flex justify-center">
+      <div className="mt-4 flex justify-center">
         <Button variant="ghost" onClick={handleLogout} className="text-red-500 hover:text-red-600 hover:bg-red-500/10">
           <Icon name="Logout" size={18} className="mr-2" />
           {t('profile.logout')}

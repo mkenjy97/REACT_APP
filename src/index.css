@@ -24,21 +24,21 @@
 
 @layer base {
   :root {
-    /* Primary Color Palette Custom / Default */
-    --primary-50: #ebf1ed;
-    --primary-100: #b9cabe;
-    --primary-200: #81938a;
-    --primary-300: #50605a;
-    --primary-400: #2d2e2b;
-    --primary-500: #121212;
+    /* SpendLess Primary: Emerald / Teal */
+    --primary-50: #ecfdf5;
+    --primary-100: #d1fae5;
+    --primary-200: #a7f3d0;
+    --primary-300: #6ee7b7;
+    --primary-400: #34d399;
+    --primary-500: #10b981;
 
-    /* Light Theme Settings */
-    --bg-color: #f7f9f8;
+    /* Light Theme */
+    --bg-color: #f0fdf8;
     --surface-color: #ffffff;
-    --text-color: #121212;
-    --text-muted: #50605a;
-    --glass-border: rgba(255, 255, 255, 0.5);
-    --glass-bg: rgba(255, 255, 255, 0.6);
+    --text-color: #0f2722;
+    --text-muted: #4b7a6e;
+    --glass-border: rgba(255, 255, 255, 0.6);
+    --glass-bg: rgba(255, 255, 255, 0.65);
 
     /* Layout Tokens */
     --radius-card-val: 1.5rem;
@@ -47,21 +47,21 @@
   }
 
   .dark {
-    /* Primary Color Palette Custom / Default - Retained or changed if user changes it via Settings */
-    --primary-50: #121212;
-    --primary-100: #2d2e2b;
-    --primary-200: #50605a;
-    --primary-300: #81938a;
-    --primary-400: #b9cabe;
-    --primary-500: #ebf1ed;
+    /* SpendLess Primary: Emerald / Teal - Dark inverted */
+    --primary-50: #0f2722;
+    --primary-100: #134e3a;
+    --primary-200: #065f46;
+    --primary-300: #047857;
+    --primary-400: #059669;
+    --primary-500: #34d399;
 
-    /* Dark Theme Settings */
-    --bg-color: #0b0c0b;
-    --surface-color: #151816;
-    --text-color: #ebf1ed;
-    --text-muted: #81938a;
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-bg: rgba(45, 46, 43, 0.4);
+    /* Dark Theme */
+    --bg-color: #070f0d;
+    --surface-color: #0d1a16;
+    --text-color: #ecfdf5;
+    --text-muted: #6ee7b7;
+    --glass-border: rgba(52, 211, 153, 0.12);
+    --glass-bg: rgba(13, 26, 22, 0.55);
   }
 
   body {

@@ -1,29 +1,69 @@
 {
-  "app_name": "baseapp",
+  "app_name": "SpendLess",
   "navigation": {
     "home": "Home",
     "search": "Cerca",
     "support": "Supporto",
-    "profile": "Profilo e Impostazioni",
+    "profile": "Profilo",
     "notifications": "Notifiche",
     "maps": "Mappa"
   },
-  "dashboard": {
-    "title": "Bacheca",
-    "subtitle": "Ecco la tua panoramica aggiornata.",
-    "item_title": "Panoramica elemento",
-    "item_desc": "Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.",
-    "view_details": "Vedi Dettagli"
-  },
-  "search": {
-    "placeholder": "Cerca qualsiasi cosa...",
-    "start_typing": "Inizia a digitare per cercare",
-    "desc": "Puoi cercare tra tutti i tuoi documenti, contatti e impostazioni.",
-    "filters": {
-      "all": "Tutti",
-      "recent": "Recenti",
-      "favorites": "Preferiti",
-      "archived": "Archiviati"
+  "spendless": {
+    "greeting": "Ciao, {{name}} 👋",
+    "days_left": "giorni alla fine del mese",
+    "nav_dashboard": "Budget",
+    "nav_history": "Storico",
+    "nav_fixed": "Fissi",
+    "nav_profile": "Profilo",
+    "weekly_budget": "Budget Settimanale",
+    "monthly_budget": "Budget Mensile",
+    "remaining": "Rimanente",
+    "spent": "Speso",
+    "budget": "Budget",
+    "this_month": "Questo mese",
+    "avg_daily": "Media giornaliera",
+    "recent_expenses": "Spese Recenti",
+    "view_all": "Vedi tutte",
+    "no_expenses": "Nessuna spesa registrata",
+    "add_first": "Aggiungi la tua prima spesa con il pulsante +",
+    "add_expense": "Nuova Spesa",
+    "add_expense_subtitle": "Compila i campi o scansiona lo scontrino",
+    "scan_receipt": "Scansiona lo scontrino con la fotocamera",
+    "scan_btn": "Scansiona Scontrino",
+    "amount": "Importo",
+    "category": "Categoria",
+    "description": "Descrizione",
+    "date": "Data",
+    "recurring": "Spesa Ricorrente",
+    "recurring_desc": "Aggiungi automaticamente ogni mese",
+    "save_expense": "Salva Spesa",
+    "history": "Storico Spese",
+    "history_subtitle": "Tutte le tue transazioni",
+    "fixed_expenses": "Spese Fisse",
+    "fixed_expenses_subtitle": "Abbonamenti, affitto e costi ricorrenti",
+    "total_fixed": "Totale Fisso Mensile",
+    "auto_added": "Aggiunto automaticamente ogni mese",
+    "no_fixed": "Nessuna spesa fissa configurata",
+    "add_fixed_hint": "Aggiungi abbonamenti, affitto o rate",
+    "add_fixed": "Aggiungi Spesa Fissa",
+    "categories": {
+      "alimentari": "Alimentari",
+      "trasporti": "Trasporti",
+      "casa": "Casa",
+      "salute": "Salute",
+      "intrattenimento": "Intrattenimento",
+      "abbigliamento": "Abbigliamento",
+      "ristoranti": "Ristoranti",
+      "tecnologia": "Tecnologia",
+      "istruzione": "Istruzione",
+      "altro": "Altro"
+    },
+    "badges": {
+      "risparmiatore_master": "Risparmiatore Master",
+      "buon_risparmiatore": "Buon Risparmiatore",
+      "attenzione": "Occhio alle Spese",
+      "spendaccione": "Spendaccione",
+      "fuori_budget": "Fuori Budget!"
     }
   },
   "profile": {
@@ -38,20 +78,6 @@
     "dev_role": "Dev: Cambia Ruolo",
     "dev_role_desc": "Simula ruoli utente diversi",
     "logout": "Esci"
-  },
-  "support": {
-    "title": "Come possiamo aiutarti?",
-    "subtitle": "Sfoglia le FAQ o contattaci qui sotto.",
-    "email_us": "Scrivici",
-    "call_us": "Chiamaci",
-    "faq": {
-      "q1": "Come cambio il colore principale del tema?",
-      "a1": "Vai nella scheda Profilo. Sotto le impostazioni dell'Aspetto, troverai una sezione 'Tavolozza Colori' dove puoi scegliere un colore personalizzato.",
-      "q2": "Posso usare il login social?",
-      "a2": "Al momento, i login social (Google, Apple, Github, Microsoft) sono in fase di sviluppo e verranno attivati in un prossimo aggiornamento.",
-      "q3": "Quali sono i diversi ruoli utente?",
-      "a3": "Ci sono tre ruoli: User, Manager e Admin. Gli Admin hanno accesso alle impostazioni globali, i Manager possono modificare i dati dell'app e gli User hanno un accesso in sola lettura."
-    }
   },
   "auth": {
     "welcome_back": "Bentornato",
@@ -69,19 +95,9 @@
     "invalid_email": "Indirizzo email non valido",
     "password_min": "La password deve contenere almeno 6 caratteri"
   },
-  "notifications_page": {
-    "system_update": "Aggiornamento di Sistema",
-    "update_desc": "La tua applicazione è stata aggiornata con le ultime funzionalità.",
-    "hours_ago": "{{count}} ora fa",
-    "hours_ago_plural": "{{count}} ore fa"
-  },
-  "notifications": {
-    "unread_messages": "Messaggi non letti",
-    "no_unread_messages": "Nessun nuovo messaggio"
-  },
   "not_found": {
     "title": "Pagina Non Trovata",
-    "desc": "La pagina che stai cercando potrebbe essere stata rimossa, aver cambiato nome o essere temporaneamente non disponibile.",
-    "back": "Torna alla Home"
+    "desc": "La pagina che stai cercando potrebbe essere stata rimossa o temporaneamente non disponibile.",
+    "back": "Torna alla Dashboard"
   }
 }

@@ -8,8 +8,9 @@ import { useEffect } from 'react';
 import { APP_CONFIG } from '@/config/app.config';
 
 // Stores
-import { subscribeToTheme, unsubscribeTheme } from '@/store/useThemeStore';
+import { useThemeStore, subscribeToTheme, unsubscribeTheme } from '@/store/useThemeStore';
 import { subscribeToPlaces, unsubscribePlaces } from '@/store/usePlacesStore';
+import { useBudgetStore } from '@/store/useBudgetStore';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -28,6 +29,13 @@ import { UsersPage } from '@/features/profile/UsersPage';
 import { SupportPage } from '@/features/support/SupportPage';
 import { NotFoundPage } from '@/features/navigation/NotFoundPage';
 
+// SpendLess Pages
+import { DashboardPage } from '@/features/budget/DashboardPage';
+import { ExpenseFormPage } from '@/features/budget/ExpenseFormPage';
+import { FixedExpensesPage } from '@/features/budget/FixedExpensesPage';
+import { ExpenseHistoryPage } from '@/features/budget/ExpenseHistoryPage';
+import { RecapPage } from '@/features/budget/RecapPage';
+
 // Layouts
 import { FullScreenLayout } from '@/components/layout/FullScreenLayout';
 import { ChatLayout } from '@/components/layout/ChatLayout';
@@ -35,6 +43,7 @@ import { ChatLayout } from '@/components/layout/ChatLayout';
 function App() {
   const { user } = useAuthStore();
   const setUnreadChatCount = useNotificationStore((state) => state.setUnreadChatCount);
+  const { subscribeToExpenses, unsubscribeExpenses, loadSettings, runFixedExpensesForMonth } = useBudgetStore();
 
   useEffect(() => {
     // Inizializza i listeners di Firestore
@@ -51,6 +60,14 @@ function App() {
       unsubChats = onSnapshot(q, (snapshot) => {
         setUnreadChatCount(snapshot.size);
       });
+
+      // SpendLess: load settings and subscribe to expenses
+      loadSettings(user.uid).then(() => {
+        runFixedExpensesForMonth(user.uid);
+        subscribeToExpenses(user.uid);
+      });
+      // Load user theme
+      useThemeStore.getState().loadUserTheme(user.uid);
     } else {
       setUnreadChatCount(0);
     }
@@ -58,9 +75,10 @@ function App() {
     return () => {
       unsubscribeTheme();
       unsubscribePlaces();
+      unsubscribeExpenses();
       if (unsubChats) unsubChats();
     };
-  }, [user?.uid, setUnreadChatCount]);
+  }, [user?.uid, setUnreadChatCount, subscribeToExpenses, unsubscribeExpenses, loadSettings, runFixedExpensesForMonth]);
 
   return (
     <>
@@ -74,12 +92,18 @@ function App() {
           {/* Protected Routes Wrapper */}
           <Route element={<ProtectedRoute />}>
             <Route element={<MainLayout />}>
-              <Route path="/" element={<HomePage />} />
-              
+              {/* SpendLess routes */}
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/add-expense" element={<ExpenseFormPage />} />
+              <Route path="/history" element={<ExpenseHistoryPage />} />
+              <Route path="/fixed-expenses" element={<FixedExpensesPage />} />
+              <Route path="/recap" element={<RecapPage />} />
+
               {APP_CONFIG.features.hasSearch && (
                 <Route path="/search" element={<SearchPage />} />
               )}
               
+              <Route path="/home-legacy" element={<HomePage />} />
               <Route path="/profile" element={<ProfilePage />} />
               
               {APP_CONFIG.features.hasSupport && (

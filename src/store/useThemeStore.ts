@@ -1,8 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import i18n from '@/i18n/config';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase';
+
+export const subscribeToTheme = () => {};
+export const unsubscribeTheme = () => {};
 
 export type Palette = {
   50: string;
@@ -16,56 +19,37 @@ export type Palette = {
 type ThemeState = {
   isDark: boolean;
   language: string;
-  palette: Palette;
+  lightPalette: Palette;
+  darkPalette: Palette;
   appName: string;
   appIconUrl: string | null;
   toggleTheme: () => void;
   setLanguage: (lang: string) => void;
-  setPaletteColor: (shade: keyof Palette, color: string) => void;
+  setPaletteColor: (mode: 'light' | 'dark', shade: keyof Palette, color: string) => void;
   setAppName: (name: string) => void;
   setAppIcon: (url: string | null) => void;
-  resetPalette: () => void;
-  _setSettingsFromCloud: (settings: { palette?: Palette; appName?: string; appIconUrl?: string | null }) => void;
+  resetPalettes: () => void;
+  loadUserTheme: (userId: string) => Promise<void>;
+  saveUserTheme: (userId: string) => Promise<void>;
+  _applyPalette: () => void;
 };
 
-const defaultPalette: Palette = {
+const defaultLightPalette: Palette = {
   50: '#ecfdf5',
   100: '#d1fae5',
   200: '#a7f3d0',
-  300: '#059669',
-  400: '#047857',
-  500: '#064e3b',
+  300: '#6ee7b7',
+  400: '#34d399',
+  500: '#10b981',
 };
 
-// Listeners status
-let unsubTheme: (() => void) | null = null;
-
-export const subscribeToTheme = () => {
-  if (unsubTheme) return; // already subscribed
-  const themeRef = doc(db, 'globalSettings', 'theme');
-  unsubTheme = onSnapshot(themeRef, (snapshot) => {
-    if (snapshot.exists()) {
-      const data = snapshot.data();
-      useThemeStore.getState()._setSettingsFromCloud({
-        palette: data.palette,
-        appName: data.appName,
-        appIconUrl: data.appIconUrl,
-      });
-      // Apply CSS variables
-      if (data.palette) {
-        Object.entries(data.palette).forEach(([shade, color]) => {
-          document.documentElement.style.setProperty(`--primary-${shade}`, color as string);
-        });
-      }
-    }
-  });
-};
-
-export const unsubscribeTheme = () => {
-  if (unsubTheme) {
-    unsubTheme();
-    unsubTheme = null;
-  }
+const defaultDarkPalette: Palette = {
+  50: '#0f2722',
+  100: '#134e3a',
+  200: '#065f46',
+  300: '#047857',
+  400: '#059669',
+  500: '#34d399',
 };
 
 export const useThemeStore = create<ThemeState>()(
@@ -73,20 +57,21 @@ export const useThemeStore = create<ThemeState>()(
     (set, get) => ({
       isDark: window.matchMedia('(prefers-color-scheme: dark)').matches,
       language: 'en',
-      palette: defaultPalette,
-      appName: 'baseapp',
+      lightPalette: defaultLightPalette,
+      darkPalette: defaultDarkPalette,
+      appName: 'SpendLess',
       appIconUrl: null,
       
-      toggleTheme: () =>
-        set((state) => {
-          const newTheme = !state.isDark;
-          if (newTheme) {
-            document.documentElement.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
-          }
-          return { isDark: newTheme };
-        }),
+      toggleTheme: () => {
+        const newTheme = !get().isDark;
+        set({ isDark: newTheme });
+        if (newTheme) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+        get()._applyPalette();
+      },
         
       setLanguage: (lang: string) =>
         set(() => {
@@ -94,46 +79,60 @@ export const useThemeStore = create<ThemeState>()(
           return { language: lang };
         }),
         
-      setPaletteColor: (shade: keyof Palette, color: string) => {
-        const currentPalette = get().palette;
-        const newPalette = { ...currentPalette, [shade]: color };
-        set({ palette: newPalette });
-        document.documentElement.style.setProperty(`--primary-${shade}`, color);
-        // Persist to Firebase
-        setDoc(doc(db, 'globalSettings', 'theme'), { palette: newPalette }, { merge: true });
+      setPaletteColor: (mode, shade, color) => {
+        if (mode === 'light') {
+          const newPalette = { ...get().lightPalette, [shade]: color };
+          set({ lightPalette: newPalette });
+        } else {
+          const newPalette = { ...get().darkPalette, [shade]: color };
+          set({ darkPalette: newPalette });
+        }
+        get()._applyPalette();
       },
       
-      setAppName: (name: string) => {
-        set({ appName: name });
-        // Persist to Firebase
-        setDoc(doc(db, 'globalSettings', 'theme'), { appName: name }, { merge: true });
-      },
-      
-      setAppIcon: (url: string | null) => {
-        set({ appIconUrl: url });
-        // Persist to Firebase
-        setDoc(doc(db, 'globalSettings', 'theme'), { appIconUrl: url }, { merge: true });
+      setAppName: (name: string) => set({ appName: name }),
+      setAppIcon: (url: string | null) => set({ appIconUrl: url }),
+
+      resetPalettes: () => {
+        set({ lightPalette: defaultLightPalette, darkPalette: defaultDarkPalette });
+        get()._applyPalette();
       },
 
-      resetPalette: () => {
-        set({ palette: defaultPalette });
-        Object.entries(defaultPalette).forEach(([shade, color]) => {
-          document.documentElement.style.setProperty(`--primary-${shade}`, color);
+      loadUserTheme: async (userId: string) => {
+        const snap = await getDoc(doc(db, 'userThemes', userId));
+        if (snap.exists()) {
+          const data = snap.data();
+          set({
+            lightPalette: data.lightPalette || defaultLightPalette,
+            darkPalette: data.darkPalette || defaultDarkPalette,
+          });
+          get()._applyPalette();
+        }
+      },
+
+      saveUserTheme: async (userId: string) => {
+        await setDoc(doc(db, 'userThemes', userId), {
+          lightPalette: get().lightPalette,
+          darkPalette: get().darkPalette,
+        }, { merge: true });
+      },
+
+      _applyPalette: () => {
+        const { isDark, lightPalette, darkPalette } = get();
+        const activePalette = isDark ? darkPalette : lightPalette;
+        Object.entries(activePalette).forEach(([shade, color]) => {
+          document.documentElement.style.setProperty(`--primary-${shade}`, color as string);
         });
-        setDoc(doc(db, 'globalSettings', 'theme'), { palette: defaultPalette }, { merge: true });
-      },
-
-      _setSettingsFromCloud: (settings) => {
-        set((state) => ({
-          palette: settings.palette ?? state.palette,
-          appName: settings.appName ?? state.appName,
-          appIconUrl: settings.appIconUrl !== undefined ? settings.appIconUrl : state.appIconUrl,
-        }));
       }
     }),
     {
       name: 'theme-storage',
-      partialize: (state) => ({ isDark: state.isDark, language: state.language }), // only persist local user prefs locally
+      partialize: (state) => ({ 
+        isDark: state.isDark, 
+        language: state.language,
+        lightPalette: state.lightPalette,
+        darkPalette: state.darkPalette
+      }),
       onRehydrateStorage: () => (state) => {
         if (state) {
           if (state.isDark) {
@@ -142,6 +141,7 @@ export const useThemeStore = create<ThemeState>()(
             document.documentElement.classList.remove('dark');
           }
           i18n.changeLanguage(state.language);
+          state._applyPalette();
         }
       },
     }

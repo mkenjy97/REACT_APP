@@ -63,5 +63,39 @@ service cloud.firestore {
       allow write: if isManager(); // Managers and Admins can write
     }
 
+    // SpendLess rules
+    match /userSettings/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    function getUserFamilyId() {
+      let path = /databases/$(database)/documents/userSettings/$(request.auth.uid);
+      return exists(path) ? get(path).data.familyId : null;
+    }
+
+    match /expenses/{expenseId} {
+      allow read, write: if isAuthenticated() && (
+        request.auth.uid == resource.data.userId || 
+        resource.data.familyId == request.auth.uid ||
+        resource.data.familyId == getUserFamilyId()
+      );
+      allow create: if isAuthenticated() && (
+        request.auth.uid == request.resource.data.userId ||
+        request.resource.data.familyId == request.auth.uid ||
+        request.resource.data.familyId == getUserFamilyId()
+      );
+    }
+    
+    match /incomes/{incomeId} {
+      allow read, write: if isAuthenticated() && (
+        request.auth.uid == resource.data.userId || 
+        resource.data.familyId == request.auth.uid ||
+        resource.data.familyId == getUserFamilyId()
+      );
+      allow create: if isAuthenticated() && (
+        request.auth.uid == request.resource.data.userId ||
+        request.resource.data.familyId == request.auth.uid ||
+        request.resource.data.familyId == getUserFamilyId()
+      );
+    }
   }
 }

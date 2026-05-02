@@ -1,23 +1,25 @@
 export const APP_CONFIG = {
-  name: 'App Factory',
+  name: 'SpendLess',
   features: {
-    hasMaps: true,
-    hasChat: true,
+    hasMaps: false,
+    hasChat: false,
     hasAuth: true,
-    hasSupport: true,
-    hasSearch: true,
-    hasNotifications: true,
+    hasSupport: false,
+    hasSearch: false,
+    hasNotifications: false,
+    hasBudget: true,
   },
   theme: {
     defaultMode: 'dark' as 'light' | 'dark',
-    accentColor: 'primary',
+    accentColor: 'emerald',
     glassMode: true,
   },
   i18n: {
     defaultLanguage: 'it',
-    supportedLanguages: ['it', 'en', 'es', 'fr', 'de'],
+    supportedLanguages: ['it', 'en'],
     fallbackLanguage: 'it',
   }
 };
 
 export type AppConfig = typeof APP_CONFIG;
+

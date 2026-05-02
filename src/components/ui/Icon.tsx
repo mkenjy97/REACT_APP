@@ -21,6 +21,8 @@ import {
   Lock,
   Eye,
   EyeOff,
+  Palette,
+  RotateCcw,
   type LucideIcon,
   type LucideProps
 } from 'lucide-react';
@@ -47,6 +49,8 @@ const ICON_MAP = {
   Password: Lock,
   Show: Eye,
   Hide: EyeOff,
+  Palette,
+  Reset: RotateCcw,
 } as const;
 
 export type IconName = keyof typeof ICON_MAP;

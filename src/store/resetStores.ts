@@ -1,5 +1,6 @@
 import { useAuthStore } from './useAuthStore';
 import { useNotificationStore } from './useNotificationStore';
+import { useBudgetStore } from './useBudgetStore';
 
 export const resetAllStores = () => {
   // Clear auth data
@@ -8,9 +9,7 @@ export const resetAllStores = () => {
   // Clear notifications
   useNotificationStore.getState().clearAll();
   
-  // Note: Theme store might not want to be fully reset to keep user settings, 
-  // but we can reset the session-specific parts if any.
-  
-  // Clear places cache
-  // usePlacesStore.getState().reset(); // Need to implement this if it exists
+  // Clear budget data
+  useBudgetStore.getState().resetBudgetStore();
 };
+
