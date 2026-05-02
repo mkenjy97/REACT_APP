@@ -106,7 +106,7 @@ export function RecapPage() {
       {/* Header */}
       <div className="pt-2">
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <TrendingUp size={24} className="text-emerald-400" />
+          <TrendingUp size={24} className="text-primary-400" />
           Riepilogo e Entrate
         </h1>
         <p className="text-sm text-text-muted mt-0.5">Gestisci le entrate comuni e consulta lo storico mensile</p>
@@ -127,7 +127,7 @@ export function RecapPage() {
                 setShowIncomeForm(true);
               }
             }}
-            className="flex items-center gap-1 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md"
+            className="flex items-center gap-1 text-xs font-bold text-primary-400 bg-primary-500/10 px-2 py-1 rounded-md"
           >
             {showIncomeForm && !editingIncome ? <X size={14} /> : <Plus size={14} />}
             {showIncomeForm && !editingIncome ? 'Chiudi' : 'Aggiungi'}
@@ -136,7 +136,7 @@ export function RecapPage() {
 
         <GlassCard className="mb-4">
           <p className="text-xs text-text-muted uppercase tracking-widest">Totale Entrate Mese</p>
-          <p className={cn("text-3xl font-bold text-emerald-400 tabular-nums mt-1", { 'blur-md select-none': privacyMode })}>
+          <p className={cn("text-3xl font-bold text-primary-400 tabular-nums mt-1", { 'blur-md select-none': privacyMode })}>
             {currency}{totalIncomeCurrentMonth.toFixed(2)}
           </p>
         </GlassCard>
@@ -149,13 +149,13 @@ export function RecapPage() {
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden mb-4"
             >
-              <GlassCard className="border-emerald-500/30">
+              <GlassCard className="border-primary-500/30">
                 <form onSubmit={handleSubmit(onIncomeSubmit)} className="flex flex-col gap-3">
                   <div className="flex gap-2">
                     <input
                       type="number" step="0.01"
                       placeholder="Importo"
-                      className="w-1/3 px-3 py-2 rounded-xl bg-glass-bg border border-glass-border focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                      className="w-1/3 px-3 py-2 rounded-xl bg-glass-bg border border-glass-border focus:outline-none focus:ring-2 focus:ring-primary-400"
                       {...register('amount', { valueAsNumber: true })}
                     />
                     <input
@@ -167,14 +167,14 @@ export function RecapPage() {
                   <input
                     type="text"
                     placeholder="Descrizione (es. Stipendio Marco)"
-                    className="w-full px-3 py-2 rounded-xl bg-glass-bg border border-glass-border focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                    className="w-full px-3 py-2 rounded-xl bg-glass-bg border border-glass-border focus:outline-none focus:ring-2 focus:ring-primary-400"
                     {...register('description')}
                   />
                   <div className="flex justify-end gap-2 mt-2">
                     <button type="button" onClick={cancelEdit} className="px-4 py-2 text-sm font-medium rounded-xl glass-button text-text-muted">
                       Annulla
                     </button>
-                    <button type="submit" className="px-4 py-2 text-sm font-bold rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 text-white">
+                    <button type="submit" className="px-4 py-2 text-sm font-bold rounded-xl bg-gradient-to-r from-primary-400 to-primary-500 text-white">
                       {editingIncome ? 'Aggiorna' : 'Salva'}
                     </button>
                   </div>
@@ -199,7 +199,7 @@ export function RecapPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={cn('text-sm font-bold text-emerald-400 tabular-nums', { 'blur-sm': privacyMode })}>
+                    <span className={cn('text-sm font-bold text-primary-400 tabular-nums', { 'blur-sm': privacyMode })}>
                       +{currency}{inc.amount.toFixed(2)}
                     </span>
                     <button onClick={() => startEditIncome(inc)} className="p-1.5 text-text-muted hover:bg-glass-border rounded-full">

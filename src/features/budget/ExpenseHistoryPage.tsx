@@ -92,7 +92,7 @@ function HistoryExpenseRow({ e, currency, privacyMode, onDelete, onEdit }: {
     }
   };
 
-  const submitEdit = (data: ExpenseFormData) => {
+  const submitEdit = (data: any) => {
     onEdit(e.id, { ...data, location: editLocation });
     setIsEditing(false);
   };
@@ -100,7 +100,7 @@ function HistoryExpenseRow({ e, currency, privacyMode, onDelete, onEdit }: {
   if (isEditing) {
     return (
       <div className="py-3 border-b border-glass-border">
-        <form onSubmit={handleSubmit(submitEdit)} className="flex flex-col gap-2">
+        <form onSubmit={handleSubmit(submitEdit as any)} className="flex flex-col gap-2">
           <div className="flex gap-2">
             <input type="number" step="0.01" {...register('amount', { valueAsNumber: true })} className="w-1/3 px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" />
             <select {...register('category')} className="w-2/3 px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm">
@@ -140,7 +140,7 @@ function HistoryExpenseRow({ e, currency, privacyMode, onDelete, onEdit }: {
 
           <div className="flex justify-end gap-2 mt-1">
             <button type="button" onClick={() => { setIsEditing(false); reset(); setEditLocation(e.location ?? null); setManualAddress(e.location?.label || ''); }} className="p-1.5 rounded-lg text-text-muted hover:bg-glass-border"><XIcon size={16}/></button>
-            <button type="submit" className="p-1.5 rounded-lg text-emerald-400 hover:bg-emerald-500/10"><Check size={16}/></button>
+            <button type="submit" className="p-1.5 rounded-lg text-primary-400 hover:bg-primary-500/10"><Check size={16}/></button>
           </div>
         </form>
       </div>
@@ -274,7 +274,7 @@ export function ExpenseHistoryPage() {
             className={cn(
               'px-4 py-1.5 rounded-full text-xs font-semibold transition-all',
               period === p
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow'
+                ? 'bg-gradient-to-r from-primary-400 to-primary-500 text-white shadow'
                 : 'glass-button'
             )}
           >

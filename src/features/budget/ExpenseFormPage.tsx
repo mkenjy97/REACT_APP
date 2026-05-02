@@ -156,8 +156,6 @@ export function ExpenseFormPage() {
     }
   };
 
-
-
   return (
     <motion.div
       variants={PAGE_VARIANTS}
@@ -177,7 +175,7 @@ export function ExpenseFormPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" id="expense-form">
+      <form onSubmit={handleSubmit(onSubmit as any)} className="flex flex-col gap-4" id="expense-form">
 
         {/* OCR scanner */}
         <GlassCard className="!p-4 flex flex-col items-center gap-3">
@@ -193,7 +191,7 @@ export function ExpenseFormPage() {
               {ocrStatus === 'processing' ? (
                 <Loader2 size={16} className="animate-spin" />
               ) : ocrStatus === 'done' ? (
-                <CheckCircle size={16} className="text-emerald-400" />
+                <CheckCircle size={16} className="text-primary-400" />
               ) : (
                 <Camera size={16} />
               )}
@@ -213,7 +211,7 @@ export function ExpenseFormPage() {
               {ocrStatus === 'processing' ? (
                 <Loader2 size={16} className="animate-spin" />
               ) : ocrStatus === 'done' ? (
-                <CheckCircle size={16} className="text-emerald-400" />
+                <CheckCircle size={16} className="text-primary-400" />
               ) : (
                 <Image size={16} />
               )}
@@ -254,7 +252,7 @@ export function ExpenseFormPage() {
                 className="w-full bg-glass-bg rounded-full overflow-hidden"
               >
                 <motion.div
-                  className="h-full bg-gradient-to-r from-teal-400 to-emerald-500 rounded-full"
+                  className="h-full bg-gradient-to-r from-primary-400 to-primary-500 rounded-full"
                   animate={{ width: `${ocrProgress}%` }}
                   transition={{ duration: 0.3 }}
                 />
@@ -395,7 +393,7 @@ export function ExpenseFormPage() {
             render={({ field }) => (
               <button type="button" onClick={() => field.onChange(!field.value)} className="text-primary-500">
                 {field.value
-                  ? <ToggleRight size={36} className="text-emerald-400" />
+                  ? <ToggleRight size={36} className="text-primary-400" />
                   : <ToggleLeft size={36} className="text-text-muted" />
                 }
               </button>
@@ -408,7 +406,7 @@ export function ExpenseFormPage() {
           type="submit"
           disabled={isSubmitting}
           whileTap={{ scale: 0.97 }}
-          className="w-full py-4 rounded-2xl font-bold text-base text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-4 rounded-2xl font-bold text-base text-white bg-gradient-to-r from-primary-400 to-primary-500 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           id="submit-expense-btn"
         >
           {isSubmitting && <Loader2 size={18} className="animate-spin" />}

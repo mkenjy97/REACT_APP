@@ -56,7 +56,7 @@ function BudgetProgressCard({ label, spent, limit, percentage, blurred, currency
           )}
         </div>
         <span className={cn('text-xs font-bold px-2 py-0.5 rounded-full', {
-          'bg-emerald-500/20 text-emerald-400': percentage < 70,
+          'bg-primary-500/20 text-primary-400': percentage < 70,
           'bg-amber-500/20 text-amber-400': percentage >= 70 && percentage < 90,
           'bg-red-500/20 text-red-400': percentage >= 90,
         })}>
@@ -86,7 +86,7 @@ function BudgetProgressCard({ label, spent, limit, percentage, blurred, currency
                 autoFocus
                 onKeyDown={e => e.key === 'Enter' && handleSave()}
               />
-              <button onClick={handleSave} className="p-1 text-emerald-500"><Check size={16} /></button>
+              <button onClick={handleSave} className="p-1 text-primary-500"><Check size={16} /></button>
               <button onClick={() => { setIsEditing(false); setEditValue(limit.toString()); }} className="p-1 text-red-400"><X size={16} /></button>
             </div>
           ) : (
@@ -98,7 +98,7 @@ function BudgetProgressCard({ label, spent, limit, percentage, blurred, currency
         <div className="text-right">
           <p className="text-xs text-text-muted">Rimanente</p>
           <p className={cn('text-lg font-bold', {
-            'text-emerald-400': percentage < 70,
+            'text-primary-400': percentage < 70,
             'text-amber-400': percentage >= 70 && percentage < 90,
             'text-red-400': percentage >= 90,
             'blur-md select-none': blurred,
@@ -300,8 +300,8 @@ export function DashboardPage() {
       {/* ── Quick Stats ── */}
       <div className="grid grid-cols-2 gap-3">
         <GlassCard className="!p-4 flex items-center gap-3">
-          <div className="p-2 bg-emerald-500/20 rounded-xl">
-            <TrendingDown size={18} className="text-emerald-400" />
+          <div className="p-2 bg-primary-500/20 rounded-xl">
+            <TrendingDown size={18} className="text-primary-400" />
           </div>
           <div className="flex-1">
             <p className="text-xs text-text-muted">{t('spendless.this_month')}</p>
@@ -433,7 +433,7 @@ export function DashboardPage() {
       {/* ── FAB ── */}
       <motion.button
         onClick={() => navigate('/add-expense')}
-        className="fixed bottom-24 right-5 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center bg-gradient-to-br from-emerald-400 to-teal-600 text-white"
+        className="fixed bottom-24 right-5 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center bg-gradient-to-br from-primary-400 to-primary-500 text-white"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         initial={{ scale: 0 }}

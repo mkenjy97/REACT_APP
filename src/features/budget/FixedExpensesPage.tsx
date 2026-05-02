@@ -51,7 +51,7 @@ function FixedExpenseRow({
     }
   });
 
-  const submitEdit = (data: ExpenseFormData) => {
+  const submitEdit = (data: any) => {
     onEdit(id, data);
     setIsEditing(false);
   };
@@ -59,7 +59,7 @@ function FixedExpenseRow({
   if (isEditing) {
     return (
       <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-3 border-b border-glass-border">
-        <form onSubmit={handleSubmit(submitEdit)} className="flex flex-col gap-2">
+        <form onSubmit={handleSubmit(submitEdit as any)} className="flex flex-col gap-2">
           <div className="flex gap-2">
             <input type="number" step="0.01" {...register('amount', { valueAsNumber: true })} className="w-1/3 px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" />
             <select {...register('category')} className="w-2/3 px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm">
@@ -185,7 +185,7 @@ export function FixedExpensesPage() {
       toast.error('Errore nel salvataggio.');
     }
   };
-
+ 
   const handleDelete = async (id: string) => {
     try {
       await deleteExpense(id);
@@ -194,12 +194,10 @@ export function FixedExpensesPage() {
       toast.error('Errore nella rimozione.');
     }
   };
-
-  const handleEdit = async (id: string, data: Partial<ExpenseFormData>) => {
+ 
+  const handleEdit = async (id: string, data: any) => {
     try {
-      const partialExpense: any = { ...data };
-      if (partialExpense.billingDay === null) partialExpense.billingDay = undefined;
-      if (partialExpense.accountSource === null) partialExpense.accountSource = undefined;
+      const partialExpense = { ...data };
       
       await updateExpense(id, partialExpense);
       toast.success('Aggiornata.');
@@ -207,7 +205,7 @@ export function FixedExpensesPage() {
       toast.error('Errore nell\'aggiornamento.');
     }
   };
-
+ 
   return (
     <motion.div
       variants={PAGE_VARIANTS}
@@ -229,7 +227,7 @@ export function FixedExpensesPage() {
           <p className="text-xs text-text-muted">{t('spendless.fixed_expenses_subtitle')}</p>
         </div>
       </div>
-
+ 
       {/* Summary card */}
       <GlassCard className="flex items-center justify-between">
         <div>
@@ -241,7 +239,7 @@ export function FixedExpensesPage() {
         </div>
         <span className="text-5xl">🔄</span>
       </GlassCard>
-
+ 
       {/* List */}
       <GlassCard>
         <AnimatePresence>
@@ -277,7 +275,7 @@ export function FixedExpensesPage() {
             </div>
           ))}
         </AnimatePresence>
-
+ 
         {/* Add Fixed Expense Form */}
         <AnimatePresence>
           {showForm && (
@@ -285,7 +283,7 @@ export function FixedExpensesPage() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              onSubmit={handleSubmit(onSubmit)}
+              onSubmit={handleSubmit(onSubmit as any)}
               className="flex flex-col gap-3 pt-4 mt-2 border-t border-glass-border overflow-hidden"
             >
               <div className="grid grid-cols-2 gap-3">

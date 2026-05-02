@@ -3,18 +3,12 @@ import { persist } from 'zustand/middleware';
 import i18n from '@/i18n/config';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase';
+import { type Palette, PREDEFINED_THEMES, DEFAULT_THEME } from '@/config/themes.config';
+
+export type { Palette };
 
 export const subscribeToTheme = () => {};
 export const unsubscribeTheme = () => {};
-
-export type Palette = {
-  50: string;
-  100: string;
-  200: string;
-  300: string;
-  400: string;
-  500: string;
-};
 
 type ThemeState = {
   isDark: boolean;
@@ -26,6 +20,7 @@ type ThemeState = {
   toggleTheme: () => void;
   setLanguage: (lang: string) => void;
   setPaletteColor: (mode: 'light' | 'dark', shade: keyof Palette, color: string) => void;
+  setThemeFromPreset: (themeId: string) => void;
   setAppName: (name: string) => void;
   setAppIcon: (url: string | null) => void;
   resetPalettes: () => void;
@@ -34,31 +29,13 @@ type ThemeState = {
   _applyPalette: () => void;
 };
 
-const defaultLightPalette: Palette = {
-  50: '#ecfdf5',
-  100: '#d1fae5',
-  200: '#a7f3d0',
-  300: '#6ee7b7',
-  400: '#34d399',
-  500: '#10b981',
-};
-
-const defaultDarkPalette: Palette = {
-  50: '#0f2722',
-  100: '#134e3a',
-  200: '#065f46',
-  300: '#047857',
-  400: '#059669',
-  500: '#34d399',
-};
-
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
       isDark: window.matchMedia('(prefers-color-scheme: dark)').matches,
       language: 'en',
-      lightPalette: defaultLightPalette,
-      darkPalette: defaultDarkPalette,
+      lightPalette: DEFAULT_THEME.light,
+      darkPalette: DEFAULT_THEME.dark,
       appName: 'SpendLess',
       appIconUrl: null,
       
@@ -89,12 +66,20 @@ export const useThemeStore = create<ThemeState>()(
         }
         get()._applyPalette();
       },
+
+      setThemeFromPreset: (themeId: string) => {
+        const theme = PREDEFINED_THEMES.find(t => t.id === themeId);
+        if (theme) {
+          set({ lightPalette: theme.light, darkPalette: theme.dark });
+          get()._applyPalette();
+        }
+      },
       
       setAppName: (name: string) => set({ appName: name }),
       setAppIcon: (url: string | null) => set({ appIconUrl: url }),
 
       resetPalettes: () => {
-        set({ lightPalette: defaultLightPalette, darkPalette: defaultDarkPalette });
+        set({ lightPalette: DEFAULT_THEME.light, darkPalette: DEFAULT_THEME.dark });
         get()._applyPalette();
       },
 
@@ -103,8 +88,8 @@ export const useThemeStore = create<ThemeState>()(
         if (snap.exists()) {
           const data = snap.data();
           set({
-            lightPalette: data.lightPalette || defaultLightPalette,
-            darkPalette: data.darkPalette || defaultDarkPalette,
+            lightPalette: data.lightPalette || DEFAULT_THEME.light,
+            darkPalette: data.darkPalette || DEFAULT_THEME.dark,
           });
           get()._applyPalette();
         }
@@ -120,9 +105,18 @@ export const useThemeStore = create<ThemeState>()(
       _applyPalette: () => {
         const { isDark, lightPalette, darkPalette } = get();
         const activePalette = isDark ? darkPalette : lightPalette;
-        Object.entries(activePalette).forEach(([shade, color]) => {
+        
+        // Primary shades
+        [50, 100, 200, 300, 400, 500].forEach(shade => {
+          const color = activePalette[shade as keyof Palette];
           document.documentElement.style.setProperty(`--primary-${shade}`, color as string);
         });
+
+        // Background, Surface, Text
+        document.documentElement.style.setProperty('--bg-color', activePalette.bg);
+        document.documentElement.style.setProperty('--surface-color', activePalette.surface);
+        document.documentElement.style.setProperty('--text-color', activePalette.text);
+        document.documentElement.style.setProperty('--text-muted', activePalette.textMuted);
       }
     }),
     {

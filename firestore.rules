@@ -67,6 +67,9 @@ service cloud.firestore {
     match /userSettings/{userId} {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
+    match /userThemes/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
     function getUserFamilyId() {
       let path = /databases/$(database)/documents/userSettings/$(request.auth.uid);
       return exists(path) ? get(path).data.familyId : null;

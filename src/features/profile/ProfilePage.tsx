@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/Input';
 import { RoleBadge } from '@/components/ui/RoleBadge';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useThemeStore, type Palette } from '@/store/useThemeStore';
+import { PREDEFINED_THEMES } from '@/config/themes.config';
 import { Icon } from '@/components/ui/Icon';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +24,7 @@ export function ProfilePage() {
   const { user, updateProfile } = useAuthStore();
   const { 
     isDark, toggleTheme, language, setLanguage, 
-    lightPalette, darkPalette, setPaletteColor, resetPalettes, saveUserTheme 
+    lightPalette, darkPalette, setPaletteColor, resetPalettes, saveUserTheme, setThemeFromPreset 
   } = useThemeStore();
   const { t } = useTranslation();
 
@@ -310,6 +311,34 @@ export function ProfilePage() {
                 className="overflow-hidden"
               >
                 <div className="border-t border-glass-border pt-4 flex flex-col gap-6">
+                  {/* Preset Selector */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-text-muted uppercase tracking-widest pl-1">Scegli un Preset</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {PREDEFINED_THEMES.map(t => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => setThemeFromPreset(t.id)}
+                          className="flex flex-col gap-2 p-3 rounded-xl bg-glass-bg border border-glass-border hover:bg-glass-border transition-all text-xs font-medium text-left"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full border border-glass-border shadow-sm" style={{ backgroundColor: t.light[500] }} />
+                            <span>{t.name}</span>
+                          </div>
+                          <div 
+                            className="w-full h-8 rounded-lg flex items-center justify-center border border-glass-border"
+                            style={{ backgroundColor: isDark ? t.dark.bg : t.light.bg }}
+                          >
+                            <span style={{ color: isDark ? t.dark.text : t.light.text }} className="text-[10px] font-bold">Aa</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-glass-border" />
+
                   {/* Light Palette */}
                   <div>
                     <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
@@ -322,7 +351,7 @@ export function ProfilePage() {
                             type="color" 
                             value={lightPalette[shade]} 
                             onChange={(e) => setPaletteColor('light', shade, e.target.value)}
-                            className="w-10 h-10 rounded-full border-2 border-glass-border bg-transparent cursor-pointer overflow-hidden"
+                            className="w-10 h-10 rounded-full border border-glass-border bg-transparent cursor-pointer overflow-hidden color-picker-input hover:scale-110 transition-transform shadow-sm"
                           />
                           <span className="text-[10px] text-text-muted">{shade}</span>
                         </div>
@@ -342,7 +371,7 @@ export function ProfilePage() {
                             type="color" 
                             value={darkPalette[shade]} 
                             onChange={(e) => setPaletteColor('dark', shade, e.target.value)}
-                            className="w-10 h-10 rounded-full border-2 border-glass-border bg-transparent cursor-pointer overflow-hidden"
+                            className="w-10 h-10 rounded-full border border-glass-border bg-transparent cursor-pointer overflow-hidden color-picker-input hover:scale-110 transition-transform shadow-sm"
                           />
                           <span className="text-[10px] text-text-muted">{shade}</span>
                         </div>

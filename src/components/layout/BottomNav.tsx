@@ -41,16 +41,16 @@ export function BottomNav() {
                 <NavIcon
                   size={22}
                   strokeWidth={isActive ? 2.5 : 1.8}
-                  className={isActive ? 'text-emerald-400' : ''}
+                  className={isActive ? 'text-primary-400' : ''}
                 />
-                <span className={`text-[10px] mt-1 font-medium ${isActive ? 'text-emerald-400' : ''}`}>
+                <span className={`text-[10px] mt-1 font-medium ${isActive ? 'text-primary-400' : ''}`}>
                   {label}
                 </span>
               </div>
               {isActive && (
                 <motion.div
                   layoutId="bottom-nav-active"
-                  className="absolute bg-emerald-500/15 rounded-2xl w-20 h-[64px] z-0"
+                  className="absolute bg-primary-500/15 rounded-2xl w-20 h-[64px] z-0"
                   transition={TRANSITIONS.spring}
                 />
               )}
