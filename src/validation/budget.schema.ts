@@ -44,6 +44,10 @@ export const expenseSchema = z.object({
     })
     .optional()
     .nullable(),
+  isFinancing: z.boolean().optional(),
+  totalFinanced: z.number().positive().optional().nullable().or(z.literal('')),
+  totalInstallments: z.number().int().positive().optional().nullable().or(z.literal('')),
+  currentInstallment: z.number().int().positive().optional().nullable().or(z.literal('')),
 });
 
 export type ExpenseFormData = z.infer<typeof expenseSchema>;
@@ -68,6 +72,7 @@ export const incomeSchema = z.object({
     .max(999999, 'Importo troppo alto'),
   date: z.string().min(1, 'Seleziona una data'),
   description: z.string().min(1, 'Inserisci una descrizione').max(100),
+  isExtra: z.boolean().optional(),
 });
 
 export type IncomeFormData = z.infer<typeof incomeSchema>;

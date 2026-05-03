@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Plus, Trash2, RepeatIcon, ChevronLeft, Edit2, X, Check } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { Plus, Trash2, RepeatIcon, ChevronLeft, Edit2, X, Check, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useBudgetStore } from '@/store/useBudgetStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -23,6 +23,10 @@ function FixedExpenseRow({
   category,
   billingDay,
   accountSource,
+  isFinancing,
+  totalFinanced,
+  totalInstallments,
+  currentInstallment,
   currency,
   onDelete,
   onEdit,
@@ -33,23 +37,33 @@ function FixedExpenseRow({
   category: string;
   billingDay?: number;
   accountSource?: string;
+  isFinancing?: boolean;
+  totalFinanced?: number;
+  totalInstallments?: number;
+  currentInstallment?: number;
   currency: string;
   onDelete: (id: string) => void;
   onEdit: (id: string, data: Partial<ExpenseFormData>) => void;
 }) {
   const catConf = DEFAULT_CATEGORIES.find(c => c.name === category as any);
   const [isEditing, setIsEditing] = useState(false);
-  const { register, handleSubmit, reset } = useForm<ExpenseFormData>({
+  const { register, handleSubmit, reset, watch, control } = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
-    defaultValues: { 
-      amount, 
-      category: category as ExpenseFormData['category'], 
-      description, 
-      isFixed: true, 
-      billingDay: billingDay ?? undefined, 
-      accountSource: accountSource ?? undefined 
+    defaultValues: {
+      amount,
+      category: category as ExpenseFormData['category'],
+      description,
+      isFixed: true,
+      billingDay: billingDay ?? undefined,
+      accountSource: accountSource ?? undefined,
+      isFinancing: isFinancing ?? false,
+      totalFinanced: totalFinanced ?? undefined,
+      totalInstallments: totalInstallments ?? undefined,
+      currentInstallment: currentInstallment ?? undefined
     }
   });
+
+  const isFinancingVal = watch('isFinancing');
 
   const submitEdit = (data: any) => {
     onEdit(id, data);
@@ -67,7 +81,7 @@ function FixedExpenseRow({
             </select>
           </div>
           <input type="text" {...register('description')} className="w-full px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" placeholder="Descrizione" />
-          
+
           <div className="flex gap-2">
             <input type="number" min="1" max="31" {...register('billingDay', { valueAsNumber: true })} className="w-1/3 px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" placeholder="Giorno (es. 15)" />
             <input type="text" list={`account-suggestions-${id}`} {...register('accountSource')} className="w-2/3 px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" placeholder="Conto/Carta" />
@@ -76,9 +90,29 @@ function FixedExpenseRow({
             </datalist>
           </div>
 
+          <div className="flex items-center justify-between p-2 mt-1 bg-glass-bg rounded-lg border border-glass-border">
+            <span className="text-xs font-semibold text-text-muted">È un finanziamento?</span>
+            <Controller
+              control={control}
+              name="isFinancing"
+              render={({ field }) => (
+                <button type="button" onClick={() => field.onChange(!field.value)} className="text-primary-500">
+                  {field.value ? <ToggleRight size={24} className="text-primary-400" /> : <ToggleLeft size={24} className="text-text-muted" />}
+                </button>
+              )}
+            />
+          </div>
+          {isFinancingVal && (
+            <div className="grid grid-cols-3 gap-2 mt-1">
+              <input type="number" step="0.01" {...register('totalFinanced', { valueAsNumber: true })} className="px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-xs" placeholder="Tot. Finanziato" />
+              <input type="number" {...register('totalInstallments', { valueAsNumber: true })} className="px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-xs" placeholder="N. Rate" />
+              <input type="number" {...register('currentInstallment', { valueAsNumber: true })} className="px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-xs" placeholder="Rata Attuale" />
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 mt-1">
-            <button type="button" onClick={() => { setIsEditing(false); reset(); }} className="p-1.5 rounded-lg text-text-muted hover:bg-glass-border"><X size={16}/></button>
-            <button type="submit" className="p-1.5 rounded-lg text-emerald-400 hover:bg-emerald-500/10"><Check size={16}/></button>
+            <button type="button" onClick={() => { setIsEditing(false); reset(); }} className="p-1.5 rounded-lg text-text-muted hover:bg-glass-border"><X size={16} /></button>
+            <button type="submit" className="p-1.5 rounded-lg text-emerald-400 hover:bg-emerald-500/10"><Check size={16} /></button>
           </div>
         </form>
       </motion.div>
@@ -94,16 +128,29 @@ function FixedExpenseRow({
       transition={TRANSITIONS.spring}
       className="flex items-center justify-between py-3 border-b border-glass-border last:border-0"
     >
-      <div className="flex items-center gap-3">
-        <span className="text-xl">{catConf?.icon ?? '🔁'}</span>
-        <div>
-          <p className="text-sm font-semibold">{description}</p>
-          <p className="text-xs text-text-muted capitalize">
+      <div className="flex items-center gap-3 w-[60%] overflow-hidden">
+        <span className="text-xl flex-shrink-0">{catConf?.icon ?? '🔁'}</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold truncate">{description}</p>
+          <p className="text-xs text-text-muted capitalize truncate">
             {category} {billingDay && ` • Giorno ${billingDay}`} {accountSource && ` • ${accountSource}`}
           </p>
+          {isFinancing && totalInstallments && (
+            <div className="w-full mt-1.5 bg-glass-border rounded-full h-1 overflow-hidden flex">
+              <div
+                className="bg-primary-400 h-full transition-all duration-500"
+                style={{ width: `${(Math.min(currentInstallment ?? 0, totalInstallments) / totalInstallments) * 100}%` }}
+              />
+            </div>
+          )}
+          {isFinancing && (
+            <p className="text-[9px] text-primary-400 mt-0.5 font-medium truncate">
+              Rata {currentInstallment ?? 0} di {totalInstallments ?? '?'} {totalFinanced ? `• Tot: ${currency}${totalFinanced}` : ''}
+            </p>
+          )}
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col items-end gap-1 flex-shrink-0">
         <span className="font-bold text-sm text-red-400 tabular-nums">{currency}{amount.toFixed(2)}/mese</span>
         <div className="flex items-center gap-1">
           <button
@@ -133,6 +180,7 @@ export function FixedExpensesPage() {
   const { user } = useAuthStore();
   const { expenses, addExpense, deleteExpense, updateExpense, settings } = useBudgetStore();
   const [showForm, setShowForm] = useState(false);
+  const [groupBy, setGroupBy] = useState<'financing' | 'account' | 'category'>('financing');
 
   const currency = settings?.currency ?? '€';
   const fixedExpenses = expenses.filter(e => e.isFixed);
@@ -140,7 +188,15 @@ export function FixedExpensesPage() {
   const uniqueAccounts = Array.from(new Set(expenses.map(e => e.accountSource).filter(Boolean))) as string[];
 
   const groupedFixedExpenses = fixedExpenses.reduce((acc, expense) => {
-    const key = expense.accountSource || 'Altro';
+    let key = 'Altro';
+    if (groupBy === 'financing') {
+      key = expense.isFinancing ? 'Finanziamenti' : 'Non Finanziamenti';
+    }
+    else if (groupBy === 'category') {
+      key = expense.category || 'Altro';
+    } else if (groupBy === 'account') {
+      key = expense.accountSource || 'Altro';
+    }
     if (!acc[key]) acc[key] = [];
     acc[key].push(expense);
     return acc;
@@ -152,6 +208,8 @@ export function FixedExpensesPage() {
     register,
     handleSubmit,
     reset,
+    watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
@@ -160,8 +218,11 @@ export function FixedExpensesPage() {
       category: 'casa',
       description: '',
       isFixed: true,
+      isFinancing: false,
     },
   });
+
+  const isFinancingVal = watch('isFinancing');
 
   const onSubmit = async (data: ExpenseFormData) => {
     if (!user?.uid) return;
@@ -175,6 +236,10 @@ export function FixedExpensesPage() {
         isFixed: true,
         billingDay: data.billingDay ?? undefined,
         accountSource: data.accountSource ?? undefined,
+        isFinancing: data.isFinancing ?? false,
+        totalFinanced: data.totalFinanced ?? undefined,
+        totalInstallments: data.totalInstallments ?? undefined,
+        currentInstallment: data.currentInstallment ?? undefined,
         addedBy: user.displayName || user.email || 'Sconosciuto',
         createdAt: Date.now(),
       });
@@ -185,7 +250,7 @@ export function FixedExpensesPage() {
       toast.error('Errore nel salvataggio.');
     }
   };
- 
+
   const handleDelete = async (id: string) => {
     try {
       await deleteExpense(id);
@@ -194,18 +259,18 @@ export function FixedExpensesPage() {
       toast.error('Errore nella rimozione.');
     }
   };
- 
+
   const handleEdit = async (id: string, data: any) => {
     try {
       const partialExpense = { ...data };
-      
+
       await updateExpense(id, partialExpense);
       toast.success('Aggiornata.');
     } catch {
       toast.error('Errore nell\'aggiornamento.');
     }
   };
- 
+
   return (
     <motion.div
       variants={PAGE_VARIANTS}
@@ -227,7 +292,7 @@ export function FixedExpensesPage() {
           <p className="text-xs text-text-muted">{t('spendless.fixed_expenses_subtitle')}</p>
         </div>
       </div>
- 
+
       {/* Summary card */}
       <GlassCard className="flex items-center justify-between">
         <div>
@@ -239,7 +304,31 @@ export function FixedExpensesPage() {
         </div>
         <span className="text-5xl">🔄</span>
       </GlassCard>
- 
+
+      {/* Grouping Toggle */}
+      {fixedExpenses.length > 0 && (
+        <div className="flex bg-glass-bg border border-glass-border rounded-xl p-1 gap-1">
+          <button
+            onClick={() => setGroupBy('financing')}
+            className={cn("flex-1 py-1.5 rounded-lg text-xs font-semibold transition", groupBy === 'financing' ? 'bg-primary-500/20 text-primary-400' : 'text-text-muted hover:bg-glass-border')}
+          >
+            Finanziamenti
+          </button>
+          <button
+            onClick={() => setGroupBy('account')}
+            className={cn("flex-1 py-1.5 rounded-lg text-xs font-semibold transition", groupBy === 'account' ? 'bg-primary-500/20 text-primary-400' : 'text-text-muted hover:bg-glass-border')}
+          >
+            Per Conto
+          </button>
+          <button
+            onClick={() => setGroupBy('category')}
+            className={cn("flex-1 py-1.5 rounded-lg text-xs font-semibold transition", groupBy === 'category' ? 'bg-primary-500/20 text-primary-400' : 'text-text-muted hover:bg-glass-border')}
+          >
+            Per Tipologia
+          </button>
+        </div>
+      )}
+
       {/* List */}
       <GlassCard>
         <AnimatePresence>
@@ -255,27 +344,38 @@ export function FixedExpensesPage() {
               <p className="text-xs">{t('spendless.add_fixed_hint')}</p>
             </motion.div>
           )}
-          {Object.entries(groupedFixedExpenses).map(([account, groupExpenses]) => (
-            <div key={account} className="mb-4 last:mb-0">
-              <h3 className="text-xs font-bold text-text-muted uppercase tracking-widest mb-2 px-1">{account}</h3>
-              {groupExpenses.map(e => (
-                <FixedExpenseRow
-                  key={e.id}
-                  id={e.id}
-                  amount={e.amount}
-                  description={e.description}
-                  category={e.category}
-                  billingDay={e.billingDay}
-                  accountSource={e.accountSource}
-                  currency={currency}
-                  onDelete={handleDelete}
-                  onEdit={handleEdit}
-                />
-              ))}
-            </div>
-          ))}
+          {Object.entries(groupedFixedExpenses)
+            .sort(([a], [b]) => {
+              if (groupBy === 'financing') return a === 'Finanziamenti' ? -1 : 1;
+              return a.localeCompare(b);
+            })
+            .map(([label, groupExpenses]) => (
+              <div key={label} className="mb-4 last:mb-0">
+                <h3 className="text-xs font-bold text-text-muted uppercase tracking-widest mb-2 px-1">{label}</h3>
+                {groupExpenses
+                  .sort((a, b) => (groupBy === 'financing' ? b.amount - a.amount : 0))
+                  .map(e => (
+                    <FixedExpenseRow
+                      key={e.id}
+                      id={e.id}
+                      amount={e.amount}
+                      description={e.description}
+                      category={e.category}
+                      billingDay={e.billingDay}
+                      accountSource={e.accountSource}
+                      isFinancing={e.isFinancing}
+                      totalFinanced={e.totalFinanced}
+                      totalInstallments={e.totalInstallments}
+                      currentInstallment={e.currentInstallment}
+                      currency={currency}
+                      onDelete={handleDelete}
+                      onEdit={handleEdit}
+                    />
+                  ))}
+              </div>
+            ))}
         </AnimatePresence>
- 
+
         {/* Add Fixed Expense Form */}
         <AnimatePresence>
           {showForm && (
@@ -359,7 +459,47 @@ export function FixedExpensesPage() {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex items-center justify-between p-3 bg-glass-bg rounded-xl border border-glass-border">
+                <div>
+                  <span className="text-sm font-semibold text-text-muted">È un finanziamento?</span>
+                  <p className="text-[10px] text-text-muted">Mostra il progresso delle rate pagate</p>
+                </div>
+                <Controller
+                  control={control}
+                  name="isFinancing"
+                  render={({ field }) => (
+                    <button type="button" onClick={() => field.onChange(!field.value)} className="text-primary-500">
+                      {field.value ? <ToggleRight size={32} className="text-primary-400" /> : <ToggleLeft size={32} className="text-text-muted" />}
+                    </button>
+                  )}
+                />
+              </div>
+
+              <AnimatePresence>
+                {isFinancingVal && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="grid grid-cols-3 gap-3 overflow-hidden"
+                  >
+                    <div>
+                      <label className="text-[10px] text-text-muted mb-1 block">Totale (€)</label>
+                      <input type="number" step="0.01" {...register('totalFinanced', { valueAsNumber: true })} className="w-full px-2 py-2 rounded-xl bg-glass-bg border border-glass-border text-xs focus:ring-2 focus:ring-primary-400" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-text-muted mb-1 block">Num. Rate</label>
+                      <input type="number" {...register('totalInstallments', { valueAsNumber: true })} className="w-full px-2 py-2 rounded-xl bg-glass-bg border border-glass-border text-xs focus:ring-2 focus:ring-primary-400" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-text-muted mb-1 block">Rata Attuale</label>
+                      <input type="number" {...register('currentInstallment', { valueAsNumber: true })} className="w-full px-2 py-2 rounded-xl bg-glass-bg border border-glass-border text-xs focus:ring-2 focus:ring-primary-400" />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="flex gap-2 mt-1">
                 <motion.button
                   type="submit"
                   disabled={isSubmitting}

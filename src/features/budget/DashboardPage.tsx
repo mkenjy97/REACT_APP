@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useBudgetStore, SPENDING_BADGE_CONFIG } from '@/store/useBudgetStore';
+import { useBudgetStore, SPENDING_BADGE_CONFIG, getMonthKey } from '@/store/useBudgetStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { PAGE_VARIANTS, TRANSITIONS, STAGGER_CONTAINER, STAGGER_ITEM } from '@/constants/animations';
@@ -9,6 +9,8 @@ import { Eye, EyeOff, Plus, TrendingDown, Calendar, Edit2, Check, X, Users, Copy
 import { cn } from '@/components/ui/GlassCard';
 import { DEFAULT_CATEGORIES } from '@/types/budget.types';
 import { toast } from 'sonner';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { db } from '@/services/firebase';
 
 // ─── Budget Bar ───────────────────────────────────────────────────────────────
 interface BudgetBarProps {
@@ -146,17 +148,49 @@ function ExpenseRow({ amount, description, category, blurred, currency = '€', 
   );
 }
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 export function DashboardPage() {
   const { user } = useAuthStore();
-  const { summary, budget, expenses, privacyMode, togglePrivacyMode, settings, saveSettings } = useBudgetStore();
+  const { summary, budget, expenses, incomes, privacyMode, togglePrivacyMode, settings, saveSettings, removeFamilyMember } = useBudgetStore();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [showFamilyCode, setShowFamilyCode] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const [familyMembers, setFamilyMembers] = useState<{ uid: string, email: string, displayName?: string }[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      if (!settings?.familyId) {
+        setFamilyMembers([]);
+        return;
+      }
+      setLoadingMembers(true);
+      try {
+        const q = query(collection(db, 'userSettings'), where('familyId', '==', settings.familyId));
+        const snap = await getDocs(q);
+        const members: any[] = [];
+        for (const d of snap.docs) {
+          const uId = d.data().userId;
+          const uSnap = await getDoc(doc(db, 'users', uId));
+          if (uSnap.exists()) {
+            members.push({ uid: uId, ...uSnap.data() });
+          }
+        }
+        setFamilyMembers(members);
+      } catch (err) {
+        console.error('Error fetching family members:', err);
+      } finally {
+        setLoadingMembers(false);
+      }
+    };
+    if (showFamilyCode) {
+      fetchMembers();
+    }
+  }, [settings?.familyId, showFamilyCode]);
 
   const handleJoinFamily = async () => {
     if (!joinCode || !user?.uid) return;
@@ -181,9 +215,12 @@ export function DashboardPage() {
 
   const currency = settings?.currency ?? '€';
   const now = new Date();
+  const monthKey = getMonthKey(now);
   const monthName = now.toLocaleDateString('it-IT', { month: 'long' });
   const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   const daysRemaining = lastDayOfMonth.getDate() - now.getDate();
+
+  const totalNormalIncome = incomes.filter(i => i.date.startsWith(monthKey) && !i.isExtra).reduce((acc, i) => acc + i.amount, 0);
 
   // Last 5 non-fixed expenses
   const recentExpenses = [...expenses]
@@ -203,230 +240,269 @@ export function DashboardPage() {
         exit="exit"
         className="flex flex-col gap-5 pb-6"
       >
-      {/* ── Header ── */}
-      <div className="flex items-start justify-between pt-2">
-        <div>
-          <h1 className="text-2xl font-bold capitalize">{t('spendless.greeting', { name: user?.displayName?.split(' ')[0] ?? 'Ciao' })}</h1>
-          <div className="flex flex-col gap-1 mt-0.5">
-            <p className="text-sm text-text-muted capitalize">
-              {monthName} · <span className="text-primary-400">{daysRemaining} {t('spendless.days_left')}</span>
-            </p>
-            {/* Month Progress Bar */}
-            <div className="w-full h-1 bg-glass-bg rounded-full overflow-hidden mt-1">
-              <motion.div 
-                className="h-full bg-primary-400"
-                initial={{ width: 0 }}
-                animate={{ width: `${(now.getDate() / lastDayOfMonth.getDate()) * 100}%` }}
-                transition={{ duration: 1 }}
-              />
+        {/* ── Header ── */}
+        <div className="flex items-start justify-between pt-2">
+          <div>
+            <h1 className="text-2xl font-bold capitalize">{t('spendless.greeting', { name: user?.displayName?.split(' ')[0] ?? 'Ciao' })}</h1>
+            <div className="flex flex-col gap-1 mt-0.5">
+              <p className="text-sm text-text-muted capitalize">
+                {monthName} · <span className="text-primary-400">{daysRemaining} {t('spendless.days_left')}</span>
+              </p>
+              {/* Month Progress Bar */}
+              <div className="w-full h-1 bg-glass-bg rounded-full overflow-hidden mt-1">
+                <motion.div
+                  className="h-full bg-primary-400"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(now.getDate() / lastDayOfMonth.getDate()) * 100}%` }}
+                  transition={{ duration: 1 }}
+                />
+              </div>
+              <p className="text-[10px] text-text-muted/60 font-medium">
+                Progresso mese: {Math.round((now.getDate() / lastDayOfMonth.getDate()) * 100)}%
+              </p>
             </div>
-            <p className="text-[10px] text-text-muted/60 font-medium">
-              Progresso mese: {Math.round((now.getDate() / lastDayOfMonth.getDate()) * 100)}%
-            </p>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          {/* Spending badge */}
-          {badgeConf && (
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={TRANSITIONS.bounce}
-              className={cn('text-xs font-bold px-2.5 py-1 rounded-full text-white bg-gradient-to-r', badgeConf.color)}
-            >
-              {badgeConf.emoji} {badgeConf.label}
-            </motion.span>
-          )}
-
-          {/* Privacy toggle */}
-          <button
-            onClick={togglePrivacyMode}
-            className="p-2.5 rounded-full glass-button"
-            aria-label="Privacy mode"
-          >
-            <AnimatePresence mode="wait">
-              <motion.div key={privacyMode ? 'hide' : 'show'}
-                initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }}
-                transition={{ duration: 0.15 }}
+          <div className="flex items-center gap-2">
+            {/* Spending badge */}
+            {badgeConf && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={TRANSITIONS.bounce}
+                className={cn('text-xs font-bold px-2.5 py-1 rounded-full text-white bg-gradient-to-r', badgeConf.color)}
               >
-                {privacyMode ? <EyeOff size={18} /> : <Eye size={18} />}
-              </motion.div>
-            </AnimatePresence>
-          </button>
-        </div>
-      </div>
+                {badgeConf.emoji} {badgeConf.label}
+              </motion.span>
+            )}
 
-      {/* ── Budget Cards ── */}
-      <motion.div
-        variants={STAGGER_CONTAINER}
-        initial="initial"
-        animate="animate"
-        className="grid gap-4"
-      >
-        <motion.div variants={STAGGER_ITEM}>
-          <BudgetProgressCard
-            label={t('spendless.weekly_budget')}
-            spent={summary?.totalSpentThisWeek ?? 0}
-            limit={budget.weeklyLimit}
-            percentage={summary?.weeklyPercentage ?? 0}
-            blurred={privacyMode}
-            currency={currency}
-            onEdit={val => {
-              if (user?.uid) {
-                saveSettings(user.uid, { budget: { ...budget, weeklyLimit: val } });
-              }
-            }}
-          />
-        </motion.div>
-        <motion.div variants={STAGGER_ITEM}>
-          <BudgetProgressCard
-            label={t('spendless.monthly_budget')}
-            spent={summary?.totalSpentThisMonth ?? 0}
-            limit={budget.monthlyLimit}
-            percentage={summary?.monthlyPercentage ?? 0}
-            blurred={privacyMode}
-            currency={currency}
-            fixedSpent={summary?.totalFixedThisMonth}
-            onEdit={val => {
-              if (user?.uid) {
-                saveSettings(user.uid, { budget: { ...budget, monthlyLimit: val } });
-              }
-            }}
-          />
-        </motion.div>
-      </motion.div>
-
-      {/* ── Quick Stats ── */}
-      <div className="grid grid-cols-2 gap-3">
-        <GlassCard className="!p-4 flex items-center gap-3">
-          <div className="p-2 bg-primary-500/20 rounded-xl">
-            <TrendingDown size={18} className="text-primary-400" />
-          </div>
-          <div className="flex-1">
-            <p className="text-xs text-text-muted">{t('spendless.this_month')}</p>
-            <p className={cn('text-sm font-bold tabular-nums', { 'blur-md select-none': privacyMode })}>
-              {currency}{(summary?.totalVariableThisMonth ?? 0).toFixed(0)} <span className="text-[10px] font-normal text-text-muted">var.</span>
-            </p>
-            <p className={cn('text-[10px] text-text-muted font-medium tabular-nums mt-0.5', { 'blur-md select-none': privacyMode })}>
-              Tot: {currency}{(summary?.totalSpentThisMonth ?? 0).toFixed(0)}
-            </p>
-          </div>
-        </GlassCard>
-        <GlassCard className="!p-4 flex items-center gap-3">
-          <div className="p-2 bg-blue-500/20 rounded-xl">
-            <Calendar size={18} className="text-blue-400" />
-          </div>
-          <div className="flex-1">
-            <p className="text-xs text-text-muted">{t('spendless.avg_daily')}</p>
-            <p className={cn('text-sm font-bold tabular-nums', { 'blur-md select-none': privacyMode })}>
-              {currency}{(now.getDate() > 0 ? (summary?.totalVariableThisMonth ?? 0) / now.getDate() : 0).toFixed(0)} <span className="text-[10px] font-normal text-text-muted">var.</span>
-            </p>
-            <p className={cn('text-[10px] text-text-muted font-medium tabular-nums mt-0.5', { 'blur-md select-none': privacyMode })}>
-              Tot: {currency}{(now.getDate() > 0 ? (summary?.totalSpentThisMonth ?? 0) / now.getDate() : 0).toFixed(0)}
-            </p>
-          </div>
-        </GlassCard>
-      </div>
-
-      {/* ── Recent Expenses ── */}
-      {recentExpenses.length > 0 && (
-        <GlassCard>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">
-              {t('spendless.recent_expenses')}
-            </h2>
+            {/* Privacy toggle */}
             <button
-              onClick={() => navigate('/history')}
-              className="text-xs text-primary-400 font-medium"
+              onClick={togglePrivacyMode}
+              className="p-2.5 rounded-full glass-button"
+              aria-label="Privacy mode"
             >
-              {t('spendless.view_all')} →
+              <AnimatePresence mode="wait">
+                <motion.div key={privacyMode ? 'hide' : 'show'}
+                  initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {privacyMode ? <EyeOff size={18} /> : <Eye size={18} />}
+                </motion.div>
+              </AnimatePresence>
             </button>
           </div>
-          {recentExpenses.map(e => (
-            <ExpenseRow
-              key={e.id}
-              amount={e.amount}
-              description={e.description}
-              category={e.category}
+        </div>
+
+        {/* ── Budget Cards ── */}
+        <motion.div
+          variants={STAGGER_CONTAINER}
+          initial="initial"
+          animate="animate"
+          className="grid gap-4"
+        >
+          <motion.div variants={STAGGER_ITEM}>
+            <BudgetProgressCard
+              label={t('spendless.weekly_budget')}
+              spent={summary?.totalSpentThisWeek ?? 0}
+              limit={budget.weeklyLimit}
+              percentage={summary?.weeklyPercentage ?? 0}
               blurred={privacyMode}
               currency={currency}
-              addedBy={e.addedBy}
+              onEdit={val => {
+                if (user?.uid) {
+                  saveSettings(user.uid, { budget: { ...budget, weeklyLimit: val } });
+                }
+              }}
             />
-          ))}
-        </GlassCard>
-      )}
+          </motion.div>
+          <motion.div variants={STAGGER_ITEM}>
+            <BudgetProgressCard
+              label={t('spendless.monthly_budget')}
+              spent={summary?.totalSpentThisMonth ?? 0}
+              limit={budget.monthlyLimit}
+              percentage={summary?.monthlyPercentage ?? 0}
+              blurred={privacyMode}
+              currency={currency}
+              fixedSpent={summary?.totalFixedThisMonth}
+              onEdit={val => {
+                if (val > totalNormalIncome) {
+                  toast.error(`Il budget mensile non può superare le entrate (escludendo entrate extra) (${currency}${totalNormalIncome.toFixed(2)})`);
+                  return;
+                }
+                if (user?.uid) {
+                  saveSettings(user.uid, { budget: { ...budget, monthlyLimit: val } });
+                }
+              }}
+            />
+          </motion.div>
+        </motion.div>
 
-      {/* ── Empty State ── */}
-      {recentExpenses.length === 0 && (
-        <GlassCard className="text-center py-10 flex flex-col items-center gap-3">
-          <span className="text-5xl">💸</span>
-          <p className="font-semibold text-text-muted">{t('spendless.no_expenses')}</p>
-          <p className="text-xs text-text-muted">{t('spendless.add_first')}</p>
-        </GlassCard>
-      )}
-
-      {/* ── Family Group ── */}
-      <GlassCard>
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Users size={18} className="text-purple-400" />
-            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">
-              Gruppo Famiglia
-            </h2>
-          </div>
-          <button
-            onClick={() => setShowFamilyCode(!showFamilyCode)}
-            className="text-xs text-primary-400 font-medium"
-          >
-            {showFamilyCode ? 'Chiudi' : 'Gestisci'}
-          </button>
+        {/* ── Quick Stats ── */}
+        <div className="grid grid-cols-2 gap-3">
+          <GlassCard className="!p-4 flex items-center gap-3">
+            <div className="p-2 bg-primary-500/20 rounded-xl">
+              <TrendingDown size={18} className="text-primary-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-text-muted">{t('spendless.this_month')}</p>
+              <p className={cn('text-sm font-bold tabular-nums', { 'blur-md select-none': privacyMode })}>
+                {currency}{(summary?.totalVariableThisMonth ?? 0).toFixed(0)} <span className="text-[10px] font-normal text-text-muted">var.</span>
+              </p>
+              <p className={cn('text-[10px] text-text-muted font-medium tabular-nums mt-0.5', { 'blur-md select-none': privacyMode })}>
+                Tot: {currency}{(summary?.totalSpentThisMonth ?? 0).toFixed(0)}
+              </p>
+            </div>
+          </GlassCard>
+          <GlassCard className="!p-4 flex items-center gap-3">
+            <div className="p-2 bg-blue-500/20 rounded-xl">
+              <Calendar size={18} className="text-blue-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-text-muted">{t('spendless.avg_daily')}</p>
+              <p className={cn('text-sm font-bold tabular-nums', { 'blur-md select-none': privacyMode })}>
+                {currency}{(now.getDate() > 0 ? (summary?.totalVariableThisMonth ?? 0) / now.getDate() : 0).toFixed(0)} <span className="text-[10px] font-normal text-text-muted">var.</span>
+              </p>
+              <p className={cn('text-[10px] text-text-muted font-medium tabular-nums mt-0.5', { 'blur-md select-none': privacyMode })}>
+                Tot: {currency}{(now.getDate() > 0 ? (summary?.totalSpentThisMonth ?? 0) / now.getDate() : 0).toFixed(0)}
+              </p>
+            </div>
+          </GlassCard>
         </div>
-        
-        <AnimatePresence>
-          {showFamilyCode && (
-            <motion.div 
-              initial={{ opacity: 0, height: 0 }} 
-              animate={{ opacity: 1, height: 'auto' }} 
-              exit={{ opacity: 0, height: 0 }}
-              className="flex flex-col gap-3 mt-3 pt-3 border-t border-glass-border overflow-hidden"
+
+        {/* ── Recent Expenses ── */}
+        {recentExpenses.length > 0 && (
+          <GlassCard>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">
+                {t('spendless.recent_expenses')}
+              </h2>
+              <button
+                onClick={() => navigate('/history')}
+                className="text-xs text-primary-400 font-medium"
+              >
+                {t('spendless.view_all')} →
+              </button>
+            </div>
+            {recentExpenses.map(e => (
+              <ExpenseRow
+                key={e.id}
+                amount={e.amount}
+                description={e.description}
+                category={e.category}
+                blurred={privacyMode}
+                currency={currency}
+                addedBy={e.addedBy}
+              />
+            ))}
+          </GlassCard>
+        )}
+
+        {/* ── Empty State ── */}
+        {recentExpenses.length === 0 && (
+          <GlassCard className="text-center py-10 flex flex-col items-center gap-3">
+            <span className="text-5xl">💸</span>
+            <p className="font-semibold text-text-muted">{t('spendless.no_expenses')}</p>
+            <p className="text-xs text-text-muted">{t('spendless.add_first')}</p>
+          </GlassCard>
+        )}
+
+        {/* ── Family Group ── */}
+        <GlassCard>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Users size={18} className="text-purple-400" />
+              <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">
+                Gruppo Famiglia
+              </h2>
+            </div>
+            <button
+              onClick={() => setShowFamilyCode(!showFamilyCode)}
+              className="text-xs text-primary-400 font-medium"
             >
-              <div className="bg-glass-bg p-3 rounded-xl border border-glass-border flex flex-col gap-2">
-                <p className="text-xs text-text-muted">Il tuo codice di invito:</p>
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-sm tracking-wider font-bold">{user?.uid}</span>
-                  <button onClick={copyCode} className="p-1.5 rounded-md glass-button text-text-muted">
-                    {copied ? <CheckCircle size={16} className="text-emerald-400" /> : <Copy size={16} />}
+              {showFamilyCode ? 'Chiudi' : 'Gestisci'}
+            </button>
+          </div>
+
+          <AnimatePresence>
+            {showFamilyCode && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex flex-col gap-3 mt-3 pt-3 border-t border-glass-border overflow-hidden"
+              >
+                <div className="bg-glass-bg p-3 rounded-xl border border-glass-border flex flex-col gap-2">
+                  <p className="text-xs text-text-muted">Il tuo codice di invito:</p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-sm tracking-wider font-bold">{user?.uid}</span>
+                    <button onClick={copyCode} className="p-1.5 rounded-md glass-button text-text-muted">
+                      {copied ? <CheckCircle size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Codice famiglia..."
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-xl bg-glass-bg border border-glass-border text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  />
+                  <button
+                    onClick={handleJoinFamily}
+                    disabled={!joinCode}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold text-sm disabled:opacity-50"
+                  >
+                    Unisciti
                   </button>
                 </div>
-              </div>
 
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Codice famiglia..."
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl bg-glass-bg border border-glass-border text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
-                />
-                <button
-                  onClick={handleJoinFamily}
-                  disabled={!joinCode}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold text-sm disabled:opacity-50"
-                >
-                  Unisciti
-                </button>
-              </div>
-              
-              {settings?.familyId && settings.familyId !== user?.uid && (
-                <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
-                  <CheckCircle size={12} /> Sei in un gruppo famiglia condiviso.
-                </p>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </GlassCard>
+                {settings?.familyId && settings.familyId !== user?.uid && (
+                  <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                    <CheckCircle size={12} /> Sei in un gruppo famiglia condiviso.
+                  </p>
+                )}
+
+                {settings?.familyId && (
+                  <div className="mt-2">
+                    <p className="text-xs text-text-muted mb-2 font-semibold uppercase tracking-widest">Membri del gruppo</p>
+                    {loadingMembers ? (
+                      <p className="text-xs text-text-muted">Caricamento...</p>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        {familyMembers.map(m => (
+                          <div key={m.uid} className="flex items-center justify-between bg-glass-bg p-2 rounded-xl border border-glass-border">
+                            <div>
+                              <p className="text-sm font-medium">{m.displayName || m.email}</p>
+                              <p className="text-[10px] text-text-muted">{m.email}</p>
+                            </div>
+                            {m.uid !== settings.familyId && (
+                              <button
+                                onClick={async () => {
+                                  await removeFamilyMember(m.uid);
+                                  setFamilyMembers(prev => prev.filter(u => u.uid !== m.uid));
+                                  toast.success('Membro rimosso');
+                                }}
+                                className="text-xs text-red-400 p-1.5 rounded-md hover:bg-red-500/10 transition-colors"
+                              >
+                                Rimuovi
+                              </button>
+                            )}
+                            {m.uid === settings.familyId && (
+                              <span className="text-[10px] px-2 py-1 bg-purple-500/20 text-purple-400 rounded-md font-bold uppercase tracking-wider">Admin</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </GlassCard>
 
       </motion.div>
 

@@ -1,82 +1,103 @@
 {
-  "app_name": "baseapp",
+  "app_name": "SpendLess",
   "navigation": {
     "home": "Accueil",
     "search": "Rechercher",
     "support": "Support",
-    "profile": "Profil & Paramètres",
-    "notifications": "Notifications"
+    "profile": "Profil",
+    "notifications": "Notifications",
+    "maps": "Carte"
   },
-  "dashboard": {
-    "title": "Tableau de Bord",
-    "subtitle": "Voici votre dernier aperçu.",
-    "item_title": "Aperçu de l'élément",
-    "item_desc": "Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.",
-    "view_details": "Voir les Détails"
-  },
-  "search": {
-    "placeholder": "Rechercher...",
-    "start_typing": "Commencez à taper pour rechercher",
-    "desc": "Vous pouvez rechercher parmi tous vos documents, contacts et paramètres.",
-    "filters": {
-      "all": "Tout",
-      "recent": "Récent",
-      "favorites": "Favoris",
-      "archived": "Archivé"
+  "spendless": {
+    "greeting": "Bonjour, {{name}} 👋",
+    "days_left": "jours avant la fin du mois",
+    "nav_dashboard": "Budget",
+    "nav_history": "Historique",
+    "nav_fixed": "Fixes",
+    "nav_profile": "Profil",
+    "weekly_budget": "Budget Hebdomadaire",
+    "monthly_budget": "Budget Mensuel",
+    "remaining": "Restant",
+    "spent": "Dépensé",
+    "budget": "Budget",
+    "this_month": "Ce mois-ci",
+    "avg_daily": "Moyenne quotidienne",
+    "recent_expenses": "Dépenses Récentes",
+    "view_all": "Voir tout",
+    "no_expenses": "Aucune dépense enregistrée",
+    "add_first": "Ajoutez votre première dépense avec le bouton +",
+    "add_expense": "Nouvelle Dépense",
+    "add_expense_subtitle": "Remplissez les champs ou scannez le ticket",
+    "scan_receipt": "Scannez le ticket avec l'appareil photo",
+    "scan_btn": "Scanner Ticket",
+    "amount": "Montant",
+    "category": "Catégorie",
+    "description": "Description",
+    "date": "Date",
+    "recurring": "Dépense Récurrente",
+    "recurring_desc": "Ajouter automatiquement chaque mois",
+    "save_expense": "Enregistrer Dépense",
+    "history": "Historique des Dépenses",
+    "history_subtitle": "Toutes vos transactions",
+    "fixed_expenses": "Dépenses Fixes",
+    "fixed_expenses_subtitle": "Abonnements, loyer et coûts récurrents",
+    "total_fixed": "Total Fixe Mensuel",
+    "auto_added": "Ajouté automatiquement chaque mois",
+    "no_fixed": "Aucune dépense fixe configurée",
+    "add_fixed_hint": "Ajoutez des abonnements, loyer ou mensualités",
+    "add_fixed": "Ajouter Dépense Fixe",
+    "categories": {
+      "alimentari": "Courses",
+      "trasporti": "Transport",
+      "casa": "Maison",
+      "salute": "Santé",
+      "intrattenimento": "Divertissement",
+      "abbigliamento": "Vêtements",
+      "ristoranti": "Restaurants",
+      "tecnologia": "Technologie",
+      "istruzione": "Éducation",
+      "altro": "Autre"
+    },
+    "badges": {
+      "risparmiatore_master": "Maître Épargnant",
+      "buon_risparmiatore": "Bon Épargnant",
+      "attenzione": "Attention aux Dépenses",
+      "spendaccione": "Dépensier",
+      "fuori_budget": "Hors Budget !"
     }
   },
   "profile": {
     "appearance": "Apparence",
     "theme": "Thème",
-    "theme_desc": "Basculer entre le mode clair ou sombre",
+    "theme_desc": "Activer le mode sombre ou clair",
     "palette": "Palette de Couleurs",
-    "palette_desc": "Personnalisez les couleurs de votre application",
+    "palette_desc": "Personnaliser les couleurs de l'application",
     "preferences": "Préférences",
     "language": "Langue",
     "language_desc": "Choisissez votre langue préférée",
-    "dev_role": "Dév: Changer de Rôle",
+    "dev_role": "Dev: Changer de Rôle",
     "dev_role_desc": "Simuler différents rôles d'utilisateur",
-    "logout": "Se Déconnecter"
-  },
-  "support": {
-    "title": "Comment pouvons-nous vous aider?",
-    "subtitle": "Parcourez la FAQ ou contactez-nous ci-dessous.",
-    "email_us": "Envoyez-nous un Email",
-    "call_us": "Appelez-nous",
-    "faq": {
-      "q1": "Comment changer la couleur de mon thème principal?",
-      "a1": "Allez dans l'onglet Profil. Sous les paramètres d'Apparence, choisissez une couleur personnalisée.",
-      "q2": "Puis-je utiliser des connexions sociales?",
-      "a2": "Actuellement, les connexions sociales (Google, Apple, Github) sont en cours de développement.",
-      "q3": "Quels sont les différents rôles d'utilisateur?",
-      "a3": "Il y a trois rôles: Utilisateur, Gestionnaire et Administrateur."
-    }
+    "logout": "Déconnexion"
   },
   "auth": {
-    "welcome_back": "De Retour",
+    "welcome_back": "Bon retour",
     "create_account": "Créer un Compte",
-    "enter_details": "Entrez vos coordonnées pour vous connecter",
+    "enter_details": "Entrez vos informations pour vous connecter",
     "sign_up_start": "Inscrivez-vous pour commencer",
     "full_name": "Nom Complet",
-    "email": "Adresse Email",
-    "password": "Mot de Passe",
+    "email": "E-mail",
+    "password": "Mot de passe",
     "sign_in": "Se Connecter",
-    "sign_up": "S'inscrire",
+    "sign_up": "S'Inscrire",
     "or_continue": "ou continuer avec",
-    "no_account": "Pas de compte? S'inscrire",
-    "have_account": "Déjà un compte? Se connecter",
-    "invalid_email": "Adresse email invalide",
-    "password_min": "Le mot de passe doit comporter au moins 6 caractères"
-  },
-  "notifications_page": {
-    "system_update": "Mise à Jour du Système",
-    "update_desc": "Votre application a été mise à jour avec de nouvelles fonctionnalités.",
-    "hours_ago": "Il y a {{count}} heure",
-    "hours_ago_plural": "Il y a {{count}} heures"
+    "no_account": "Pas de compte ? Inscrivez-vous",
+    "have_account": "Déjà un compte ? Connectez-vous",
+    "invalid_email": "Adresse e-mail invalide",
+    "password_min": "Le mot de passe doit contenir au moins 6 caractères"
   },
   "not_found": {
-    "title": "Page Introuvable",
+    "title": "Page Non Trouvée",
     "desc": "La page que vous recherchez a peut-être été supprimée ou est temporairement indisponible.",
-    "back": "Retour à l'Accueil"
+    "back": "Retour au Tableau de Bord"
   }
 }

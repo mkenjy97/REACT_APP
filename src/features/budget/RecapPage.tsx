@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Plus, X, Edit2, TrendingUp } from 'lucide-react';
+import { ChevronDown, Plus, X, Edit2, TrendingUp, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { incomeSchema, type IncomeFormData } from '@/validation/budget.schema';
@@ -15,7 +15,7 @@ import { DEFAULT_CATEGORIES } from '@/types/budget.types';
 export function RecapPage() {
   const { user } = useAuthStore();
   const { expenses, incomes, settings, addIncome, deleteIncome, updateIncome, privacyMode } = useBudgetStore();
-  
+
   const [showIncomeForm, setShowIncomeForm] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
   const [editingIncome, setEditingIncome] = useState<string | null>(null);
@@ -25,14 +25,17 @@ export function RecapPage() {
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
   // -- Income Form --
-  const { register, handleSubmit, reset } = useForm<IncomeFormData>({
+  const { register, handleSubmit, reset, watch, setValue } = useForm<IncomeFormData>({
     resolver: zodResolver(incomeSchema),
     defaultValues: {
       amount: 0,
       description: '',
-      date: now.toISOString().split('T')[0]
+      date: now.toISOString().split('T')[0],
+      isExtra: false
     }
   });
+
+  const isExtraVal = watch('isExtra');
 
   const onIncomeSubmit = async (data: IncomeFormData) => {
     if (!user?.uid) return;
@@ -48,7 +51,8 @@ export function RecapPage() {
           description: data.description,
           date: data.date,
           addedBy: user.displayName || user.email || 'Sconosciuto',
-          createdAt: Date.now()
+          createdAt: Date.now(),
+          isExtra: data.isExtra ?? false
         });
         toast.success('Entrata registrata!');
       }
@@ -64,7 +68,8 @@ export function RecapPage() {
     reset({
       amount: income.amount,
       description: income.description,
-      date: income.date
+      date: income.date,
+      isExtra: income.isExtra ?? false
     });
     setShowIncomeForm(true);
   };
@@ -79,6 +84,8 @@ export function RecapPage() {
   // Current month incomes
   const currentMonthIncomes = incomes.filter(i => i.date.startsWith(currentMonthKey));
   const totalIncomeCurrentMonth = currentMonthIncomes.reduce((acc, i) => acc + i.amount, 0);
+  const normalIncomes = currentMonthIncomes.filter(i => !i.isExtra);
+  const extraIncomes = currentMonthIncomes.filter(i => i.isExtra);
 
   // Group expenses by month (YYYY-MM)
   const expensesByMonth = expenses.reduce((acc, e) => {
@@ -170,6 +177,12 @@ export function RecapPage() {
                     className="w-full px-3 py-2 rounded-xl bg-glass-bg border border-glass-border focus:outline-none focus:ring-2 focus:ring-primary-400"
                     {...register('description')}
                   />
+                  <div className="flex items-center justify-between p-2 bg-glass-bg rounded-xl border border-glass-border">
+                    <span className="text-sm font-semibold text-text-muted">Entrata Extra (es. bonus, aiuti)</span>
+                    <button type="button" onClick={() => setValue('isExtra', !isExtraVal)} className="text-primary-500">
+                      {isExtraVal ? <ToggleRight size={32} className="text-primary-400" /> : <ToggleLeft size={32} className="text-text-muted" />}
+                    </button>
+                  </div>
                   <div className="flex justify-end gap-2 mt-2">
                     <button type="button" onClick={cancelEdit} className="px-4 py-2 text-sm font-medium rounded-xl glass-button text-text-muted">
                       Annulla
@@ -190,7 +203,8 @@ export function RecapPage() {
               <span className="text-xs font-bold text-text-muted uppercase">Dettaglio Entrate</span>
             </div>
             <div className="px-4">
-              {currentMonthIncomes.map(inc => (
+              {normalIncomes.length === 0 && <p className="text-xs text-text-muted py-3">Nessuna entrata normale</p>}
+              {normalIncomes.map(inc => (
                 <div key={inc.id} className="flex items-center justify-between py-3 border-b border-glass-border last:border-0">
                   <div>
                     <p className="text-sm font-medium">{inc.description}</p>
@@ -212,6 +226,36 @@ export function RecapPage() {
                 </div>
               ))}
             </div>
+            {extraIncomes.length > 0 && (
+              <>
+                <div className="px-4 py-2 bg-purple-500/10 border-y border-glass-border">
+                  <span className="text-xs font-bold text-purple-400 uppercase">Entrate Extra</span>
+                </div>
+                <div className="px-4">
+                  {extraIncomes.map(inc => (
+                    <div key={inc.id} className="flex items-center justify-between py-3 border-b border-glass-border last:border-0">
+                      <div>
+                        <p className="text-sm font-medium">{inc.description}</p>
+                        <p className="text-xs text-text-muted">
+                          {new Date(inc.date).toLocaleDateString('it-IT')} • di {inc.addedBy}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={cn('text-sm font-bold text-purple-400 tabular-nums', { 'blur-sm': privacyMode })}>
+                          +{currency}{inc.amount.toFixed(2)}
+                        </span>
+                        <button onClick={() => startEditIncome(inc)} className="p-1.5 text-text-muted hover:bg-glass-border rounded-full">
+                          <Edit2 size={14} />
+                        </button>
+                        <button onClick={() => deleteIncome(inc.id)} className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-full">
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </GlassCard>
         )}
       </section>
@@ -239,7 +283,7 @@ export function RecapPage() {
               return (
                 <motion.div key={monthKey} variants={STAGGER_ITEM}>
                   <GlassCard className="!p-0 overflow-hidden">
-                    <button 
+                    <button
                       onClick={() => toggleMonth(monthKey)}
                       className="w-full flex items-center justify-between p-4 hover:bg-glass-bg transition-colors text-left"
                     >

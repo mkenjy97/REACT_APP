@@ -1,82 +1,103 @@
 {
-  "app_name": "baseapp",
+  "app_name": "SpendLess",
   "navigation": {
     "home": "首页",
     "search": "搜索",
     "support": "支持",
-    "profile": "个人资料和设置",
-    "notifications": "通知"
+    "profile": "个人资料",
+    "notifications": "通知",
+    "maps": "地图"
   },
-  "dashboard": {
-    "title": "仪表板",
-    "subtitle": "这是您最新的概述。",
-    "item_title": "项目概述",
-    "item_desc": "Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.",
-    "view_details": "查看详情"
-  },
-  "search": {
-    "placeholder": "搜索...",
-    "start_typing": "开始输入以搜索",
-    "desc": "您可以跨所有文档、联系人和设置进行搜索。",
-    "filters": {
-      "all": "全部",
-      "recent": "近期",
-      "favorites": "收藏",
-      "archived": "已存档"
+  "spendless": {
+    "greeting": "你好, {{name}} 👋",
+    "days_left": "本月剩余天数",
+    "nav_dashboard": "预算",
+    "nav_history": "历史",
+    "nav_fixed": "固定",
+    "nav_profile": "个人资料",
+    "weekly_budget": "每周预算",
+    "monthly_budget": "每月预算",
+    "remaining": "剩余",
+    "spent": "已花",
+    "budget": "预算",
+    "this_month": "本月",
+    "avg_daily": "每日平均",
+    "recent_expenses": "最近支出",
+    "view_all": "查看全部",
+    "no_expenses": "没有记录的支出",
+    "add_first": "点击 + 按钮添加你的第一笔支出",
+    "add_expense": "新支出",
+    "add_expense_subtitle": "填写字段或扫描收据",
+    "scan_receipt": "使用摄像头扫描收据",
+    "scan_btn": "扫描收据",
+    "amount": "金额",
+    "category": "类别",
+    "description": "描述",
+    "date": "日期",
+    "recurring": "经常性支出",
+    "recurring_desc": "每月自动添加",
+    "save_expense": "保存支出",
+    "history": "支出历史",
+    "history_subtitle": "所有交易记录",
+    "fixed_expenses": "固定支出",
+    "fixed_expenses_subtitle": "订阅、租金和经常性费用",
+    "total_fixed": "每月固定总计",
+    "auto_added": "每月自动添加",
+    "no_fixed": "未配置固定支出",
+    "add_fixed_hint": "添加订阅、租金或分期付款",
+    "add_fixed": "添加固定支出",
+    "categories": {
+      "alimentari": "食品杂货",
+      "trasporti": "交通",
+      "casa": "家居",
+      "salute": "健康",
+      "intrattenimento": "娱乐",
+      "abbigliamento": "服装",
+      "ristoranti": "餐饮",
+      "tecnologia": "科技",
+      "istruzione": "教育",
+      "altro": "其他"
+    },
+    "badges": {
+      "risparmiatore_master": "节俭大师",
+      "buon_risparmiatore": "省钱达人",
+      "attenzione": "注意支出",
+      "spendaccione": "大笔挥霍者",
+      "fuori_budget": "超出预算！"
     }
   },
   "profile": {
     "appearance": "外观",
     "theme": "主题",
-    "theme_desc": "切换浅色或深色模式",
+    "theme_desc": "启用深色或浅色模式",
     "palette": "调色板",
-    "palette_desc": "自定义您的应用颜色",
+    "palette_desc": "自定义应用程序颜色",
     "preferences": "首选项",
     "language": "语言",
-    "language_desc": "选择您的首选语言",
+    "language_desc": "选择您喜欢的语言",
     "dev_role": "开发者：更改角色",
     "dev_role_desc": "模拟不同的用户角色",
     "logout": "注销"
   },
-  "support": {
-    "title": "需要帮助吗？",
-    "subtitle": "浏览常见问题解答或通过下方与我们联系。",
-    "email_us": "发给我们邮件",
-    "call_us": "致电我们",
-    "faq": {
-      "q1": "如何更改我的主主题颜色？",
-      "a1": "进入个人资料页面。在外观设置下可以修改颜色。",
-      "q2": "我可以使用社交登录吗？",
-      "a2": "目前，社交登录正在开发中。",
-      "q3": "不同的用户角色有哪些？",
-      "a3": "有三种角色：用户，经理和管理员。"
-    }
-  },
   "auth": {
     "welcome_back": "欢迎回来",
-    "create_account": "创建账号",
-    "enter_details": "输入您的详情以登录",
+    "create_account": "创建账户",
+    "enter_details": "输入您的详细信息以登录",
     "sign_up_start": "注册以开始使用",
     "full_name": "全名",
-    "email": "邮件地址",
+    "email": "电子邮件",
     "password": "密码",
     "sign_in": "登录",
     "sign_up": "注册",
     "or_continue": "或继续使用",
     "no_account": "没有账户？注册",
     "have_account": "已有账户？登录",
-    "invalid_email": "无效邮件格式",
-    "password_min": "密码至少需6个字符"
-  },
-  "notifications_page": {
-    "system_update": "系统更新",
-    "update_desc": "您的应用程序已更新。",
-    "hours_ago": "{{count}} 小时前",
-    "hours_ago_plural": "{{count}} 小时前"
+    "invalid_email": "电子邮件地址无效",
+    "password_min": "密码必须至少包含 6 个字符"
   },
   "not_found": {
-    "title": "页面未找到",
-    "desc": "由于未知原因，该页面不存在或已被移除。",
-    "back": "返回主页"
+    "title": "找不到页面",
+    "desc": "您寻找的页面可能已被删除或暂时不可用。",
+    "back": "返回控制面板"
   }
 }

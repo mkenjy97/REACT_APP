@@ -54,6 +54,7 @@ export function ExpenseFormPage() {
     handleSubmit,
     control,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
@@ -63,8 +64,12 @@ export function ExpenseFormPage() {
       date: today,
       description: '',
       isFixed: false,
+      isFinancing: false,
     },
   });
+
+  const isFixedVal = watch('isFixed');
+  const isFinancingVal = watch('isFinancing');
 
   const handleGeolocate = async () => {
     if (!navigator.geolocation) {
@@ -135,6 +140,10 @@ export function ExpenseFormPage() {
         date: data.date ?? today,
         description: data.description,
         isFixed: data.isFixed,
+        isFinancing: data.isFixed && data.isFinancing ? true : false,
+        totalFinanced: data.isFixed && data.isFinancing ? (data.totalFinanced ?? undefined) : undefined,
+        totalInstallments: data.isFixed && data.isFinancing ? (data.totalInstallments ?? undefined) : undefined,
+        currentInstallment: data.isFixed && data.isFinancing ? (data.currentInstallment ?? undefined) : undefined,
         addedBy: user.displayName || user.email || 'Sconosciuto',
         createdAt: Date.now(),
         location: data.location || (manualAddress ? { lat: 0, lng: 0, label: manualAddress } : null),
@@ -382,24 +391,82 @@ export function ExpenseFormPage() {
         </div>
 
         {/* Fixed Toggle */}
-        <GlassCard className="!p-4 flex items-center justify-between">
-          <div>
-            <p className="font-semibold text-sm">{t('spendless.recurring')}</p>
-            <p className="text-xs text-text-muted">{t('spendless.recurring_desc')}</p>
-          </div>
-          <Controller
-            control={control}
-            name="isFixed"
-            render={({ field }) => (
-              <button type="button" onClick={() => field.onChange(!field.value)} className="text-primary-500">
-                {field.value
-                  ? <ToggleRight size={36} className="text-primary-400" />
-                  : <ToggleLeft size={36} className="text-text-muted" />
-                }
-              </button>
+        <div className="flex flex-col gap-3">
+          <GlassCard className="!p-4 flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-sm">{t('spendless.recurring')}</p>
+              <p className="text-xs text-text-muted">{t('spendless.recurring_desc')}</p>
+            </div>
+            <Controller
+              control={control}
+              name="isFixed"
+              render={({ field }) => (
+                <button type="button" onClick={() => field.onChange(!field.value)} className="text-primary-500">
+                  {field.value
+                    ? <ToggleRight size={36} className="text-primary-400" />
+                    : <ToggleLeft size={36} className="text-text-muted" />
+                  }
+                </button>
+              )}
+            />
+          </GlassCard>
+
+          <AnimatePresence>
+            {isFixedVal && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden flex flex-col gap-3"
+              >
+                <GlassCard className="!p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-sm">È un finanziamento?</p>
+                      <p className="text-xs text-text-muted">Mostra il progresso delle rate pagate</p>
+                    </div>
+                    <Controller
+                      control={control}
+                      name="isFinancing"
+                      render={({ field }) => (
+                        <button type="button" onClick={() => field.onChange(!field.value)} className="text-primary-500">
+                          {field.value
+                            ? <ToggleRight size={36} className="text-primary-400" />
+                            : <ToggleLeft size={36} className="text-text-muted" />
+                          }
+                        </button>
+                      )}
+                    />
+                  </div>
+
+                  <AnimatePresence>
+                    {isFinancingVal && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="grid grid-cols-3 gap-3 overflow-hidden mt-3 pt-3 border-t border-glass-border"
+                      >
+                        <div>
+                          <label className="text-[10px] text-text-muted mb-1 block">Totale (€)</label>
+                          <input type="number" step="0.01" {...register('totalFinanced', { valueAsNumber: true })} className="w-full px-2 py-2 rounded-xl bg-glass-bg border border-glass-border text-xs focus:ring-2 focus:ring-primary-400" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-text-muted mb-1 block">Num. Rate</label>
+                          <input type="number" {...register('totalInstallments', { valueAsNumber: true })} className="w-full px-2 py-2 rounded-xl bg-glass-bg border border-glass-border text-xs focus:ring-2 focus:ring-primary-400" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-text-muted mb-1 block">Rata Attuale</label>
+                          <input type="number" {...register('currentInstallment', { valueAsNumber: true })} className="w-full px-2 py-2 rounded-xl bg-glass-bg border border-glass-border text-xs focus:ring-2 focus:ring-primary-400" />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </GlassCard>
+              </motion.div>
             )}
-          />
-        </GlassCard>
+          </AnimatePresence>
+        </div>
 
         {/* Submit */}
         <motion.button

@@ -1,82 +1,103 @@
 {
-  "app_name": "baseapp",
+  "app_name": "SpendLess",
   "navigation": {
     "home": "ホーム",
     "search": "検索",
     "support": "サポート",
-    "profile": "プロフィールと設定",
-    "notifications": "通知"
+    "profile": "プロフィール",
+    "notifications": "通知",
+    "maps": "マップ"
   },
-  "dashboard": {
-    "title": "ダッシュボード",
-    "subtitle": "最新の概要です。",
-    "item_title": "アイテム概要",
-    "item_desc": "Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.",
-    "view_details": "詳細を見る"
-  },
-  "search": {
-    "placeholder": "検索...",
-    "start_typing": "文字を入力して検索を開始",
-    "desc": "すべてのドキュメントや設定を検索できます。",
-    "filters": {
-      "all": "すべて",
-      "recent": "最近",
-      "favorites": "お気に入り",
-      "archived": "アーカイブ"
+  "spendless": {
+    "greeting": "こんにちは, {{name}} 👋",
+    "days_left": "今月末までの日数",
+    "nav_dashboard": "予算",
+    "nav_history": "履歴",
+    "nav_fixed": "固定費",
+    "nav_profile": "プロフィール",
+    "weekly_budget": "週間予算",
+    "monthly_budget": "月間予算",
+    "remaining": "残り",
+    "spent": "使用済み",
+    "budget": "予算",
+    "this_month": "今月",
+    "avg_daily": "一日の平均",
+    "recent_expenses": "最近の支出",
+    "view_all": "すべて見る",
+    "no_expenses": "記録された支出はありません",
+    "add_first": "+ ボタンで最初の支出を追加しましょう",
+    "add_expense": "新規支出",
+    "add_expense_subtitle": "フィールドに入力するか、レシートをスキャンしてください",
+    "scan_receipt": "カメラでレシートをスキャン",
+    "scan_btn": "レシートスキャン",
+    "amount": "金額",
+    "category": "カテゴリー",
+    "description": "説明",
+    "date": "日付",
+    "recurring": "固定費（定期支出）",
+    "recurring_desc": "毎月自動的に追加",
+    "save_expense": "支出を保存",
+    "history": "支出履歴",
+    "history_subtitle": "すべての取引記録",
+    "fixed_expenses": "固定費",
+    "fixed_expenses_subtitle": "サブスクリプション、家賃、定期的なコスト",
+    "total_fixed": "月間固定費合計",
+    "auto_added": "毎月自動的に追加されます",
+    "no_fixed": "固定費が設定されていません",
+    "add_fixed_hint": "サブスクリプション、家賃、または分割払いを追加",
+    "add_fixed": "固定費を追加",
+    "categories": {
+      "alimentari": "食料品",
+      "trasporti": "交通費",
+      "casa": "住居",
+      "salute": "健康",
+      "intrattenimento": "エンターテイメント",
+      "abbigliamento": "衣類",
+      "ristoranti": "外食",
+      "tecnologia": "テクノロジー",
+      "istruzione": "教育",
+      "altro": "その他"
+    },
+    "badges": {
+      "risparmiatore_master": "節約マスター",
+      "buon_risparmiatore": "節約上手",
+      "attenzione": "支出に注意",
+      "spendaccione": "浪費家",
+      "fuori_budget": "予算オーバー！"
     }
   },
   "profile": {
     "appearance": "外観",
     "theme": "テーマ",
-    "theme_desc": "ライトモードまたはダークモードの切り替え",
+    "theme_desc": "ダークモードまたはライトモードを有効にする",
     "palette": "カラーパレット",
-    "palette_desc": "アプリの色をカスタマイズ",
+    "palette_desc": "アプリケーションの色をカスタマイズ",
     "preferences": "設定",
     "language": "言語",
-    "language_desc": "言語を選択してください",
-    "dev_role": "開発：役割の変更",
-    "dev_role_desc": "異なるユーザー役割のシミュレート",
+    "language_desc": "お好みの言語を選択",
+    "dev_role": "開発者：ロールを変更",
+    "dev_role_desc": "異なるユーザーロールをシミュレート",
     "logout": "ログアウト"
   },
-  "support": {
-    "title": "サポート",
-    "subtitle": "FAQをご覧になるか、ご連絡ください。",
-    "email_us": "メールを送信",
-    "call_us": "電話をかける",
-    "faq": {
-      "q1": "テーマ色の変更方法は？",
-      "a1": "プロフィールタブから設定できます。",
-      "q2": "ソーシャルログインは可能ですか？",
-      "a2": "現在開発中です。",
-      "q3": "ユーザーの役割は？",
-      "a3": "ユーザー、マネージャー、管理者の3つです。"
-    }
-  },
   "auth": {
-    "welcome_back": "お帰りなさい",
+    "welcome_back": "おかえりなさい",
     "create_account": "アカウント作成",
-    "enter_details": "詳細を入力してログイン",
-    "sign_up_start": "サインアップして開始",
+    "enter_details": "ログイン情報を入力してください",
+    "sign_up_start": "登録して開始",
     "full_name": "氏名",
     "email": "メールアドレス",
     "password": "パスワード",
     "sign_in": "ログイン",
-    "sign_up": "サインアップ",
-    "or_continue": "または以下で続行",
-    "no_account": "アカウントがない場合：サインアップ",
-    "have_account": "アカウントがある場合：ログイン",
+    "sign_up": "新規登録",
+    "or_continue": "または次で続行",
+    "no_account": "アカウントをお持ちでないですか？登録",
+    "have_account": "すでにアカウントをお持ちですか？ログイン",
     "invalid_email": "無効なメールアドレス",
-    "password_min": "パスワードは6文字以上"
-  },
-  "notifications_page": {
-    "system_update": "システム更新",
-    "update_desc": "アプリが更新されました。",
-    "hours_ago": "{{count}} 時間前",
-    "hours_ago_plural": "{{count}} 時間前"
+    "password_min": "パスワードは少なくとも6文字である必要があります"
   },
   "not_found": {
     "title": "ページが見つかりません",
-    "desc": "お探しのページは削除されたか、利用できません。",
-    "back": "ホームに戻る"
+    "desc": "お探しのページは削除されたか、一時的に利用できない可能性があります。",
+    "back": "ダッシュボードに戻る"
   }
 }

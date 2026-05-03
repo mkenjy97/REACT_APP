@@ -1,60 +1,86 @@
 {
-  "app_name": "baseapp",
+  "app_name": "SpendLess",
   "navigation": {
     "home": "Home",
     "search": "Search",
     "support": "Support",
-    "profile": "Profile & Settings",
+    "profile": "Profile",
     "notifications": "Notifications",
     "maps": "Map"
   },
-  "dashboard": {
-    "title": "Dashboard",
-    "subtitle": "Here's your latest overview.",
-    "item_title": "Item overview",
-    "item_desc": "Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.",
-    "view_details": "View Details"
-  },
-  "search": {
-    "placeholder": "Search anything...",
-    "start_typing": "Start typing to search",
-    "desc": "You can search across all your documents, contacts, and settings.",
-    "filters": {
-      "all": "All",
-      "recent": "Recent",
-      "favorites": "Favorites",
-      "archived": "Archived"
+  "spendless": {
+    "greeting": "Hello, {{name}} 👋",
+    "days_left": "days left in the month",
+    "nav_dashboard": "Budget",
+    "nav_history": "History",
+    "nav_fixed": "Fixed",
+    "nav_profile": "Profile",
+    "weekly_budget": "Weekly Budget",
+    "monthly_budget": "Monthly Budget",
+    "remaining": "Remaining",
+    "spent": "Spent",
+    "budget": "Budget",
+    "this_month": "This month",
+    "avg_daily": "Daily average",
+    "recent_expenses": "Recent Expenses",
+    "view_all": "View all",
+    "no_expenses": "No expenses recorded",
+    "add_first": "Add your first expense with the + button",
+    "add_expense": "New Expense",
+    "add_expense_subtitle": "Fill in the fields or scan the receipt",
+    "scan_receipt": "Scan the receipt with the camera",
+    "scan_btn": "Scan Receipt",
+    "amount": "Amount",
+    "category": "Category",
+    "description": "Description",
+    "date": "Date",
+    "recurring": "Recurring Expense",
+    "recurring_desc": "Add automatically every month",
+    "save_expense": "Save Expense",
+    "history": "Expense History",
+    "history_subtitle": "All your transactions",
+    "fixed_expenses": "Fixed Expenses",
+    "fixed_expenses_subtitle": "Subscriptions, rent and recurring costs",
+    "total_fixed": "Total Monthly Fixed",
+    "auto_added": "Added automatically every month",
+    "no_fixed": "No fixed expenses configured",
+    "add_fixed_hint": "Add subscriptions, rent or installments",
+    "add_fixed": "Add Fixed Expense",
+    "categories": {
+      "alimentari": "Groceries",
+      "trasporti": "Transportation",
+      "casa": "Home",
+      "salute": "Health",
+      "intrattenimento": "Entertainment",
+      "abbigliamento": "Clothing",
+      "ristoranti": "Restaurants",
+      "tecnologia": "Technology",
+      "istruzione": "Education",
+      "altro": "Other"
+    },
+    "badges": {
+      "risparmiatore_master": "Master Saver",
+      "buon_risparmiatore": "Good Saver",
+      "attenzione": "Watch your Spending",
+      "spendaccione": "Big Spender",
+      "fuori_budget": "Over Budget!"
     }
   },
   "profile": {
     "appearance": "Appearance",
     "theme": "Theme",
-    "theme_desc": "Toggle dark or light mode",
+    "theme_desc": "Activate dark or light mode",
     "palette": "Color Palette",
-    "palette_desc": "Customize your application colors",
+    "palette_desc": "Customize application colors",
     "preferences": "Preferences",
     "language": "Language",
     "language_desc": "Choose your preferred language",
     "dev_role": "Dev: Change Role",
     "dev_role_desc": "Simulate different user roles",
-    "logout": "Log Out"
-  },
-  "support": {
-    "title": "How can we help?",
-    "subtitle": "Browse the FAQ or get in touch below.",
-    "email_us": "Email Us",
-    "call_us": "Call Us",
-    "faq": {
-      "q1": "How do I change my primary theme color?",
-      "a1": "Go to your Profile tab. Under Appearance settings, you'll find a 'Primary Color' section where you can choose a preset or pick a custom color.",
-      "q2": "Can I use social logins?",
-      "a2": "Currently, social logins (Google, Apple, Github, Microsoft) are in development and will be activated in a future update.",
-      "q3": "What are the different user roles?",
-      "a3": "There are three roles: User, Manager, and Admin. Admins have access to global settings, Managers can edit app data, and Users have basic read access to app data."
-    }
+    "logout": "Logout"
   },
   "auth": {
-    "welcome_back": "Welcome Back",
+    "welcome_back": "Welcome back",
     "create_account": "Create Account",
     "enter_details": "Enter your details to sign in",
     "sign_up_start": "Sign up to get started",
@@ -67,17 +93,11 @@
     "no_account": "Don't have an account? Sign up",
     "have_account": "Already have an account? Sign in",
     "invalid_email": "Invalid email address",
-    "password_min": "Password must be at least 6 characters"
-  },
-  "notifications_page": {
-    "system_update": "System Update",
-    "update_desc": "Your application has been updated with the newest features.",
-    "hours_ago": "{{count}} hour ago",
-    "hours_ago_plural": "{{count}} hours ago"
+    "password_min": "Password must contain at least 6 characters"
   },
   "not_found": {
     "title": "Page Not Found",
-    "desc": "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
-    "back": "Back to Home"
+    "desc": "The page you are looking for might have been removed or is temporarily unavailable.",
+    "back": "Back to Dashboard"
   }
 }
