@@ -192,7 +192,7 @@ type FilterPeriod = 'week' | 'month' | 'all';
 
 export function ExpenseHistoryPage() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { expenses, deleteExpense, updateExpense, privacyMode, settings } = useBudgetStore();
   const [period, setPeriod] = useState<FilterPeriod>('month');
 
@@ -306,7 +306,7 @@ export function ExpenseHistoryPage() {
       ) : (
         <motion.div variants={STAGGER_CONTAINER} initial="initial" animate="animate" className="flex flex-col gap-4">
           {Object.entries(grouped).map(([date, items]) => {
-            const dateLabel = new Date(date).toLocaleDateString('it-IT', {
+            const dateLabel = new Date(date).toLocaleDateString(i18n.language, {
               weekday: 'short', day: 'numeric', month: 'short',
             });
             const dayTotal = items.reduce((s, e) => s + e.amount, 0);

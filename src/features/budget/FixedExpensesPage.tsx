@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Plus, Trash2, RepeatIcon, ChevronLeft, Edit2, X, Check, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Trash2, RepeatIcon, ChevronLeft, Edit2, X, Check, ToggleLeft, ToggleRight, Calculator, CheckSquare, Square } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useBudgetStore } from '@/store/useBudgetStore';
@@ -30,6 +30,9 @@ function FixedExpenseRow({
   currency,
   onDelete,
   onEdit,
+  isSelectionMode,
+  isSelected,
+  onToggleSelect,
 }: {
   id: string;
   amount: number;
@@ -44,6 +47,9 @@ function FixedExpenseRow({
   currency: string;
   onDelete: (id: string) => void;
   onEdit: (id: string, data: Partial<ExpenseFormData>) => void;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }) {
   const { t } = useTranslation();
   const catConf = DEFAULT_CATEGORIES.find(c => c.name === category as any);
@@ -127,9 +133,18 @@ function FixedExpenseRow({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20, height: 0 }}
       transition={TRANSITIONS.spring}
-      className="flex items-center justify-between py-3 border-b border-glass-border last:border-0"
+      className={cn(
+        "flex items-center justify-between py-3 border-b border-glass-border last:border-0 transition-colors",
+        isSelected && "bg-primary-500/5 -mx-2 px-2 rounded-lg"
+      )}
+      onClick={() => isSelectionMode && onToggleSelect?.(id)}
     >
       <div className="flex items-center gap-3 w-[60%] overflow-hidden">
+        {isSelectionMode && (
+          <div className="flex-shrink-0 text-primary-400">
+            {isSelected ? <CheckSquare size={20} /> : <Square size={20} className="text-text-muted opacity-50" />}
+          </div>
+        )}
         <span className="text-xl flex-shrink-0">{catConf?.icon ?? '🔁'}</span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold truncate">{description}</p>
@@ -182,6 +197,8 @@ export function FixedExpensesPage() {
   const { expenses, addExpense, deleteExpense, updateExpense, settings } = useBudgetStore();
   const [showForm, setShowForm] = useState(false);
   const [groupBy, setGroupBy] = useState<'financing' | 'account' | 'category'>('financing');
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const currency = settings?.currency ?? '€';
   const fixedExpenses = expenses.filter(e => e.isFixed);
@@ -272,9 +289,22 @@ export function FixedExpensesPage() {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectedExpenses = fixedExpenses.filter(e => selectedIds.has(e.id));
+  const selectedTotal = selectedExpenses.reduce((s, e) => s + e.amount, 0);
+
   return (
-    <motion.div
-      variants={PAGE_VARIANTS}
+    <>
+      <motion.div
+        variants={PAGE_VARIANTS}
       initial="initial"
       animate="animate"
       exit="exit"
@@ -285,13 +315,26 @@ export function FixedExpensesPage() {
         <button onClick={() => navigate(-1)} className="p-2 glass-button" aria-label={t('common.back')}>
           <ChevronLeft size={20} />
         </button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-xl font-bold flex items-center gap-2">
             <RepeatIcon size={20} className="text-purple-400" />
             {t('spendless.fixed_expenses')}
           </h1>
           <p className="text-xs text-text-muted">{t('spendless.fixed_expenses_subtitle')}</p>
         </div>
+        <button 
+          onClick={() => {
+            setIsSelectionMode(!isSelectionMode);
+            if (isSelectionMode) setSelectedIds(new Set());
+          }}
+          className={cn(
+            "p-2 rounded-xl transition-all",
+            isSelectionMode ? "bg-primary-500 text-white shadow-lg" : "glass-button text-text-muted"
+          )}
+          aria-label={t('spendless.selection_mode')}
+        >
+          <Calculator size={20} />
+        </button>
       </div>
 
       {/* Summary card */}
@@ -371,11 +414,16 @@ export function FixedExpensesPage() {
                       currency={currency}
                       onDelete={handleDelete}
                       onEdit={handleEdit}
+                      isSelectionMode={isSelectionMode}
+                      isSelected={selectedIds.has(e.id)}
+                      onToggleSelect={toggleSelect}
                     />
                   ))}
               </div>
             ))}
         </AnimatePresence>
+
+
 
         {/* Add Fixed Expense Form */}
         <AnimatePresence>
@@ -534,6 +582,31 @@ export function FixedExpensesPage() {
           {t('spendless.add_fixed')}
         </motion.button>
       )}
-    </motion.div>
+      </motion.div>
+
+      {/* Floating Selection Sum Bar (Fixed at bottom) */}
+      <AnimatePresence>
+        {isSelectionMode && selectedIds.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
+            className="fixed bottom-24 left-4 right-4 z-[60]"
+          >
+            <GlassCard className="!p-4 bg-primary-500/20 border-primary-500/40 backdrop-blur-xl shadow-2xl flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-primary-400 uppercase tracking-widest">{t('spendless.selected_count', { count: selectedIds.size })}</span>
+                <span className="text-xs text-text-muted">{t('spendless.total_selected')}</span>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-bold text-primary-400 tabular-nums">
+                  {currency}{selectedTotal.toFixed(2)}
+                </span>
+              </div>
+            </GlassCard>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

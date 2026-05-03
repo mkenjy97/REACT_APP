@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { ChevronDown, Plus, X, Edit2, TrendingUp, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { useTranslation } from 'react-i18next';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { incomeSchema, type IncomeFormData } from '@/validation/budget.schema';
 import { toast } from 'sonner';
@@ -14,7 +14,7 @@ import { PAGE_VARIANTS, STAGGER_CONTAINER, STAGGER_ITEM } from '@/constants/anim
 import { DEFAULT_CATEGORIES } from '@/types/budget.types';
 
 export function RecapPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuthStore();
   const { expenses, incomes, settings, addIncome, deleteIncome, updateIncome, privacyMode } = useBudgetStore();
 
@@ -125,7 +125,7 @@ export function RecapPage() {
       <section>
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">
-            {t('spendless.income_details')} ({now.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })})
+            {t('spendless.income_details')} ({now.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' })})
           </h2>
           <button
             onClick={() => {

@@ -30,6 +30,7 @@
     "nav_dashboard": "Budget",
     "nav_history": "Storico",
     "nav_fixed": "Fissi",
+    "nav_recap": "Recap",
     "nav_profile": "Profilo",
     "weekly_budget": "Budget Settimanale",
     "monthly_budget": "Budget Mensile",
@@ -37,6 +38,8 @@
     "spent": "Speso",
     "budget": "Budget",
     "this_month": "Questo mese",
+    "this_week": "Questa settimana",
+    "all": "Tutte",
     "avg_daily": "Media giornaliera",
     "recent_expenses": "Spese Recenti",
     "view_all": "Vedi tutte",
@@ -83,6 +86,7 @@
     "join_family": "Unisciti a una famiglia",
     "family_code_placeholder": "Codice famiglia...",
     "join_btn": "Unisciti",
+    "join_family_success": "Ti sei unito alla famiglia con successo!",
     "in_shared_group": "Sei in un gruppo famiglia condiviso.",
     "group_members": "Membri del gruppo",
     "categories": {
@@ -104,7 +108,10 @@
       "spendaccione": "Spendaccione",
       "fuori_budget": "Fuori Budget!"
     },
-    "auto_prefix": "Auto"
+    "auto_prefix": "Auto",
+    "selection_mode": "Modalità Selezione",
+    "selected_count": "{{count}} selezionati",
+    "total_selected": "Totale Selezionato"
   },
   "profile": {
     "account": "Account",
@@ -119,6 +126,7 @@
     "new_password": "Nuova password",
     "confirm_new_password": "Conferma nuova password",
     "update_password_btn": "Aggiorna password",
+    "success_password_update": "Password aggiornata con successo.",
     "app_colors": "Colori App",
     "app_colors_desc": "Personalizza la palette (Chiaro/Scuro)",
     "choose_preset": "Scegli un Preset",
@@ -156,6 +164,7 @@
     "no_account": "Non hai un account? Registrati",
     "have_account": "Hai già un account? Accedi",
     "invalid_email": "Indirizzo email non valido",
+    "unauthenticated": "Utente non autenticato.",
     "password_min": "La password deve contenere almeno 6 caratteri",
     "password_mismatch": "Le password non coincidono",
     "password_too_short": "La nuova password deve essere almeno 6 caratteri",

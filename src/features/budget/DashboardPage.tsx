@@ -156,7 +156,7 @@ import { useState, useEffect } from 'react';
 export function DashboardPage() {
   const { user } = useAuthStore();
   const { summary, budget, expenses, incomes, privacyMode, togglePrivacyMode, settings, saveSettings, removeFamilyMember } = useBudgetStore();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [showFamilyCode, setShowFamilyCode] = useState(false);
   const [joinCode, setJoinCode] = useState('');
@@ -218,7 +218,7 @@ export function DashboardPage() {
   const currency = settings?.currency ?? '€';
   const now = new Date();
   const monthKey = getMonthKey(now);
-  const monthName = now.toLocaleDateString('it-IT', { month: 'long' });
+  const monthName = now.toLocaleDateString(i18n.language, { month: 'long' });
   const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   const daysRemaining = lastDayOfMonth.getDate() - now.getDate();
 
@@ -517,7 +517,7 @@ export function DashboardPage() {
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={TRANSITIONS.bounce}
-        aria-label="Aggiungi spesa"
+        aria-label={t('spendless.add_expense')}
         id="fab-add-expense"
       >
         <Plus size={26} strokeWidth={2.5} />

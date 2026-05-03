@@ -81,14 +81,14 @@ export function ProfilePage() {
     try {
       const firebaseUser = authService.getCurrentUser();
       if (!firebaseUser || !firebaseUser.email) {
-        throw new Error('Utente non autenticato.');
+        throw new Error(t('auth.unauthenticated'));
       }
 
       const credential = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
       await reauthenticateWithCredential(firebaseUser, credential);
       await updatePassword(firebaseUser, newPassword);
 
-      toast.success('Password aggiornata con successo.');
+      toast.success(t('profile.success_password_update'));
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
