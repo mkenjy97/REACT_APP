@@ -41,6 +41,7 @@ function HistoryExpenseRow({ e, currency, privacyMode, onDelete, onEdit }: {
   onDelete: (id: string) => void;
   onEdit: (id: string, data: Partial<ExpenseFormData> & { location?: GeoLocation | null }) => void;
 }) {
+  const { t } = useTranslation();
   const cat = DEFAULT_CATEGORIES.find(c => c.name === e.category);
   const [isEditing, setIsEditing] = useState(false);
   const [editLocation, setEditLocation] = useState<GeoLocation | null>(e.location ?? null);
@@ -60,7 +61,7 @@ function HistoryExpenseRow({ e, currency, privacyMode, onDelete, onEdit }: {
 
   const handleGeolocate = async () => {
     if (!navigator.geolocation) {
-      toast.error('Geolocalizzazione non supportata dal browser.');
+      toast.error(t('spendless.geo_not_supported'));
       return;
     }
     setGeoLoading(true);
@@ -71,11 +72,11 @@ function HistoryExpenseRow({ e, currency, privacyMode, onDelete, onEdit }: {
         const geo: GeoLocation = { lat, lng, label };
         setEditLocation(geo);
         setManualAddress(label);
-        toast.success(`Posizione aggiornata: ${label}`);
+        toast.success(`${t('spendless.location')}: ${label}`);
         setGeoLoading(false);
       },
       (err) => {
-        toast.error(`Impossibile ottenere la posizione: ${err.message}`);
+        toast.error(`${t('auth.generic_error')}: ${err.message}`);
         setGeoLoading(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -107,7 +108,7 @@ function HistoryExpenseRow({ e, currency, privacyMode, onDelete, onEdit }: {
               {DEFAULT_CATEGORIES.map(c => <option key={c.name} value={c.name}>{c.icon} {c.name}</option>)}
             </select>
           </div>
-          <input type="text" {...register('description')} className="w-full px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" placeholder="Descrizione" />
+          <input type="text" {...register('description')} className="w-full px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" placeholder={t('spendless.description')} />
           <input type="date" {...register('date')} className="w-full px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" />
 
           {/* Refined Geolocation in edit mode */}
@@ -116,7 +117,7 @@ function HistoryExpenseRow({ e, currency, privacyMode, onDelete, onEdit }: {
               <MapPin size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-muted" />
               <input
                 type="text"
-                placeholder="Indirizzo manuale..."
+                placeholder={t('spendless.location')}
                 value={manualAddress}
                 onChange={(e) => handleManualAddressChange(e.target.value)}
                 className="w-full pl-7 pr-7 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-xs focus:outline-none focus:ring-1 focus:ring-primary-400"
@@ -134,7 +135,7 @@ function HistoryExpenseRow({ e, currency, privacyMode, onDelete, onEdit }: {
               className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-primary-500/10 border border-primary-500/30 text-primary-400 text-[10px] font-bold transition hover:bg-primary-500/20 disabled:opacity-50"
             >
               {geoLoading ? <Loader2 size={12} className="animate-spin" /> : <Navigation size={12} />}
-              {geoLoading ? 'Rilevamento...' : 'Rileva posizione attuale'}
+              {geoLoading ? `${t('common.loading')}...` : t('spendless.detect_location')}
             </button>
           </div>
 
@@ -154,7 +155,7 @@ function HistoryExpenseRow({ e, currency, privacyMode, onDelete, onEdit }: {
         <div>
           <p className="text-sm font-medium">{e.description}</p>
           <p className="text-xs text-text-muted capitalize">
-            {e.category} {e.addedBy && ` • di ${e.addedBy}`}
+            {t(`spendless.categories.${e.category}`)} {e.addedBy && ` • ${e.addedBy}`}
           </p>
           {e.location && (
             <p className="text-xs text-primary-400 flex items-center gap-0.5 mt-0.5">
@@ -171,14 +172,14 @@ function HistoryExpenseRow({ e, currency, privacyMode, onDelete, onEdit }: {
         <button
           onClick={() => setIsEditing(true)}
           className="p-1 rounded-full text-text-muted hover:bg-glass-border transition"
-          aria-label="Modifica"
+          aria-label={t('common.edit')}
         >
           <Edit2 size={14} />
         </button>
         <button
           onClick={() => onDelete(e.id)}
           className="p-1 rounded-full text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition"
-          aria-label="Elimina"
+          aria-label={t('common.remove')}
         >
           ×
         </button>
@@ -240,9 +241,9 @@ export function ExpenseHistoryPage() {
       if (partialExpense.location === null) partialExpense.location = null; // explicit null = removed
 
       await updateExpense(id, partialExpense);
-      toast.success('Spesa aggiornata.');
+      toast.success(t('common.success'));
     } catch {
-      toast.error('Errore nell\'aggiornamento.');
+      toast.error(t('auth.generic_error'));
     }
   };
 
@@ -256,7 +257,7 @@ export function ExpenseHistoryPage() {
     >
       {/* Header */}
       <div className="flex items-center gap-3 pt-2">
-        <button onClick={() => navigate(-1)} className="p-2 glass-button" aria-label="Indietro">
+        <button onClick={() => navigate(-1)} className="p-2 glass-button" aria-label={t('common.back')}>
           <ChevronLeft size={20} />
         </button>
         <div>
@@ -278,7 +279,7 @@ export function ExpenseHistoryPage() {
                 : 'glass-button'
             )}
           >
-            {p === 'week' ? 'Settimana' : p === 'month' ? 'Mese' : 'Tutto'}
+            {p === 'week' ? t('spendless.this_week') : p === 'month' ? t('spendless.this_month') : t('spendless.all')}
           </button>
         ))}
       </div>
@@ -286,7 +287,7 @@ export function ExpenseHistoryPage() {
       {/* Total */}
       <GlassCard className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-text-muted uppercase tracking-widest">Totale Periodo</p>
+          <p className="text-xs text-text-muted uppercase tracking-widest">{t('spendless.history')}</p>
           <p className={cn('text-3xl font-bold text-red-400 tabular-nums mt-1', {
             'blur-md select-none': privacyMode,
           })}>
@@ -300,7 +301,7 @@ export function ExpenseHistoryPage() {
       {Object.keys(grouped).length === 0 ? (
         <GlassCard className="text-center py-10">
           <p className="text-4xl mb-3">🗓️</p>
-          <p className="font-medium text-text-muted">Nessuna spesa in questo periodo</p>
+          <p className="font-medium text-text-muted">{t('spendless.no_expenses')}</p>
         </GlassCard>
       ) : (
         <motion.div variants={STAGGER_CONTAINER} initial="initial" animate="animate" className="flex flex-col gap-4">

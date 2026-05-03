@@ -73,7 +73,7 @@ export function ExpenseFormPage() {
 
   const handleGeolocate = async () => {
     if (!navigator.geolocation) {
-      toast.error('Geolocalizzazione non supportata dal browser.');
+      toast.error(t('spendless.geo_not_supported'));
       return;
     }
     setGeoLoading(true);
@@ -85,11 +85,11 @@ export function ExpenseFormPage() {
         setLocation(geo);
         setManualAddress(label);
         setValue('location', geo);
-        toast.success(`Posizione rilevata: ${label}`);
+        toast.success(`${t('spendless.location')}: ${label}`);
         setGeoLoading(false);
       },
       (err) => {
-        toast.error(`Impossibile ottenere la posizione: ${err.message}`);
+        toast.error(`${t('auth.generic_error')}: ${err.message}`);
         setGeoLoading(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -119,13 +119,13 @@ export function ExpenseFormPage() {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    toast.info('Analisi scontrino in corso…');
+    toast.info(t('spendless.scan_receipt'));
     const amount = await extractAmount(file);
     if (amount !== null) {
       setValue('amount', amount, { shouldValidate: true });
-      toast.success(`Importo rilevato: €${amount.toFixed(2)}`);
+      toast.success(`${t('spendless.amount')}: €${amount.toFixed(2)}`);
     } else {
-      toast.error('Impossibile rilevare l\'importo. Inseriscilo manualmente.');
+      toast.error(t('spendless.ocr_error'));
     }
   };
 
@@ -141,10 +141,10 @@ export function ExpenseFormPage() {
         description: data.description,
         isFixed: data.isFixed,
         isFinancing: data.isFixed && data.isFinancing ? true : false,
-        totalFinanced: data.isFixed && data.isFinancing ? (data.totalFinanced ?? undefined) : undefined,
-        totalInstallments: data.isFixed && data.isFinancing ? (data.totalInstallments ?? undefined) : undefined,
-        currentInstallment: data.isFixed && data.isFinancing ? (data.currentInstallment ?? undefined) : undefined,
-        addedBy: user.displayName || user.email || 'Sconosciuto',
+        totalFinanced: (data.isFixed && data.isFinancing && typeof data.totalFinanced === 'number') ? data.totalFinanced : undefined,
+        totalInstallments: (data.isFixed && data.isFinancing && typeof data.totalInstallments === 'number') ? data.totalInstallments : undefined,
+        currentInstallment: (data.isFixed && data.isFinancing && typeof data.currentInstallment === 'number') ? data.currentInstallment : undefined,
+        addedBy: user.displayName || user.email || t('common.loading'),
         createdAt: Date.now(),
         location: data.location || (manualAddress ? { lat: 0, lng: 0, label: manualAddress } : null),
       });
@@ -152,16 +152,16 @@ export function ExpenseFormPage() {
       // Check if weekly budget exceeded
       const newWeeklyTotal = (summary?.totalSpentThisWeek ?? 0) + data.amount;
       if (newWeeklyTotal > budget.weeklyLimit) {
-        toast.warning(`⚠️ Budget settimanale superato! Speso ${newWeeklyTotal.toFixed(2)}€ su ${budget.weeklyLimit}€`, {
+        toast.warning(`⚠️ ${t('spendless.weekly_budget')} ${t('spendless.remaining').toLowerCase()}! ${newWeeklyTotal.toFixed(2)}€ / ${budget.weeklyLimit}€`, {
           duration: 5000,
         });
       } else {
-        toast.success('Spesa aggiunta!');
+        toast.success(t('common.success'));
       }
 
       navigate('/');
     } catch {
-      toast.error('Errore nel salvataggio. Riprova.');
+      toast.error(t('auth.generic_error'));
     }
   };
 
@@ -175,7 +175,7 @@ export function ExpenseFormPage() {
     >
       {/* Header */}
       <div className="flex items-center gap-3 pt-2">
-        <button onClick={() => navigate(-1)} className="p-2 glass-button" aria-label="Indietro">
+        <button onClick={() => navigate(-1)} className="p-2 glass-button" aria-label={t('common.back')}>
           <ChevronLeft size={20} />
         </button>
         <div>
@@ -205,10 +205,10 @@ export function ExpenseFormPage() {
                 <Camera size={16} />
               )}
               {ocrStatus === 'processing'
-                ? `Analisi… ${ocrProgress}%`
+                ? `${t('common.loading')}… ${ocrProgress}%`
                 : ocrStatus === 'done'
-                ? 'Completato'
-                : 'Fotocamera'}
+                ? t('common.success')
+                : t('spendless.camera')}
             </motion.button>
             <motion.button
               type="button"
@@ -225,10 +225,10 @@ export function ExpenseFormPage() {
                 <Image size={16} />
               )}
               {ocrStatus === 'processing'
-                ? `Analisi…`
+                ? `${t('common.loading')}…`
                 : ocrStatus === 'done'
-                ? 'Completato'
-                : 'Libreria'}
+                ? t('common.success')
+                : t('spendless.gallery')}
             </motion.button>
           </div>
 
@@ -240,7 +240,7 @@ export function ExpenseFormPage() {
             capture="environment"
             className="hidden"
             onChange={handleImageChange}
-            aria-label="Scatta foto scontrino"
+            aria-label={t('spendless.camera')}
           />
           <input
             ref={galleryInputRef}
@@ -248,7 +248,7 @@ export function ExpenseFormPage() {
             accept="image/*"
             className="hidden"
             onChange={handleImageChange}
-            aria-label="Carica scontrino da libreria"
+            aria-label={t('spendless.gallery')}
           />
 
           {/* OCR progress bar */}
@@ -313,7 +313,7 @@ export function ExpenseFormPage() {
                     )}
                   >
                     <span className="text-xl">{cat.icon}</span>
-                    <span className="text-[9px] leading-tight text-center capitalize">{cat.name}</span>
+                    <span className="text-[9px] leading-tight text-center capitalize">{t(`spendless.categories.${cat.name}`)}</span>
                   </button>
                 ))}
               </div>
@@ -328,7 +328,7 @@ export function ExpenseFormPage() {
           <input
             type="text"
             id="expense-description"
-            placeholder="es. Spesa al supermercato"
+            placeholder={t('spendless.description')}
             className={cn(
               'w-full px-4 py-3 rounded-2xl bg-glass-bg border focus:outline-none focus:ring-2 focus:ring-primary-400 transition',
               errors.description ? 'border-red-500' : 'border-glass-border'
@@ -355,13 +355,13 @@ export function ExpenseFormPage() {
 
         {/* Geolocation */}
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-semibold text-text-muted pl-1">Posizione</label>
+          <label className="text-sm font-semibold text-text-muted pl-1">{t('spendless.location')}</label>
           <div className="flex flex-col gap-2">
             <div className="relative">
               <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
               <input
                 type="text"
-                placeholder="Inserisci indirizzo o geolocalizza..."
+                placeholder={t('spendless.location')}
                 value={manualAddress}
                 onChange={(e) => handleManualAddressChange(e.target.value)}
                 className="w-full pl-10 pr-10 py-3 rounded-2xl bg-glass-bg border border-glass-border focus:outline-none focus:ring-2 focus:ring-primary-400 transition text-sm"
@@ -385,7 +385,7 @@ export function ExpenseFormPage() {
               className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary-500/10 border border-primary-500/30 text-primary-400 text-xs font-bold transition hover:bg-primary-500/20 disabled:opacity-50"
             >
               {geoLoading ? <Loader2 size={14} className="animate-spin" /> : <Navigation size={14} />}
-              {geoLoading ? 'Rilevamento...' : 'Rileva posizione attuale'}
+              {geoLoading ? `${t('common.loading')}...` : t('spendless.detect_location')}
             </motion.button>
           </div>
         </div>
@@ -422,8 +422,8 @@ export function ExpenseFormPage() {
                 <GlassCard className="!p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold text-sm">È un finanziamento?</p>
-                      <p className="text-xs text-text-muted">Mostra il progresso delle rate pagate</p>
+                      <p className="font-semibold text-sm">{t('spendless.is_financing')}</p>
+                      <p className="text-xs text-text-muted">{t('spendless.recurring_desc')}</p>
                     </div>
                     <Controller
                       control={control}
@@ -448,15 +448,15 @@ export function ExpenseFormPage() {
                         className="grid grid-cols-3 gap-3 overflow-hidden mt-3 pt-3 border-t border-glass-border"
                       >
                         <div>
-                          <label className="text-[10px] text-text-muted mb-1 block">Totale (€)</label>
+                          <label className="text-[10px] text-text-muted mb-1 block">{t('spendless.amount')} (€)</label>
                           <input type="number" step="0.01" {...register('totalFinanced', { valueAsNumber: true })} className="w-full px-2 py-2 rounded-xl bg-glass-bg border border-glass-border text-xs focus:ring-2 focus:ring-primary-400" />
                         </div>
                         <div>
-                          <label className="text-[10px] text-text-muted mb-1 block">Num. Rate</label>
+                          <label className="text-[10px] text-text-muted mb-1 block">{t('spendless.total_installments')}</label>
                           <input type="number" {...register('totalInstallments', { valueAsNumber: true })} className="w-full px-2 py-2 rounded-xl bg-glass-bg border border-glass-border text-xs focus:ring-2 focus:ring-primary-400" />
                         </div>
                         <div>
-                          <label className="text-[10px] text-text-muted mb-1 block">Rata Attuale</label>
+                          <label className="text-[10px] text-text-muted mb-1 block">{t('spendless.current_installment')}</label>
                           <input type="number" {...register('currentInstallment', { valueAsNumber: true })} className="w-full px-2 py-2 rounded-xl bg-glass-bg border border-glass-border text-xs focus:ring-2 focus:ring-primary-400" />
                         </div>
                       </motion.div>

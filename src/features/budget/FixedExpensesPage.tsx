@@ -45,6 +45,7 @@ function FixedExpenseRow({
   onDelete: (id: string) => void;
   onEdit: (id: string, data: Partial<ExpenseFormData>) => void;
 }) {
+  const { t } = useTranslation();
   const catConf = DEFAULT_CATEGORIES.find(c => c.name === category as any);
   const [isEditing, setIsEditing] = useState(false);
   const { register, handleSubmit, reset, watch, control } = useForm<ExpenseFormData>({
@@ -80,18 +81,18 @@ function FixedExpenseRow({
               {DEFAULT_CATEGORIES.map(c => <option key={c.name} value={c.name}>{c.icon} {c.name}</option>)}
             </select>
           </div>
-          <input type="text" {...register('description')} className="w-full px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" placeholder="Descrizione" />
+          <input type="text" {...register('description')} className="w-full px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" placeholder={t('spendless.description')} />
 
           <div className="flex gap-2">
-            <input type="number" min="1" max="31" {...register('billingDay', { valueAsNumber: true })} className="w-1/3 px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" placeholder="Giorno (es. 15)" />
-            <input type="text" list={`account-suggestions-${id}`} {...register('accountSource')} className="w-2/3 px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" placeholder="Conto/Carta" />
+            <input type="number" min="1" max="31" {...register('billingDay', { valueAsNumber: true })} className="w-1/3 px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" placeholder={t('spendless.date')} />
+            <input type="text" list={`account-suggestions-${id}`} {...register('accountSource')} className="w-2/3 px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" placeholder={t('spendless.group_account')} />
             <datalist id={`account-suggestions-${id}`}>
               {/* Note: In a real app we'd pass uniqueAccounts down, but standard browser autofill also helps */}
             </datalist>
           </div>
 
           <div className="flex items-center justify-between p-2 mt-1 bg-glass-bg rounded-lg border border-glass-border">
-            <span className="text-xs font-semibold text-text-muted">È un finanziamento?</span>
+            <span className="text-xs font-semibold text-text-muted">{t('spendless.is_financing')}</span>
             <Controller
               control={control}
               name="isFinancing"
@@ -104,9 +105,9 @@ function FixedExpenseRow({
           </div>
           {isFinancingVal && (
             <div className="grid grid-cols-3 gap-2 mt-1">
-              <input type="number" step="0.01" {...register('totalFinanced', { valueAsNumber: true })} className="px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-xs" placeholder="Tot. Finanziato" />
-              <input type="number" {...register('totalInstallments', { valueAsNumber: true })} className="px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-xs" placeholder="N. Rate" />
-              <input type="number" {...register('currentInstallment', { valueAsNumber: true })} className="px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-xs" placeholder="Rata Attuale" />
+              <input type="number" step="0.01" {...register('totalFinanced', { valueAsNumber: true })} className="px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-xs" placeholder={t('spendless.total_financed')} />
+              <input type="number" {...register('totalInstallments', { valueAsNumber: true })} className="px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-xs" placeholder={t('spendless.total_installments')} />
+              <input type="number" {...register('currentInstallment', { valueAsNumber: true })} className="px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-xs" placeholder={t('spendless.current_installment')} />
             </div>
           )}
 
@@ -133,7 +134,7 @@ function FixedExpenseRow({
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold truncate">{description}</p>
           <p className="text-xs text-text-muted capitalize truncate">
-            {category} {billingDay && ` • Giorno ${billingDay}`} {accountSource && ` • ${accountSource}`}
+            {t(`spendless.categories.${category}`)} {billingDay && ` • ${t('spendless.date')} ${billingDay}`} {accountSource && ` • ${accountSource}`}
           </p>
           {isFinancing && totalInstallments && (
             <div className="w-full mt-1.5 bg-glass-border rounded-full h-1 overflow-hidden flex">
@@ -145,13 +146,13 @@ function FixedExpenseRow({
           )}
           {isFinancing && (
             <p className="text-[9px] text-primary-400 mt-0.5 font-medium truncate">
-              Rata {currentInstallment ?? 0} di {totalInstallments ?? '?'} {totalFinanced ? `• Tot: ${currency}${totalFinanced}` : ''}
+              {t('spendless.installments_progress', { current: currentInstallment ?? 0, total: totalInstallments ?? '?' })} {totalFinanced ? `• ${t('spendless.spent')}: ${currency}${totalFinanced}` : ''}
             </p>
           )}
         </div>
       </div>
       <div className="flex flex-col items-end gap-1 flex-shrink-0">
-        <span className="font-bold text-sm text-red-400 tabular-nums">{currency}{amount.toFixed(2)}/mese</span>
+        <span className="font-bold text-sm text-red-400 tabular-nums">{currency}{amount.toFixed(2)}/{t('spendless.this_month').toLowerCase()}</span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setIsEditing(true)}
@@ -188,14 +189,14 @@ export function FixedExpensesPage() {
   const uniqueAccounts = Array.from(new Set(expenses.map(e => e.accountSource).filter(Boolean))) as string[];
 
   const groupedFixedExpenses = fixedExpenses.reduce((acc, expense) => {
-    let key = 'Altro';
+    let key = t('spendless.categories.altro');
     if (groupBy === 'financing') {
-      key = expense.isFinancing ? 'Finanziamenti' : 'Non Finanziamenti';
+      key = expense.isFinancing ? t('spendless.group_financing') : t('spendless.non_financing');
     }
     else if (groupBy === 'category') {
-      key = expense.category || 'Altro';
+      key = t(`spendless.categories.${expense.category}`) || t('spendless.categories.altro');
     } else if (groupBy === 'account') {
-      key = expense.accountSource || 'Altro';
+      key = expense.accountSource || t('spendless.categories.altro');
     }
     if (!acc[key]) acc[key] = [];
     acc[key].push(expense);
@@ -234,29 +235,29 @@ export function FixedExpensesPage() {
         date: data.date ?? new Date().toISOString().split('T')[0],
         description: data.description,
         isFixed: true,
-        billingDay: data.billingDay ?? undefined,
+        billingDay: typeof data.billingDay === 'number' ? data.billingDay : undefined,
         accountSource: data.accountSource ?? undefined,
         isFinancing: data.isFinancing ?? false,
-        totalFinanced: data.totalFinanced ?? undefined,
-        totalInstallments: data.totalInstallments ?? undefined,
-        currentInstallment: data.currentInstallment ?? undefined,
-        addedBy: user.displayName || user.email || 'Sconosciuto',
+        totalFinanced: typeof data.totalFinanced === 'number' ? data.totalFinanced : undefined,
+        totalInstallments: typeof data.totalInstallments === 'number' ? data.totalInstallments : undefined,
+        currentInstallment: typeof data.currentInstallment === 'number' ? data.currentInstallment : undefined,
+        addedBy: user.displayName || user.email || t('common.loading'),
         createdAt: Date.now(),
       });
-      toast.success('Spesa fissa aggiunta!');
+      toast.success(t('spendless.fixed_expense_added'));
       reset();
       setShowForm(false);
     } catch {
-      toast.error('Errore nel salvataggio.');
+      toast.error(t('auth.generic_error'));
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await deleteExpense(id);
-      toast.success('Rimossa.');
+      toast.success(t('common.success'));
     } catch {
-      toast.error('Errore nella rimozione.');
+      toast.error(t('auth.generic_error'));
     }
   };
 
@@ -265,9 +266,9 @@ export function FixedExpensesPage() {
       const partialExpense = { ...data };
 
       await updateExpense(id, partialExpense);
-      toast.success('Aggiornata.');
+      toast.success(t('common.success'));
     } catch {
-      toast.error('Errore nell\'aggiornamento.');
+      toast.error(t('auth.generic_error'));
     }
   };
 
@@ -281,7 +282,7 @@ export function FixedExpensesPage() {
     >
       {/* Header */}
       <div className="flex items-center gap-3 pt-2">
-        <button onClick={() => navigate(-1)} className="p-2 glass-button" aria-label="Indietro">
+        <button onClick={() => navigate(-1)} className="p-2 glass-button" aria-label={t('common.back')}>
           <ChevronLeft size={20} />
         </button>
         <div>
@@ -312,19 +313,19 @@ export function FixedExpensesPage() {
             onClick={() => setGroupBy('financing')}
             className={cn("flex-1 py-1.5 rounded-lg text-xs font-semibold transition", groupBy === 'financing' ? 'bg-primary-500/20 text-primary-400' : 'text-text-muted hover:bg-glass-border')}
           >
-            Finanziamenti
+            {t('spendless.group_financing')}
           </button>
           <button
             onClick={() => setGroupBy('account')}
             className={cn("flex-1 py-1.5 rounded-lg text-xs font-semibold transition", groupBy === 'account' ? 'bg-primary-500/20 text-primary-400' : 'text-text-muted hover:bg-glass-border')}
           >
-            Per Conto
+            {t('spendless.group_account')}
           </button>
           <button
             onClick={() => setGroupBy('category')}
             className={cn("flex-1 py-1.5 rounded-lg text-xs font-semibold transition", groupBy === 'category' ? 'bg-primary-500/20 text-primary-400' : 'text-text-muted hover:bg-glass-border')}
           >
-            Per Tipologia
+            {t('spendless.group_category')}
           </button>
         </div>
       )}
@@ -346,7 +347,7 @@ export function FixedExpensesPage() {
           )}
           {Object.entries(groupedFixedExpenses)
             .sort(([a], [b]) => {
-              if (groupBy === 'financing') return a === 'Finanziamenti' ? -1 : 1;
+              if (groupBy === 'financing') return a === t('spendless.group_financing') ? -1 : 1;
               return a.localeCompare(b);
             })
             .map(([label, groupExpenses]) => (
@@ -388,7 +389,7 @@ export function FixedExpensesPage() {
             >
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-text-muted mb-1 block">Importo (€)</label>
+                  <label className="text-xs text-text-muted mb-1 block">{t('spendless.amount')} (€)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -404,14 +405,14 @@ export function FixedExpensesPage() {
                   {errors.amount && <p className="text-xs text-red-400 mt-0.5">{errors.amount.message}</p>}
                 </div>
                 <div>
-                  <label className="text-xs text-text-muted mb-1 block">Categoria</label>
+                  <label className="text-xs text-text-muted mb-1 block">{t('spendless.category')}</label>
                   <select
                     className="w-full px-3 py-2.5 rounded-xl bg-glass-bg border border-glass-border text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
                     {...register('category')}
                   >
                     {DEFAULT_CATEGORIES.map(c => (
                       <option key={c.name} value={c.name}>
-                        {c.icon} {c.name}
+                        {c.icon} {t(`spendless.categories.${c.name}`)}
                       </option>
                     ))}
                   </select>
@@ -419,10 +420,10 @@ export function FixedExpensesPage() {
               </div>
 
               <div>
-                <label className="text-xs text-text-muted mb-1 block">Descrizione</label>
+                <label className="text-xs text-text-muted mb-1 block">{t('spendless.description')}</label>
                 <input
                   type="text"
-                  placeholder="es. Abbonamento Netflix"
+                  placeholder={t('spendless.description')}
                   className={cn(
                     'w-full px-3 py-2.5 rounded-xl bg-glass-bg border text-sm focus:outline-none focus:ring-2 focus:ring-primary-400',
                     errors.description ? 'border-red-500' : 'border-glass-border'
@@ -434,7 +435,7 @@ export function FixedExpensesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-text-muted mb-1 block">Giorno di addebito</label>
+                  <label className="text-xs text-text-muted mb-1 block">{t('spendless.date')}</label>
                   <input
                     type="number"
                     min="1"
@@ -445,7 +446,7 @@ export function FixedExpensesPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-text-muted mb-1 block">Conto / Carta</label>
+                  <label className="text-xs text-text-muted mb-1 block">{t('spendless.group_account')}</label>
                   <input
                     type="text"
                     list="account-suggestions"
@@ -461,8 +462,8 @@ export function FixedExpensesPage() {
 
               <div className="flex items-center justify-between p-3 bg-glass-bg rounded-xl border border-glass-border">
                 <div>
-                  <span className="text-sm font-semibold text-text-muted">È un finanziamento?</span>
-                  <p className="text-[10px] text-text-muted">Mostra il progresso delle rate pagate</p>
+                  <span className="text-sm font-semibold text-text-muted">{t('spendless.is_financing')}</span>
+                  <p className="text-[10px] text-text-muted">{t('spendless.recurring_desc')}</p>
                 </div>
                 <Controller
                   control={control}
@@ -484,15 +485,15 @@ export function FixedExpensesPage() {
                     className="grid grid-cols-3 gap-3 overflow-hidden"
                   >
                     <div>
-                      <label className="text-[10px] text-text-muted mb-1 block">Totale (€)</label>
+                      <label className="text-[10px] text-text-muted mb-1 block">{t('spendless.amount')} (€)</label>
                       <input type="number" step="0.01" {...register('totalFinanced', { valueAsNumber: true })} className="w-full px-2 py-2 rounded-xl bg-glass-bg border border-glass-border text-xs focus:ring-2 focus:ring-primary-400" />
                     </div>
                     <div>
-                      <label className="text-[10px] text-text-muted mb-1 block">Num. Rate</label>
+                      <label className="text-[10px] text-text-muted mb-1 block">{t('spendless.total_installments')}</label>
                       <input type="number" {...register('totalInstallments', { valueAsNumber: true })} className="w-full px-2 py-2 rounded-xl bg-glass-bg border border-glass-border text-xs focus:ring-2 focus:ring-primary-400" />
                     </div>
                     <div>
-                      <label className="text-[10px] text-text-muted mb-1 block">Rata Attuale</label>
+                      <label className="text-[10px] text-text-muted mb-1 block">{t('spendless.current_installment')}</label>
                       <input type="number" {...register('currentInstallment', { valueAsNumber: true })} className="w-full px-2 py-2 rounded-xl bg-glass-bg border border-glass-border text-xs focus:ring-2 focus:ring-primary-400" />
                     </div>
                   </motion.div>
@@ -506,14 +507,14 @@ export function FixedExpensesPage() {
                   whileTap={{ scale: 0.97 }}
                   className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-purple-500 to-indigo-600 disabled:opacity-60"
                 >
-                  Salva
+                  {t('common.save')}
                 </motion.button>
                 <button
                   type="button"
                   onClick={() => { setShowForm(false); reset(); }}
                   className="px-4 py-2.5 rounded-xl glass-button text-sm"
                 >
-                  Annulla
+                  {t('common.cancel')}
                 </button>
               </div>
             </motion.form>

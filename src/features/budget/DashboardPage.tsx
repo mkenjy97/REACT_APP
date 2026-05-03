@@ -32,6 +32,7 @@ function getBarColor(pct: number) {
 }
 
 function BudgetProgressCard({ label, spent, limit, percentage, blurred, currency = '€', onEdit, fixedSpent }: BudgetBarProps) {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(limit.toString());
   const color = getBarColor(percentage);
@@ -75,7 +76,7 @@ function BudgetProgressCard({ label, spent, limit, percentage, blurred, currency
           </p>
           {fixedSpent !== undefined && fixedSpent > 0 && (
             <p className={cn("text-[10px] text-purple-400 font-medium", { 'blur-md': blurred })}>
-              di cui fisse: {currency}{fixedSpent.toFixed(0)}
+              {t('spendless.spent')} {t('spendless.nav_fixed').toLowerCase()}: {currency}{fixedSpent.toFixed(0)}
             </p>
           )}
           {isEditing ? (
@@ -93,12 +94,12 @@ function BudgetProgressCard({ label, spent, limit, percentage, blurred, currency
             </div>
           ) : (
             <p className="text-xs text-text-muted mt-0.5">
-              di <span className={cn({ 'blur-md select-none': blurred })}>{currency}{limit.toFixed(2)}</span>
+              {t('spendless.budget')}: <span className={cn({ 'blur-md select-none': blurred })}>{currency}{limit.toFixed(2)}</span>
             </p>
           )}
         </div>
         <div className="text-right">
-          <p className="text-xs text-text-muted">Rimanente</p>
+          <p className="text-xs text-text-muted">{t('spendless.remaining')}</p>
           <p className={cn('text-lg font-bold', {
             'text-primary-400': percentage < 70,
             'text-amber-400': percentage >= 70 && percentage < 90,
@@ -127,6 +128,7 @@ function BudgetProgressCard({ label, spent, limit, percentage, blurred, currency
 function ExpenseRow({ amount, description, category, blurred, currency = '€', addedBy }: {
   amount: number; description: string; category: string; blurred: boolean; currency?: string; addedBy?: string;
 }) {
+  const { t } = useTranslation();
   const catConf = DEFAULT_CATEGORIES.find(c => c.name === category);
   return (
     <div className="flex items-center justify-between py-2.5 border-b border-glass-border last:border-0">
@@ -135,7 +137,7 @@ function ExpenseRow({ amount, description, category, blurred, currency = '€', 
         <div>
           <p className="text-sm font-medium leading-tight">{description}</p>
           <p className="text-xs text-text-muted capitalize">
-            {category} {addedBy && ` • di ${addedBy}`}
+            {t(`spendless.categories.${category}`)} {addedBy && ` • ${addedBy}`}
           </p>
         </div>
       </div>
@@ -196,13 +198,13 @@ export function DashboardPage() {
     if (!joinCode || !user?.uid) return;
     try {
       await saveSettings(user.uid, { familyId: joinCode.trim() });
-      toast.success('Entrato nel gruppo famiglia!');
+      toast.success(t('spendless.join_family_success'));
       setJoinCode('');
       setShowFamilyCode(false);
       // Reload is handled by subscribeToExpenses taking new settings
       window.location.reload();
     } catch {
-      toast.error('Errore durante l\'unione al gruppo.');
+      toast.error(t('auth.generic_error'));
     }
   };
 
@@ -243,7 +245,7 @@ export function DashboardPage() {
         {/* ── Header ── */}
         <div className="flex items-start justify-between pt-2">
           <div>
-            <h1 className="text-2xl font-bold capitalize">{t('spendless.greeting', { name: user?.displayName?.split(' ')[0] ?? 'Ciao' })}</h1>
+            <h1 className="text-2xl font-bold capitalize">{t('spendless.greeting', { name: user?.displayName?.split(' ')[0] ?? '' })}</h1>
             <div className="flex flex-col gap-1 mt-0.5">
               <p className="text-sm text-text-muted capitalize">
                 {monthName} · <span className="text-primary-400">{daysRemaining} {t('spendless.days_left')}</span>
@@ -258,7 +260,7 @@ export function DashboardPage() {
                 />
               </div>
               <p className="text-[10px] text-text-muted/60 font-medium">
-                Progresso mese: {Math.round((now.getDate() / lastDayOfMonth.getDate()) * 100)}%
+                {t('spendless.month_progress')}: {Math.round((now.getDate() / lastDayOfMonth.getDate()) * 100)}%
               </p>
             </div>
           </div>
@@ -272,7 +274,7 @@ export function DashboardPage() {
                 transition={TRANSITIONS.bounce}
                 className={cn('text-xs font-bold px-2.5 py-1 rounded-full text-white bg-gradient-to-r', badgeConf.color)}
               >
-                {badgeConf.emoji} {badgeConf.label}
+                {badgeConf.emoji} {t(`spendless.badges.${badge}`)}
               </motion.span>
             )}
 
@@ -327,7 +329,7 @@ export function DashboardPage() {
               fixedSpent={summary?.totalFixedThisMonth}
               onEdit={val => {
                 if (val > totalNormalIncome) {
-                  toast.error(`Il budget mensile non può superare le entrate (escludendo entrate extra) (${currency}${totalNormalIncome.toFixed(2)})`);
+                  toast.error(`${t('spendless.monthly_budget')} > ${t('spendless.income_details')} (${currency}${totalNormalIncome.toFixed(2)})`);
                   return;
                 }
                 if (user?.uid) {
@@ -350,7 +352,7 @@ export function DashboardPage() {
                 {currency}{(summary?.totalVariableThisMonth ?? 0).toFixed(0)} <span className="text-[10px] font-normal text-text-muted">var.</span>
               </p>
               <p className={cn('text-[10px] text-text-muted font-medium tabular-nums mt-0.5', { 'blur-md select-none': privacyMode })}>
-                Tot: {currency}{(summary?.totalSpentThisMonth ?? 0).toFixed(0)}
+                {t('spendless.spent')}: {currency}{(summary?.totalSpentThisMonth ?? 0).toFixed(0)}
               </p>
             </div>
           </GlassCard>
@@ -364,7 +366,7 @@ export function DashboardPage() {
                 {currency}{(now.getDate() > 0 ? (summary?.totalVariableThisMonth ?? 0) / now.getDate() : 0).toFixed(0)} <span className="text-[10px] font-normal text-text-muted">var.</span>
               </p>
               <p className={cn('text-[10px] text-text-muted font-medium tabular-nums mt-0.5', { 'blur-md select-none': privacyMode })}>
-                Tot: {currency}{(now.getDate() > 0 ? (summary?.totalSpentThisMonth ?? 0) / now.getDate() : 0).toFixed(0)}
+                {t('spendless.spent')}: {currency}{(now.getDate() > 0 ? (summary?.totalSpentThisMonth ?? 0) / now.getDate() : 0).toFixed(0)}
               </p>
             </div>
           </GlassCard>
@@ -413,14 +415,14 @@ export function DashboardPage() {
             <div className="flex items-center gap-2">
               <Users size={18} className="text-purple-400" />
               <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">
-                Gruppo Famiglia
+                {t('spendless.family_group')}
               </h2>
             </div>
             <button
               onClick={() => setShowFamilyCode(!showFamilyCode)}
               className="text-xs text-primary-400 font-medium"
             >
-              {showFamilyCode ? 'Chiudi' : 'Gestisci'}
+              {showFamilyCode ? t('common.close') : t('common.manage')}
             </button>
           </div>
 
@@ -433,7 +435,7 @@ export function DashboardPage() {
                 className="flex flex-col gap-3 mt-3 pt-3 border-t border-glass-border overflow-hidden"
               >
                 <div className="bg-glass-bg p-3 rounded-xl border border-glass-border flex flex-col gap-2">
-                  <p className="text-xs text-text-muted">Il tuo codice di invito:</p>
+                  <p className="text-xs text-text-muted">{t('spendless.invite_code')}:</p>
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-sm tracking-wider font-bold">{user?.uid}</span>
                     <button onClick={copyCode} className="p-1.5 rounded-md glass-button text-text-muted">
@@ -445,7 +447,7 @@ export function DashboardPage() {
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Codice famiglia..."
+                    placeholder={t('spendless.family_code_placeholder')}
                     value={joinCode}
                     onChange={(e) => setJoinCode(e.target.value)}
                     className="flex-1 px-3 py-2 rounded-xl bg-glass-bg border border-glass-border text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
@@ -455,21 +457,21 @@ export function DashboardPage() {
                     disabled={!joinCode}
                     className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold text-sm disabled:opacity-50"
                   >
-                    Unisciti
+                    {t('spendless.join_btn')}
                   </button>
                 </div>
 
                 {settings?.familyId && settings.familyId !== user?.uid && (
                   <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
-                    <CheckCircle size={12} /> Sei in un gruppo famiglia condiviso.
+                    <CheckCircle size={12} /> {t('spendless.in_shared_group')}
                   </p>
                 )}
 
                 {settings?.familyId && (
                   <div className="mt-2">
-                    <p className="text-xs text-text-muted mb-2 font-semibold uppercase tracking-widest">Membri del gruppo</p>
+                    <p className="text-xs text-text-muted mb-2 font-semibold uppercase tracking-widest">{t('spendless.group_members')}</p>
                     {loadingMembers ? (
-                      <p className="text-xs text-text-muted">Caricamento...</p>
+                      <p className="text-xs text-text-muted">{t('common.loading')}</p>
                     ) : (
                       <div className="flex flex-col gap-2">
                         {familyMembers.map(m => (
@@ -483,15 +485,15 @@ export function DashboardPage() {
                                 onClick={async () => {
                                   await removeFamilyMember(m.uid);
                                   setFamilyMembers(prev => prev.filter(u => u.uid !== m.uid));
-                                  toast.success('Membro rimosso');
+                                  toast.success(t('common.success'));
                                 }}
                                 className="text-xs text-red-400 p-1.5 rounded-md hover:bg-red-500/10 transition-colors"
                               >
-                                Rimuovi
+                                {t('common.remove')}
                               </button>
                             )}
                             {m.uid === settings.familyId && (
-                              <span className="text-[10px] px-2 py-1 bg-purple-500/20 text-purple-400 rounded-md font-bold uppercase tracking-wider">Admin</span>
+                              <span className="text-[10px] px-2 py-1 bg-purple-500/20 text-purple-400 rounded-md font-bold uppercase tracking-wider">{t('common.admin')}</span>
                             )}
                           </div>
                         ))}

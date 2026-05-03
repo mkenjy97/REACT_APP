@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Plus, X, Edit2, TrendingUp, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { incomeSchema, type IncomeFormData } from '@/validation/budget.schema';
 import { toast } from 'sonner';
@@ -13,6 +14,7 @@ import { PAGE_VARIANTS, STAGGER_CONTAINER, STAGGER_ITEM } from '@/constants/anim
 import { DEFAULT_CATEGORIES } from '@/types/budget.types';
 
 export function RecapPage() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const { expenses, incomes, settings, addIncome, deleteIncome, updateIncome, privacyMode } = useBudgetStore();
 
@@ -42,7 +44,7 @@ export function RecapPage() {
     try {
       if (editingIncome) {
         await updateIncome(editingIncome, data);
-        toast.success('Entrata aggiornata!');
+        toast.success(t('common.success'));
         setEditingIncome(null);
       } else {
         await addIncome({
@@ -54,12 +56,12 @@ export function RecapPage() {
           createdAt: Date.now(),
           isExtra: data.isExtra ?? false
         });
-        toast.success('Entrata registrata!');
+        toast.success(t('common.success'));
       }
       reset();
       setShowIncomeForm(false);
     } catch {
-      toast.error('Errore nel salvataggio.');
+      toast.error(t('auth.generic_error'));
     }
   };
 
@@ -114,16 +116,16 @@ export function RecapPage() {
       <div className="pt-2">
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <TrendingUp size={24} className="text-primary-400" />
-          Riepilogo e Entrate
+          {t('spendless.income_details')}
         </h1>
-        <p className="text-sm text-text-muted mt-0.5">Gestisci le entrate comuni e consulta lo storico mensile</p>
+        <p className="text-sm text-text-muted mt-0.5">{t('spendless.fixed_expenses_subtitle')}</p>
       </div>
 
       {/* -- ENTRATE MENSILI -- */}
       <section>
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">
-            Entrate ({now.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })})
+            {t('spendless.income_details')} ({now.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })})
           </h2>
           <button
             onClick={() => {
@@ -137,12 +139,12 @@ export function RecapPage() {
             className="flex items-center gap-1 text-xs font-bold text-primary-400 bg-primary-500/10 px-2 py-1 rounded-md"
           >
             {showIncomeForm && !editingIncome ? <X size={14} /> : <Plus size={14} />}
-            {showIncomeForm && !editingIncome ? 'Chiudi' : 'Aggiungi'}
+            {showIncomeForm && !editingIncome ? t('common.close') : t('common.save')}
           </button>
         </div>
 
         <GlassCard className="mb-4">
-          <p className="text-xs text-text-muted uppercase tracking-widest">Totale Entrate Mese</p>
+          <p className="text-xs text-text-muted uppercase tracking-widest">{t('spendless.income_details')} {t('spendless.this_month').toLowerCase()}</p>
           <p className={cn("text-3xl font-bold text-primary-400 tabular-nums mt-1", { 'blur-md select-none': privacyMode })}>
             {currency}{totalIncomeCurrentMonth.toFixed(2)}
           </p>
@@ -161,7 +163,7 @@ export function RecapPage() {
                   <div className="flex gap-2">
                     <input
                       type="number" step="0.01"
-                      placeholder="Importo"
+                      placeholder={t('spendless.amount')}
                       className="w-1/3 px-3 py-2 rounded-xl bg-glass-bg border border-glass-border focus:outline-none focus:ring-2 focus:ring-primary-400"
                       {...register('amount', { valueAsNumber: true })}
                     />
@@ -173,22 +175,22 @@ export function RecapPage() {
                   </div>
                   <input
                     type="text"
-                    placeholder="Descrizione (es. Stipendio Marco)"
+                    placeholder={t('spendless.description')}
                     className="w-full px-3 py-2 rounded-xl bg-glass-bg border border-glass-border focus:outline-none focus:ring-2 focus:ring-primary-400"
                     {...register('description')}
                   />
                   <div className="flex items-center justify-between p-2 bg-glass-bg rounded-xl border border-glass-border">
-                    <span className="text-sm font-semibold text-text-muted">Entrata Extra (es. bonus, aiuti)</span>
+                    <span className="text-sm font-semibold text-text-muted">{t('spendless.is_extra')}</span>
                     <button type="button" onClick={() => setValue('isExtra', !isExtraVal)} className="text-primary-500">
                       {isExtraVal ? <ToggleRight size={32} className="text-primary-400" /> : <ToggleLeft size={32} className="text-text-muted" />}
                     </button>
                   </div>
                   <div className="flex justify-end gap-2 mt-2">
                     <button type="button" onClick={cancelEdit} className="px-4 py-2 text-sm font-medium rounded-xl glass-button text-text-muted">
-                      Annulla
+                      {t('common.cancel')}
                     </button>
                     <button type="submit" className="px-4 py-2 text-sm font-bold rounded-xl bg-gradient-to-r from-primary-400 to-primary-500 text-white">
-                      {editingIncome ? 'Aggiorna' : 'Salva'}
+                      {editingIncome ? t('common.edit') : t('common.save')}
                     </button>
                   </div>
                 </form>
@@ -200,16 +202,16 @@ export function RecapPage() {
         {currentMonthIncomes.length > 0 && (
           <GlassCard className="!p-0 overflow-hidden">
             <div className="px-4 py-2 bg-glass-bg border-b border-glass-border">
-              <span className="text-xs font-bold text-text-muted uppercase">Dettaglio Entrate</span>
+              <span className="text-xs font-bold text-text-muted uppercase">{t('spendless.income_details')}</span>
             </div>
             <div className="px-4">
-              {normalIncomes.length === 0 && <p className="text-xs text-text-muted py-3">Nessuna entrata normale</p>}
+              {normalIncomes.length === 0 && <p className="text-xs text-text-muted py-3">{t('spendless.no_normal_income')}</p>}
               {normalIncomes.map(inc => (
                 <div key={inc.id} className="flex items-center justify-between py-3 border-b border-glass-border last:border-0">
                   <div>
                     <p className="text-sm font-medium">{inc.description}</p>
                     <p className="text-xs text-text-muted">
-                      {new Date(inc.date).toLocaleDateString('it-IT')} • di {inc.addedBy}
+                      {new Date(inc.date).toLocaleDateString()} • {inc.addedBy}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -229,7 +231,7 @@ export function RecapPage() {
             {extraIncomes.length > 0 && (
               <>
                 <div className="px-4 py-2 bg-purple-500/10 border-y border-glass-border">
-                  <span className="text-xs font-bold text-purple-400 uppercase">Entrate Extra</span>
+                  <span className="text-xs font-bold text-purple-400 uppercase">{t('spendless.extra_incomes')}</span>
                 </div>
                 <div className="px-4">
                   {extraIncomes.map(inc => (
@@ -237,7 +239,7 @@ export function RecapPage() {
                       <div>
                         <p className="text-sm font-medium">{inc.description}</p>
                         <p className="text-xs text-text-muted">
-                          {new Date(inc.date).toLocaleDateString('it-IT')} • di {inc.addedBy}
+                          {new Date(inc.date).toLocaleDateString()} • {inc.addedBy}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -263,13 +265,13 @@ export function RecapPage() {
       {/* -- STORICO USCITE MENSILI -- */}
       <section className="mt-4">
         <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest mb-3">
-          Storico Mensile Uscite
+          {t('spendless.history')}
         </h2>
 
         {sortedMonths.length === 0 ? (
           <GlassCard className="text-center py-8">
             <span className="text-4xl">📊</span>
-            <p className="text-text-muted mt-2 font-medium">Nessuna spesa registrata.</p>
+            <p className="text-text-muted mt-2 font-medium">{t('spendless.no_expenses')}</p>
           </GlassCard>
         ) : (
           <motion.div variants={STAGGER_CONTAINER} initial="initial" animate="animate" className="flex flex-col gap-3">
@@ -277,7 +279,7 @@ export function RecapPage() {
               const monthExpenses = expensesByMonth[monthKey].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
               const monthTotal = monthExpenses.reduce((acc, e) => acc + e.amount, 0);
               const [year, month] = monthKey.split('-');
-              const monthName = new Date(parseInt(year), parseInt(month) - 1, 1).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+              const monthName = new Date(parseInt(year), parseInt(month) - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
               const isExpanded = expandedMonths[monthKey] || false;
 
               return (
@@ -289,7 +291,7 @@ export function RecapPage() {
                     >
                       <div>
                         <h3 className="font-bold capitalize">{monthName}</h3>
-                        <p className="text-xs text-text-muted">{monthExpenses.length} spese</p>
+                        <p className="text-xs text-text-muted">{monthExpenses.length} {t('spendless.nav_history').toLowerCase()}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className={cn("font-bold text-red-400 tabular-nums", { 'blur-md': privacyMode })}>
@@ -319,11 +321,11 @@ export function RecapPage() {
                                     <div>
                                       <p className="text-sm font-medium">{e.description}</p>
                                       <p className="text-[10px] text-text-muted">
-                                        {new Date(e.date).toLocaleDateString('it-IT')} • {e.category} {e.addedBy && `• di ${e.addedBy}`}
+                                        {new Date(e.date).toLocaleDateString()} • {t(`spendless.categories.${e.category}`)} {e.addedBy && `• ${e.addedBy}`}
                                       </p>
                                       {e.isFixed && (
                                         <span className="inline-block mt-1 px-1.5 py-0.5 rounded-md bg-purple-500/20 text-purple-400 text-[8px] font-bold uppercase tracking-wider">
-                                          Spesa Fissa
+                                          {t('spendless.nav_fixed')}
                                         </span>
                                       )}
                                     </div>

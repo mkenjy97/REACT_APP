@@ -41,15 +41,15 @@ export function AuthPage() {
       case 'auth/user-not-found':
       case 'auth/wrong-password':
       case 'auth/invalid-credential':
-        return t('auth.invalid_credentials') || 'Email o password non corretti.';
+        return t('auth.invalid_credentials');
       case 'auth/email-already-in-use':
-        return t('auth.email_in_use') || 'Questa email è già registrata.';
+        return t('auth.email_in_use');
       case 'auth/too-many-requests':
-        return t('auth.too_many_requests') || 'Troppi tentativi. Riprova più tardi.';
+        return t('auth.too_many_requests');
       case 'auth/network-request-failed':
-        return t('auth.network_error') || 'Errore di rete. Controlla la connessione.';
+        return t('auth.network_error');
       default:
-        return t('auth.generic_error') || 'Si è verificato un errore. Riprova.';
+        return t('auth.generic_error');
     }
   };
 
@@ -102,7 +102,7 @@ export function AuthPage() {
       type="button"
       onClick={() => setShowPassword((v) => !v)}
       className="text-text-muted hover:text-text transition-colors p-1"
-      aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
+      aria-label={showPassword ? t('auth.hide_password') : t('auth.show_password')}
     >
       <Icon name={showPassword ? 'Hide' : 'Show'} size={16} />
     </button>
@@ -139,7 +139,7 @@ export function AuthPage() {
                 >
                   <Input
                     label={t('auth.full_name')}
-                    placeholder="Mario Rossi"
+                    placeholder={t('auth.full_name')}
                     {...register('fullName' as any)}
                     error={(errors as any).fullName?.message}
                   />

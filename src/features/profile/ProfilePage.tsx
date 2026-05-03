@@ -16,7 +16,7 @@ import {
   updatePassword,
 } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { APP_CONFIG } from '@/config/app.config';
+
 import { PAGE_VARIANTS } from '@/constants/animations';
 import { resetAllStores } from '@/store/resetStores';
 
@@ -47,7 +47,7 @@ export function ProfilePage() {
 
   const handleLogout = () => {
     resetAllStores();
-    toast.success('Logout effettuato.');
+    toast.success(t('common.success'));
   };
 
   const handleSaveProfile = async () => {
@@ -57,9 +57,9 @@ export function ProfilePage() {
         await authService.updateDisplayName(displayName);
       }
       updateProfile({ displayName, phoneNumber });
-      toast.success('Profilo aggiornato con successo.');
+      toast.success(t('common.success'));
     } catch {
-      toast.error('Errore durante il salvataggio del profilo.');
+      toast.error(t('auth.generic_error'));
     } finally {
       setIsSavingProfile(false);
     }
@@ -69,11 +69,11 @@ export function ProfilePage() {
     setPasswordError(null);
 
     if (newPassword.length < 6) {
-      setPasswordError('La nuova password deve essere almeno 6 caratteri.');
+      setPasswordError(t('auth.password_too_short'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError('Le password non coincidono.');
+      setPasswordError(t('auth.password_mismatch'));
       return;
     }
 
@@ -96,11 +96,11 @@ export function ProfilePage() {
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code ?? '';
       if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
-        setPasswordError('Password attuale non corretta.');
+        setPasswordError(t('auth.wrong_password'));
       } else if (code === 'auth/too-many-requests') {
-        setPasswordError('Troppi tentativi. Riprova più tardi.');
+        setPasswordError(t('auth.too_many_requests'));
       } else {
-        setPasswordError('Errore durante il cambio password. Riprova.');
+        setPasswordError(t('auth.generic_error'));
       }
     } finally {
       setIsSavingPassword(false);
@@ -112,9 +112,9 @@ export function ProfilePage() {
     setIsSavingTheme(true);
     try {
       await saveUserTheme(user.uid);
-      toast.success('Colori del tema salvati!');
+      toast.success(t('common.success'));
     } catch {
-      toast.error('Errore nel salvataggio del tema.');
+      toast.error(t('auth.generic_error'));
     } finally {
       setIsSavingTheme(false);
     }
@@ -122,7 +122,7 @@ export function ProfilePage() {
 
   const handleResetTheme = () => {
     resetPalettes();
-    toast.success('Colori resettati ai valori predefiniti.');
+    toast.success(t('common.success'));
   };
 
   const isDirty =
@@ -150,26 +150,26 @@ export function ProfilePage() {
           </span>
         </div>
         <div className="flex-1">
-          <h2 className="text-xl font-bold">{user?.displayName || 'Utente'}</h2>
+          <h2 className="text-xl font-bold">{user?.displayName || t('profile.user_label')}</h2>
           <p className="text-text-muted mb-2">{user?.email}</p>
           <RoleBadge role={user?.role || 'User'} />
         </div>
       </GlassCard>
 
       <section className="flex flex-col gap-4">
-        <h3 className="font-semibold text-lg">Account</h3>
+        <h3 className="font-semibold text-lg">{t('profile.account')}</h3>
 
         <GlassCard className="flex flex-col gap-4 p-6">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
               <Icon name="User" size={14} />
-              Nome profilo
+              {t('profile.profile_name')}
             </label>
             <input
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Il tuo nome"
+              placeholder={t('profile.profile_name_placeholder')}
               className="flex h-12 w-full rounded-full border border-glass-border bg-surface px-4 py-2 text-sm text-text transition-colors placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 shadow-sm"
             />
           </div>
@@ -177,13 +177,13 @@ export function ProfilePage() {
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
               <Icon name="Notifications" size={14} /> 
-              Numero di telefono
+              {t('profile.phone')}
             </label>
             <input
               type="tel"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder="+39 000 0000000"
+              placeholder={t('profile.phone_placeholder')}
               className="flex h-12 w-full rounded-full border border-glass-border bg-surface px-4 py-2 text-sm text-text transition-colors placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 shadow-sm"
             />
           </div>
@@ -199,7 +199,7 @@ export function ProfilePage() {
                 }}
               >
                 <Icon name="Close" size={15} className="mr-1.5" />
-                Annulla
+                {t('common.cancel')}
               </Button>
             )}
             <Button
@@ -212,7 +212,7 @@ export function ProfilePage() {
               ) : (
                 <Icon name="Check" size={15} className="mr-1.5" />
               )}
-              Salva profilo
+              {t('profile.save_profile')}
             </Button>
           </div>
         </GlassCard>
@@ -226,8 +226,8 @@ export function ProfilePage() {
             <div className="flex items-center gap-3">
               <Icon name="Password" size={18} className="text-primary-400" />
               <div className="text-left">
-                <p className="font-medium">Cambia password</p>
-                <p className="text-xs text-text-muted">Aggiorna le credenziali di accesso</p>
+                <p className="font-medium">{t('profile.change_password')}</p>
+                <p className="text-xs text-text-muted">{t('profile.change_password_desc')}</p>
               </div>
             </div>
             <motion.div
@@ -248,21 +248,21 @@ export function ProfilePage() {
               >
                 <div className="border-t border-glass-border pt-4 flex flex-col gap-3">
                   <Input
-                    label="Password attuale"
+                    label={t('profile.current_password')}
                     type="password"
                     placeholder="••••••••"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                   />
                   <Input
-                    label="Nuova password"
+                    label={t('profile.new_password')}
                     type="password"
                     placeholder="••••••••"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                   />
                   <Input
-                    label="Conferma nuova password"
+                    label={t('profile.confirm_new_password')}
                     type="password"
                     placeholder="••••••••"
                     value={confirmPassword}
@@ -271,7 +271,7 @@ export function ProfilePage() {
                   {passwordError && <p className="text-xs text-red-400 ml-2">{passwordError}</p>}
                   <div className="flex justify-end gap-2">
                     <Button size="sm" onClick={handleChangePassword} disabled={isSavingPassword}>
-                      Aggiorna password
+                      {t('profile.update_password_btn')}
                     </Button>
                   </div>
                 </div>
@@ -290,8 +290,8 @@ export function ProfilePage() {
             <div className="flex items-center gap-3">
               <Icon name="Palette" size={18} className="text-primary-400" />
               <div className="text-left">
-                <p className="font-medium">Colori App</p>
-                <p className="text-xs text-text-muted">Personalizza la palette (Chiaro/Scuro)</p>
+                <p className="font-medium">{t('profile.app_colors')}</p>
+                <p className="text-xs text-text-muted">{t('profile.app_colors_desc')}</p>
               </div>
             </div>
             <motion.div
@@ -313,7 +313,7 @@ export function ProfilePage() {
                 <div className="border-t border-glass-border pt-4 flex flex-col gap-6">
                   {/* Preset Selector */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-text-muted uppercase tracking-widest pl-1">Scegli un Preset</label>
+                    <label className="text-xs font-bold text-text-muted uppercase tracking-widest pl-1">{t('profile.choose_preset')}</label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {PREDEFINED_THEMES.map(t => (
                         <button
@@ -342,7 +342,7 @@ export function ProfilePage() {
                   {/* Light Palette */}
                   <div>
                     <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-emerald-400" /> Palette Tema Chiaro
+                      <div className="w-2 h-2 rounded-full bg-emerald-400" /> {t('profile.light_palette')}
                     </h4>
                     <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
                       {shades.map(shade => (
@@ -362,7 +362,7 @@ export function ProfilePage() {
                   {/* Dark Palette */}
                   <div>
                     <h4 className="text-sm font-bold mb-3 flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-purple-400" /> Palette Tema Scuro
+                      <div className="w-2 h-2 rounded-full bg-purple-400" /> {t('profile.dark_palette')}
                     </h4>
                     <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
                       {shades.map(shade => (
@@ -382,11 +382,11 @@ export function ProfilePage() {
                   <div className="flex justify-between items-center pt-2 border-t border-glass-border">
                     <Button variant="ghost" size="sm" onClick={handleResetTheme} className="text-text-muted">
                       <Icon name="Reset" size={14} className="mr-1.5" />
-                      Reset predefiniti
+                      {t('profile.reset_defaults')}
                     </Button>
                     <Button size="sm" onClick={handleSaveTheme} disabled={isSavingTheme}>
                       {isSavingTheme ? <Icon name="Info" size={14} className="animate-spin mr-1.5" /> : <Icon name="Check" size={14} className="mr-1.5" />}
-                      Salva Colori
+                      {t('profile.save_colors')}
                     </Button>
                   </div>
                 </div>
@@ -400,8 +400,8 @@ export function ProfilePage() {
         <h3 className="font-semibold text-lg">{t('profile.appearance')}</h3>
         <GlassCard className="flex items-center justify-between p-4">
           <div>
-            <p className="font-medium">Tema Attuale</p>
-            <p className="text-xs text-text-muted">{isDark ? 'Modalità Scura' : 'Modalità Chiara'}</p>
+            <p className="font-medium">{t('profile.current_theme')}</p>
+            <p className="text-xs text-text-muted">{isDark ? t('profile.dark_mode') : t('profile.light_mode')}</p>
           </div>
           <button
             onClick={toggleTheme}
@@ -421,9 +421,13 @@ export function ProfilePage() {
             onChange={(e) => setLanguage(e.target.value)}
             className="mt-2 h-10 w-full rounded-lg border border-glass-border bg-glass-bg px-3 text-sm focus:outline-none focus:border-primary-300"
           >
-            {APP_CONFIG.i18n.supportedLanguages.map(lang => (
-              <option key={lang} value={lang}>{lang.toUpperCase()}</option>
-            ))}
+            <option value="it">🇮🇹 Italiano</option>
+            <option value="en">🇺🇸 English</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="fr">🇫🇷 Français</option>
+            <option value="ja">🇯🇵 日本語</option>
+            <option value="ru">🇷🇺 Русский</option>
+            <option value="zh">🇨🇳 中文</option>
           </select>
         </GlassCard>
       </section>

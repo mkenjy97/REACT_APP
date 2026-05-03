@@ -16,7 +16,7 @@ export const APP_CONFIG = {
   },
   i18n: {
     defaultLanguage: 'it',
-    supportedLanguages: ['it', 'en'],
+    supportedLanguages: ['it', 'en', 'es', 'fr', 'ja', 'ru', 'zh'],
     fallbackLanguage: 'it',
   }
 };
