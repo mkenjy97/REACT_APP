@@ -160,16 +160,16 @@ export function RecapPage() {
             >
               <GlassCard className="border-primary-500/30">
                 <form onSubmit={handleSubmit(onIncomeSubmit)} className="flex flex-col gap-3">
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="number" step="0.01"
                       placeholder={t('spendless.amount')}
-                      className="w-1/3 px-3 py-2 rounded-xl bg-glass-bg border border-glass-border focus:outline-none focus:ring-2 focus:ring-primary-400"
+                      className="w-full sm:w-1/3 px-3 py-2 rounded-xl bg-glass-bg border border-glass-border focus:outline-none focus:ring-2 focus:ring-primary-400"
                       {...register('amount', { valueAsNumber: true })}
                     />
                     <input
                       type="date"
-                      className="w-2/3 px-3 py-2 rounded-xl bg-glass-bg border border-glass-border focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
+                      className="w-full sm:w-2/3 px-3 py-2 rounded-xl bg-glass-bg border border-glass-border focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
                       {...register('date')}
                     />
                   </div>
@@ -207,15 +207,15 @@ export function RecapPage() {
             <div className="px-4">
               {normalIncomes.length === 0 && <p className="text-xs text-text-muted py-3">{t('spendless.no_normal_income')}</p>}
               {normalIncomes.map(inc => (
-                <div key={inc.id} className="flex items-center justify-between py-3 border-b border-glass-border last:border-0">
-                  <div>
-                    <p className="text-sm font-medium">{inc.description}</p>
-                    <p className="text-xs text-text-muted">
+                <div key={inc.id} className="flex items-center justify-between py-3 border-b border-glass-border last:border-0 gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{inc.description}</p>
+                    <p className="text-xs text-text-muted truncate">
                       {new Date(inc.date).toLocaleDateString()} • {inc.addedBy}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={cn('text-sm font-bold text-primary-400 tabular-nums', { 'blur-sm': privacyMode })}>
+                  <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                    <span className={cn('text-sm font-bold text-primary-400 tabular-nums shrink-0', { 'blur-sm': privacyMode })}>
                       +{currency}{inc.amount.toFixed(2)}
                     </span>
                     <button onClick={() => startEditIncome(inc)} className="p-1.5 text-text-muted hover:bg-glass-border rounded-full">
@@ -235,15 +235,15 @@ export function RecapPage() {
                 </div>
                 <div className="px-4">
                   {extraIncomes.map(inc => (
-                    <div key={inc.id} className="flex items-center justify-between py-3 border-b border-glass-border last:border-0">
-                      <div>
-                        <p className="text-sm font-medium">{inc.description}</p>
-                        <p className="text-xs text-text-muted">
+                    <div key={inc.id} className="flex items-center justify-between py-3 border-b border-glass-border last:border-0 gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{inc.description}</p>
+                        <p className="text-xs text-text-muted truncate">
                           {new Date(inc.date).toLocaleDateString()} • {inc.addedBy}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className={cn('text-sm font-bold text-purple-400 tabular-nums', { 'blur-sm': privacyMode })}>
+                      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                        <span className={cn('text-sm font-bold text-purple-400 tabular-nums shrink-0', { 'blur-sm': privacyMode })}>
                           +{currency}{inc.amount.toFixed(2)}
                         </span>
                         <button onClick={() => startEditIncome(inc)} className="p-1.5 text-text-muted hover:bg-glass-border rounded-full">
@@ -315,12 +315,12 @@ export function RecapPage() {
                             {monthExpenses.map(e => {
                               const cat = DEFAULT_CATEGORIES.find(c => c.name === e.category);
                               return (
-                                <div key={e.id} className="flex items-center justify-between">
-                                  <div className="flex items-center gap-3">
-                                    <span className="text-lg">{cat?.icon ?? '📦'}</span>
-                                    <div>
-                                      <p className="text-sm font-medium">{e.description}</p>
-                                      <p className="text-[10px] text-text-muted">
+                                <div key={e.id} className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <span className="text-lg shrink-0">{cat?.icon ?? '📦'}</span>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium truncate">{e.description}</p>
+                                      <p className="text-[10px] text-text-muted truncate">
                                         {new Date(e.date).toLocaleDateString()} • {t(`spendless.categories.${e.category}`)} {e.addedBy && `• ${e.addedBy}`}
                                       </p>
                                       {e.isFixed && (
@@ -330,7 +330,7 @@ export function RecapPage() {
                                       )}
                                     </div>
                                   </div>
-                                  <span className={cn('text-sm font-semibold text-red-400 tabular-nums', { 'blur-sm': privacyMode })}>
+                                  <span className={cn('text-sm font-semibold text-red-400 tabular-nums shrink-0', { 'blur-sm': privacyMode })}>
                                     -{currency}{e.amount.toFixed(2)}
                                   </span>
                                 </div>

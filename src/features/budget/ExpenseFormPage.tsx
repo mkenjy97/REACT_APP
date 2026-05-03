@@ -189,12 +189,12 @@ export function ExpenseFormPage() {
         {/* OCR scanner */}
         <GlassCard className="!p-4 flex flex-col items-center gap-3">
           <p className="text-sm font-medium text-text-muted">{t('spendless.scan_receipt')}</p>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full">
             <motion.button
               type="button"
               onClick={openCameraInput}
               disabled={ocrStatus === 'processing'}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl glass-button font-semibold text-sm disabled:opacity-60"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl glass-button font-semibold text-sm disabled:opacity-60"
               whileTap={{ scale: 0.96 }}
             >
               {ocrStatus === 'processing' ? (
@@ -214,7 +214,7 @@ export function ExpenseFormPage() {
               type="button"
               onClick={openGalleryInput}
               disabled={ocrStatus === 'processing'}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl glass-button font-semibold text-sm disabled:opacity-60"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl glass-button font-semibold text-sm disabled:opacity-60"
               whileTap={{ scale: 0.96 }}
             >
               {ocrStatus === 'processing' ? (
@@ -445,7 +445,7 @@ export function ExpenseFormPage() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="grid grid-cols-3 gap-3 overflow-hidden mt-3 pt-3 border-t border-glass-border"
+                        className="flex flex-col sm:grid sm:grid-cols-3 gap-3 overflow-hidden mt-3 pt-3 border-t border-glass-border"
                       >
                         <div>
                           <label className="text-[10px] text-text-muted mb-1 block">{t('spendless.amount')} (€)</label>

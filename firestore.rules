@@ -65,10 +65,25 @@ service cloud.firestore {
 
     // SpendLess rules
     match /userSettings/{userId} {
-      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      allow read: if isAuthenticated() && (
+        request.auth.uid == userId ||
+        resource.data.familyId == getUserFamilyId() ||
+        resource.data.familyId == request.auth.uid ||
+        getUserFamilyId() == userId
+      );
+      allow write: if isAuthenticated() && (
+        request.auth.uid == userId ||
+        resource.data.familyId == request.auth.uid
+      );
     }
     match /userThemes/{userId} {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    match /familyBudget/{familyId} {
+      allow read, write: if isAuthenticated() && (
+        request.auth.uid == familyId ||
+        getUserFamilyId() == familyId
+      );
     }
     function getUserFamilyId() {
       let path = /databases/$(database)/documents/userSettings/$(request.auth.uid);
@@ -76,8 +91,8 @@ service cloud.firestore {
     }
 
     match /expenses/{expenseId} {
-      allow read, write: if isAuthenticated() && (
-        request.auth.uid == resource.data.userId || 
+      allow read: if isAuthenticated() && (
+        request.auth.uid == resource.data.userId ||
         resource.data.familyId == request.auth.uid ||
         resource.data.familyId == getUserFamilyId()
       );
@@ -85,12 +100,17 @@ service cloud.firestore {
         request.auth.uid == request.resource.data.userId ||
         request.resource.data.familyId == request.auth.uid ||
         request.resource.data.familyId == getUserFamilyId()
+      );
+      allow update, delete: if isAuthenticated() && (
+        request.auth.uid == resource.data.userId ||
+        resource.data.familyId == request.auth.uid ||
+        resource.data.familyId == getUserFamilyId()
       );
     }
     
     match /incomes/{incomeId} {
-      allow read, write: if isAuthenticated() && (
-        request.auth.uid == resource.data.userId || 
+      allow read: if isAuthenticated() && (
+        request.auth.uid == resource.data.userId ||
         resource.data.familyId == request.auth.uid ||
         resource.data.familyId == getUserFamilyId()
       );
@@ -98,6 +118,11 @@ service cloud.firestore {
         request.auth.uid == request.resource.data.userId ||
         request.resource.data.familyId == request.auth.uid ||
         request.resource.data.familyId == getUserFamilyId()
+      );
+      allow update, delete: if isAuthenticated() && (
+        request.auth.uid == resource.data.userId ||
+        resource.data.familyId == request.auth.uid ||
+        resource.data.familyId == getUserFamilyId()
       );
     }
   }

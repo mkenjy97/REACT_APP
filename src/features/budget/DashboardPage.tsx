@@ -85,12 +85,12 @@ function BudgetProgressCard({ label, spent, limit, percentage, blurred, currency
                 type="number"
                 value={editValue}
                 onChange={e => setEditValue(e.target.value)}
-                className="w-24 bg-background border border-glass-border rounded px-2 py-1 text-sm font-bold"
+                className="w-20 sm:w-24 bg-background border border-glass-border rounded px-2 py-1 text-sm font-bold"
                 autoFocus
                 onKeyDown={e => e.key === 'Enter' && handleSave()}
               />
-              <button onClick={handleSave} className="p-1 text-primary-500"><Check size={16} /></button>
-              <button onClick={() => { setIsEditing(false); setEditValue(limit.toString()); }} className="p-1 text-red-400"><X size={16} /></button>
+              <button onClick={handleSave} className="p-1 text-primary-500 shrink-0"><Check size={16} /></button>
+              <button onClick={() => { setIsEditing(false); setEditValue(limit.toString()); }} className="p-1 text-red-400 shrink-0"><X size={16} /></button>
             </div>
           ) : (
             <p className="text-xs text-text-muted mt-0.5">
@@ -131,17 +131,17 @@ function ExpenseRow({ amount, description, category, blurred, currency = '€', 
   const { t } = useTranslation();
   const catConf = DEFAULT_CATEGORIES.find(c => c.name === category);
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-glass-border last:border-0">
-      <div className="flex items-center gap-3">
-        <span className="text-xl">{catConf?.icon ?? '📦'}</span>
-        <div>
-          <p className="text-sm font-medium leading-tight">{description}</p>
-          <p className="text-xs text-text-muted capitalize">
+    <div className="flex items-center justify-between py-2.5 border-b border-glass-border last:border-0 gap-2">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <span className="text-xl shrink-0">{catConf?.icon ?? '📦'}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium leading-tight truncate">{description}</p>
+          <p className="text-xs text-text-muted capitalize truncate">
             {t(`spendless.categories.${category}`)} {addedBy && ` • ${addedBy}`}
           </p>
         </div>
       </div>
-      <span className={cn('text-sm font-bold text-red-400 tabular-nums', {
+      <span className={cn('text-sm font-bold text-red-400 tabular-nums shrink-0', {
         'blur-md select-none': blurred,
       })}>
         -{currency}{amount.toFixed(2)}
@@ -155,7 +155,7 @@ import { useState, useEffect } from 'react';
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 export function DashboardPage() {
   const { user } = useAuthStore();
-  const { summary, budget, expenses, incomes, privacyMode, togglePrivacyMode, settings, saveSettings, removeFamilyMember } = useBudgetStore();
+  const { summary, budget, expenses, incomes, privacyMode, togglePrivacyMode, settings, saveSettings, removeFamilyMember, updateFamilyBudget } = useBudgetStore();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [showFamilyCode, setShowFamilyCode] = useState(false);
@@ -166,22 +166,34 @@ export function DashboardPage() {
 
   useEffect(() => {
     const fetchMembers = async () => {
-      if (!settings?.familyId) {
+      const currentFamilyId = settings?.familyId || user?.uid;
+      if (!currentFamilyId) {
         setFamilyMembers([]);
         return;
       }
       setLoadingMembers(true);
       try {
-        const q = query(collection(db, 'userSettings'), where('familyId', '==', settings.familyId));
+        const q = query(collection(db, 'userSettings'), where('familyId', '==', currentFamilyId));
         const snap = await getDocs(q);
         const members: any[] = [];
+        let adminFound = false;
+
         for (const d of snap.docs) {
           const uId = d.data().userId;
           const uSnap = await getDoc(doc(db, 'users', uId));
           if (uSnap.exists()) {
             members.push({ uid: uId, ...uSnap.data() });
+            if (uId === currentFamilyId) adminFound = true;
           }
         }
+        
+        if (!adminFound && currentFamilyId === user?.uid) {
+          const uSnap = await getDoc(doc(db, 'users', currentFamilyId));
+          if (uSnap.exists()) {
+            members.push({ uid: currentFamilyId, ...uSnap.data() });
+          }
+        }
+
         setFamilyMembers(members);
       } catch (err) {
         console.error('Error fetching family members:', err);
@@ -192,7 +204,7 @@ export function DashboardPage() {
     if (showFamilyCode) {
       fetchMembers();
     }
-  }, [settings?.familyId, showFamilyCode]);
+  }, [settings?.familyId, user?.uid, showFamilyCode]);
 
   const handleJoinFamily = async () => {
     if (!joinCode || !user?.uid) return;
@@ -243,11 +255,11 @@ export function DashboardPage() {
         className="flex flex-col gap-5 pb-6"
       >
         {/* ── Header ── */}
-        <div className="flex items-start justify-between pt-2">
-          <div>
-            <h1 className="text-2xl font-bold capitalize">{t('spendless.greeting', { name: user?.displayName?.split(' ')[0] ?? '' })}</h1>
+        <div className="flex items-start justify-between pt-2 gap-2">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-bold capitalize truncate">{t('spendless.greeting', { name: user?.displayName?.split(' ')[0] ?? '' })}</h1>
             <div className="flex flex-col gap-1 mt-0.5">
-              <p className="text-sm text-text-muted capitalize">
+              <p className="text-sm text-text-muted capitalize truncate">
                 {monthName} · <span className="text-primary-400">{daysRemaining} {t('spendless.days_left')}</span>
               </p>
               {/* Month Progress Bar */}
@@ -265,14 +277,14 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 shrink-0">
             {/* Spending badge */}
             {badgeConf && (
               <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={TRANSITIONS.bounce}
-                className={cn('text-xs font-bold px-2.5 py-1 rounded-full text-white bg-gradient-to-r', badgeConf.color)}
+                className={cn('text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full text-white bg-gradient-to-r whitespace-nowrap', badgeConf.color)}
               >
                 {badgeConf.emoji} {t(`spendless.badges.${badge}`)}
               </motion.span>
@@ -281,7 +293,7 @@ export function DashboardPage() {
             {/* Privacy toggle */}
             <button
               onClick={togglePrivacyMode}
-              className="p-2.5 rounded-full glass-button"
+              className="p-2 sm:p-2.5 rounded-full glass-button shrink-0"
               aria-label="Privacy mode"
             >
               <AnimatePresence mode="wait">
@@ -313,7 +325,7 @@ export function DashboardPage() {
               currency={currency}
               onEdit={val => {
                 if (user?.uid) {
-                  saveSettings(user.uid, { budget: { ...budget, weeklyLimit: val } });
+                  updateFamilyBudget(user.uid, { ...budget, weeklyLimit: val });
                 }
               }}
             />
@@ -333,7 +345,7 @@ export function DashboardPage() {
                   return;
                 }
                 if (user?.uid) {
-                  saveSettings(user.uid, { budget: { ...budget, monthlyLimit: val } });
+                  updateFamilyBudget(user.uid, { ...budget, monthlyLimit: val });
                 }
               }}
             />
@@ -342,30 +354,30 @@ export function DashboardPage() {
 
         {/* ── Quick Stats ── */}
         <div className="grid grid-cols-2 gap-3">
-          <GlassCard className="!p-4 flex items-center gap-3">
-            <div className="p-2 bg-primary-500/20 rounded-xl">
-              <TrendingDown size={18} className="text-primary-400" />
+          <GlassCard className="!p-3 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 bg-primary-500/20 rounded-xl shrink-0">
+              <TrendingDown size={16} className="text-primary-400 sm:w-[18px] sm:h-[18px]" />
             </div>
-            <div className="flex-1">
-              <p className="text-xs text-text-muted">{t('spendless.this_month')}</p>
-              <p className={cn('text-sm font-bold tabular-nums', { 'blur-md select-none': privacyMode })}>
-                {currency}{(summary?.totalVariableThisMonth ?? 0).toFixed(0)} <span className="text-[10px] font-normal text-text-muted">var.</span>
+            <div className="flex-1 min-w-0 w-full">
+              <p className="text-[10px] sm:text-xs text-text-muted truncate">{t('spendless.this_month')}</p>
+              <p className={cn('text-xs sm:text-sm font-bold tabular-nums truncate', { 'blur-md select-none': privacyMode })}>
+                {currency}{(summary?.totalVariableThisMonth ?? 0).toFixed(0)} <span className="text-[9px] sm:text-[10px] font-normal text-text-muted">var.</span>
               </p>
-              <p className={cn('text-[10px] text-text-muted font-medium tabular-nums mt-0.5', { 'blur-md select-none': privacyMode })}>
+              <p className={cn('text-[9px] sm:text-[10px] text-text-muted font-medium tabular-nums mt-0.5 truncate', { 'blur-md select-none': privacyMode })}>
                 {t('spendless.spent')}: {currency}{(summary?.totalSpentThisMonth ?? 0).toFixed(0)}
               </p>
             </div>
           </GlassCard>
-          <GlassCard className="!p-4 flex items-center gap-3">
-            <div className="p-2 bg-blue-500/20 rounded-xl">
-              <Calendar size={18} className="text-blue-400" />
+          <GlassCard className="!p-3 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 bg-blue-500/20 rounded-xl shrink-0">
+              <Calendar size={16} className="text-blue-400 sm:w-[18px] sm:h-[18px]" />
             </div>
-            <div className="flex-1">
-              <p className="text-xs text-text-muted">{t('spendless.avg_daily')}</p>
-              <p className={cn('text-sm font-bold tabular-nums', { 'blur-md select-none': privacyMode })}>
-                {currency}{(now.getDate() > 0 ? (summary?.totalVariableThisMonth ?? 0) / now.getDate() : 0).toFixed(0)} <span className="text-[10px] font-normal text-text-muted">var.</span>
+            <div className="flex-1 min-w-0 w-full">
+              <p className="text-[10px] sm:text-xs text-text-muted truncate">{t('spendless.avg_daily')}</p>
+              <p className={cn('text-xs sm:text-sm font-bold tabular-nums truncate', { 'blur-md select-none': privacyMode })}>
+                {currency}{(now.getDate() > 0 ? (summary?.totalVariableThisMonth ?? 0) / now.getDate() : 0).toFixed(0)} <span className="text-[9px] sm:text-[10px] font-normal text-text-muted">var.</span>
               </p>
-              <p className={cn('text-[10px] text-text-muted font-medium tabular-nums mt-0.5', { 'blur-md select-none': privacyMode })}>
+              <p className={cn('text-[9px] sm:text-[10px] text-text-muted font-medium tabular-nums mt-0.5 truncate', { 'blur-md select-none': privacyMode })}>
                 {t('spendless.spent')}: {currency}{(now.getDate() > 0 ? (summary?.totalSpentThisMonth ?? 0) / now.getDate() : 0).toFixed(0)}
               </p>
             </div>
@@ -455,7 +467,7 @@ export function DashboardPage() {
                   <button
                     onClick={handleJoinFamily}
                     disabled={!joinCode}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold text-sm disabled:opacity-50"
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold text-sm disabled:opacity-50 shrink-0 whitespace-nowrap"
                   >
                     {t('spendless.join_btn')}
                   </button>
@@ -467,7 +479,7 @@ export function DashboardPage() {
                   </p>
                 )}
 
-                {settings?.familyId && (
+                {(settings?.familyId || user?.uid) && (
                   <div className="mt-2">
                     <p className="text-xs text-text-muted mb-2 font-semibold uppercase tracking-widest">{t('spendless.group_members')}</p>
                     {loadingMembers ? (
@@ -475,25 +487,25 @@ export function DashboardPage() {
                     ) : (
                       <div className="flex flex-col gap-2">
                         {familyMembers.map(m => (
-                          <div key={m.uid} className="flex items-center justify-between bg-glass-bg p-2 rounded-xl border border-glass-border">
-                            <div>
-                              <p className="text-sm font-medium">{m.displayName || m.email}</p>
-                              <p className="text-[10px] text-text-muted">{m.email}</p>
+                          <div key={m.uid} className="flex items-center justify-between bg-glass-bg p-2 rounded-xl border border-glass-border gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{m.displayName || m.email}</p>
+                              <p className="text-[10px] text-text-muted truncate">{m.email}</p>
                             </div>
-                            {m.uid !== settings.familyId && (
+                            {m.uid !== (settings?.familyId || user?.uid) && (
                               <button
                                 onClick={async () => {
                                   await removeFamilyMember(m.uid);
                                   setFamilyMembers(prev => prev.filter(u => u.uid !== m.uid));
                                   toast.success(t('common.success'));
                                 }}
-                                className="text-xs text-red-400 p-1.5 rounded-md hover:bg-red-500/10 transition-colors"
+                                className="text-xs text-red-400 p-1.5 rounded-md hover:bg-red-500/10 transition-colors shrink-0 whitespace-nowrap"
                               >
                                 {t('common.remove')}
                               </button>
                             )}
-                            {m.uid === settings.familyId && (
-                              <span className="text-[10px] px-2 py-1 bg-purple-500/20 text-purple-400 rounded-md font-bold uppercase tracking-wider">{t('common.admin')}</span>
+                            {m.uid === (settings?.familyId || user?.uid) && (
+                              <span className="text-[10px] px-2 py-1 bg-purple-500/20 text-purple-400 rounded-md font-bold uppercase tracking-wider shrink-0 whitespace-nowrap">{t('common.admin')}</span>
                             )}
                           </div>
                         ))}
