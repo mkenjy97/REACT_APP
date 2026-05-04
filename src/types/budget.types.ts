@@ -18,6 +18,7 @@ export interface Expense {
   amount: number;
   category: ExpenseCategory;
   date: string; // ISO date string YYYY-MM-DD
+  startDate?: string; // ISO date string YYYY-MM-DD for fixed expenses
   description: string;
   isFixed: boolean;
   receiptUrl?: string;

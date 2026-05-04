@@ -32,9 +32,10 @@ export const expenseSchema = z.object({
     'altro',
   ] as const),
   date: z.string().optional(),
+  startDate: z.string().optional(),
   description: z.string().min(1, 'Inserisci una descrizione').max(100),
   isFixed: z.boolean(),
-  billingDay: z.number().min(1).max(31).or(z.literal(NaN)).optional().nullable(),
+  billingDay: z.number().min(1).max(31).optional().nullable(),
   accountSource: z.string().optional().nullable().or(z.literal('')),
   location: z
     .object({

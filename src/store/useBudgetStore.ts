@@ -60,7 +60,11 @@ function computeSummary(expenses: Expense[], budget: Budget): BudgetSummary {
   const monthKey = getMonthKey(now);
   const weekStart = getWeekStart();
 
-  const fixedTemplates = expenses.filter(e => e.isFixed);
+  const fixedTemplates = expenses.filter(e => {
+    if (!e.isFixed) return false;
+    if (!e.startDate) return true;
+    return e.startDate.substring(0, 7) <= monthKey;
+  });
   const totalFixedTemplates = fixedTemplates.reduce((s, e) => s + e.amount, 0);
 
   // Variable expenses: not templates and not auto-generated copies (those are handled by templates weight)
@@ -217,7 +221,7 @@ export const useBudgetStore = create<BudgetState>()(
       },
 
       updateExpense: async (expenseId, partial) => {
-        await setDoc(doc(db, 'expenses', expenseId), partial, { merge: true });
+        await setDoc(doc(db, 'expenses', expenseId), removeUndefined(partial), { merge: true });
       },
 
       addIncome: async (income) => {
@@ -230,7 +234,7 @@ export const useBudgetStore = create<BudgetState>()(
       },
 
       updateIncome: async (id, partial) => {
-        await setDoc(doc(db, 'incomes', id), partial, { merge: true });
+        await setDoc(doc(db, 'incomes', id), removeUndefined(partial), { merge: true });
       },
 
       deleteIncome: async (id) => {
@@ -329,7 +333,11 @@ export const useBudgetStore = create<BudgetState>()(
         // Prevent double-run
         if (settings?.lastFixedExpensesRun === monthKey) return;
 
-        const fixedExpenses = expenses.filter((e) => e.isFixed);
+        const fixedExpenses = expenses.filter((e) => {
+          if (!e.isFixed) return false;
+          if (!e.startDate) return true;
+          return e.startDate.substring(0, 7) <= monthKey;
+        });
         if (fixedExpenses.length === 0) return;
 
         const now = new Date();

@@ -19,7 +19,8 @@ export function RecapPage() {
   const { expenses, incomes, settings, addIncome, deleteIncome, updateIncome, privacyMode } = useBudgetStore();
 
   const [showIncomeForm, setShowIncomeForm] = useState(false);
-  const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
+  const [expandedExpenseMonths, setExpandedExpenseMonths] = useState<Record<string, boolean>>({});
+  const [expandedIncomeMonths, setExpandedIncomeMonths] = useState<Record<string, boolean>>({});
   const [editingIncome, setEditingIncome] = useState<string | null>(null);
 
   const currency = settings?.currency ?? '€';
@@ -82,12 +83,23 @@ export function RecapPage() {
     setShowIncomeForm(false);
   };
 
-  // -- Data processing --
   // Current month incomes
   const currentMonthIncomes = incomes.filter(i => i.date.startsWith(currentMonthKey));
   const totalIncomeCurrentMonth = currentMonthIncomes.reduce((acc, i) => acc + i.amount, 0);
   const normalIncomes = currentMonthIncomes.filter(i => !i.isExtra);
   const extraIncomes = currentMonthIncomes.filter(i => i.isExtra);
+  const totalNormalCurrentMonth = normalIncomes.reduce((acc, i) => acc + i.amount, 0);
+  const totalExtraCurrentMonth = extraIncomes.reduce((acc, i) => acc + i.amount, 0);
+
+  // Group incomes by month
+  const incomesByMonth = incomes.reduce((acc, i) => {
+    const monthKey = i.date.substring(0, 7);
+    if (!acc[monthKey]) acc[monthKey] = [];
+    acc[monthKey].push(i);
+    return acc;
+  }, {} as Record<string, typeof incomes>);
+
+  const sortedIncomeMonths = Object.keys(incomesByMonth).sort((a, b) => b.localeCompare(a));
 
   // Group expenses by month (YYYY-MM)
   const expensesByMonth = expenses.reduce((acc, e) => {
@@ -100,8 +112,12 @@ export function RecapPage() {
   // Sort months descending
   const sortedMonths = Object.keys(expensesByMonth).sort((a, b) => b.localeCompare(a));
 
-  const toggleMonth = (month: string) => {
-    setExpandedMonths(prev => ({ ...prev, [month]: !prev[month] }));
+  const toggleExpenseMonth = (month: string) => {
+    setExpandedExpenseMonths(prev => ({ ...prev, [month]: !prev[month] }));
+  };
+
+  const toggleIncomeMonth = (month: string) => {
+    setExpandedIncomeMonths(prev => ({ ...prev, [month]: !prev[month] }));
   };
 
   return (
@@ -145,9 +161,15 @@ export function RecapPage() {
 
         <GlassCard className="mb-4">
           <p className="text-xs text-text-muted uppercase tracking-widest">{t('spendless.income_details')} {t('spendless.this_month').toLowerCase()}</p>
-          <p className={cn("text-3xl font-bold text-primary-400 tabular-nums mt-1", { 'blur-md select-none': privacyMode })}>
-            {currency}{totalIncomeCurrentMonth.toFixed(2)}
-          </p>
+          <div className="flex items-center justify-between gap-2 mt-1">
+            <p className={cn("text-3xl font-bold text-primary-400 tabular-nums", { 'blur-md select-none': privacyMode })}>
+              {currency}{totalIncomeCurrentMonth.toFixed(2)}
+            </p>
+            <div className={cn("flex flex-col text-[10px] items-end leading-tight text-text-muted", { 'blur-sm': privacyMode })}>
+              <span>{t('spendless.normal_incomes')}: {currency}{totalNormalCurrentMonth.toFixed(2)}</span>
+              <span className="text-purple-400 font-medium">{t('spendless.extra_incomes')}: {currency}{totalExtraCurrentMonth.toFixed(2)}</span>
+            </div>
+          </div>
         </GlassCard>
 
         <AnimatePresence>
@@ -199,67 +221,85 @@ export function RecapPage() {
           )}
         </AnimatePresence>
 
-        {currentMonthIncomes.length > 0 && (
-          <GlassCard className="!p-0 overflow-hidden">
-            <div className="px-4 py-2 bg-glass-bg border-b border-glass-border">
-              <span className="text-xs font-bold text-text-muted uppercase">{t('spendless.income_details')}</span>
-            </div>
-            <div className="px-4">
-              {normalIncomes.length === 0 && <p className="text-xs text-text-muted py-3">{t('spendless.no_normal_income')}</p>}
-              {normalIncomes.map(inc => (
-                <div key={inc.id} className="flex items-center justify-between py-3 border-b border-glass-border last:border-0 gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{inc.description}</p>
-                    <p className="text-xs text-text-muted truncate">
-                      {new Date(inc.date).toLocaleDateString()} • {inc.addedBy}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                    <span className={cn('text-sm font-bold text-primary-400 tabular-nums shrink-0', { 'blur-sm': privacyMode })}>
-                      +{currency}{inc.amount.toFixed(2)}
-                    </span>
-                    <button onClick={() => startEditIncome(inc)} className="p-1.5 text-text-muted hover:bg-glass-border rounded-full">
-                      <Edit2 size={14} />
-                    </button>
-                    <button onClick={() => deleteIncome(inc.id)} className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-full">
-                      <X size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {extraIncomes.length > 0 && (
-              <>
-                <div className="px-4 py-2 bg-purple-500/10 border-y border-glass-border">
-                  <span className="text-xs font-bold text-purple-400 uppercase">{t('spendless.extra_incomes')}</span>
-                </div>
-                <div className="px-4">
-                  {extraIncomes.map(inc => (
-                    <div key={inc.id} className="flex items-center justify-between py-3 border-b border-glass-border last:border-0 gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{inc.description}</p>
-                        <p className="text-xs text-text-muted truncate">
-                          {new Date(inc.date).toLocaleDateString()} • {inc.addedBy}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                        <span className={cn('text-sm font-bold text-purple-400 tabular-nums shrink-0', { 'blur-sm': privacyMode })}>
-                          +{currency}{inc.amount.toFixed(2)}
-                        </span>
-                        <button onClick={() => startEditIncome(inc)} className="p-1.5 text-text-muted hover:bg-glass-border rounded-full">
-                          <Edit2 size={14} />
-                        </button>
-                        <button onClick={() => deleteIncome(inc.id)} className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-full">
-                          <X size={14} />
-                        </button>
-                      </div>
+        <motion.div variants={STAGGER_CONTAINER} initial="initial" animate="animate" className="flex flex-col gap-3">
+          {sortedIncomeMonths.map(monthKey => {
+            const monthIncomes = incomesByMonth[monthKey].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            const monthTotal = monthIncomes.reduce((acc, i) => acc + i.amount, 0);
+            const [year, month] = monthKey.split('-');
+            const monthDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+            const monthName = monthDate.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' });
+            const isExpanded = expandedIncomeMonths[monthKey] || monthKey === currentMonthKey;
+
+            return (
+              <motion.div key={monthKey} variants={STAGGER_ITEM}>
+                <GlassCard className="!p-0 overflow-hidden">
+                  <button
+                    onClick={() => toggleIncomeMonth(monthKey)}
+                    className="w-full flex items-center justify-between p-4 hover:bg-glass-bg transition-colors text-left"
+                  >
+                    <div>
+                      <h3 className="font-bold capitalize">{monthName}</h3>
+                      <p className="text-xs text-text-muted">{monthIncomes.length} {t('spendless.income_details').toLowerCase()}</p>
                     </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </GlassCard>
-        )}
+                    <div className="flex items-center gap-3">
+                      <span className={cn("font-bold text-primary-400 tabular-nums", { 'blur-md': privacyMode })}>
+                        +{currency}{monthTotal.toFixed(2)}
+                      </span>
+                      <motion.div animate={{ rotate: isExpanded ? 180 : 0 }}>
+                        <ChevronDown size={20} className="text-text-muted" />
+                      </motion.div>
+                    </div>
+                  </button>
+
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0 }}
+                        animate={{ height: 'auto' }}
+                        exit={{ height: 0 }}
+                        className="overflow-hidden border-t border-glass-border"
+                      >
+                        <div className="p-4 flex flex-col gap-3 bg-black/5">
+                          {monthIncomes.map(inc => (
+                            <div key={inc.id} className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", inc.isExtra ? "bg-purple-500/20" : "bg-primary-500/20")}>
+                                  <TrendingUp size={16} className={inc.isExtra ? "text-purple-400" : "text-primary-400"} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">{inc.description}</p>
+                                  <p className="text-[10px] text-text-muted truncate">
+                                    {new Date(inc.date).toLocaleDateString()} • {inc.addedBy}
+                                  </p>
+                                  {inc.isExtra && (
+                                    <span className="inline-block mt-1 px-1.5 py-0.5 rounded-md bg-purple-500/20 text-purple-400 text-[8px] font-bold uppercase tracking-wider">
+                                      {t('spendless.is_extra')}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={cn('text-sm font-semibold tabular-nums shrink-0', inc.isExtra ? "text-purple-400" : "text-primary-400", { 'blur-sm': privacyMode })}>
+                                  +{currency}{inc.amount.toFixed(2)}
+                                </span>
+                                <button onClick={() => startEditIncome(inc)} className="p-1.5 text-text-muted hover:bg-glass-border rounded-full transition">
+                                  <Edit2 size={14} />
+                                </button>
+                                <button onClick={() => deleteIncome(inc.id)} className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-full transition">
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </GlassCard>
+              </motion.div>
+            );
+          })}
+        </motion.div>
       </section>
 
       {/* -- STORICO USCITE MENSILI -- */}
@@ -279,14 +319,15 @@ export function RecapPage() {
               const monthExpenses = expensesByMonth[monthKey].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
               const monthTotal = monthExpenses.reduce((acc, e) => acc + e.amount, 0);
               const [year, month] = monthKey.split('-');
-              const monthName = new Date(parseInt(year), parseInt(month) - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-              const isExpanded = expandedMonths[monthKey] || false;
+              const monthDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+              const monthName = monthDate.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' });
+              const isExpanded = expandedExpenseMonths[monthKey] || false;
 
               return (
                 <motion.div key={monthKey} variants={STAGGER_ITEM}>
                   <GlassCard className="!p-0 overflow-hidden">
                     <button
-                      onClick={() => toggleMonth(monthKey)}
+                      onClick={() => toggleExpenseMonth(monthKey)}
                       className="w-full flex items-center justify-between p-4 hover:bg-glass-bg transition-colors text-left"
                     >
                       <div>
