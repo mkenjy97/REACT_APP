@@ -111,7 +111,8 @@
     "auto_prefix": "自动",
     "selection_mode": "选择模式",
     "selected_count": "已选择 {{count}} 项",
-    "total_selected": "选择总计"
+    "total_selected": "选择总计",
+    "start_date": "开始日期"
   },
   "profile": {
     "account": "账户",

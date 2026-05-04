@@ -111,7 +111,8 @@
     "auto_prefix": "Auto",
     "selection_mode": "Modo Selección",
     "selected_count": "{{count}} seleccionados",
-    "total_selected": "Total Seleccionado"
+    "total_selected": "Total Seleccionado",
+    "start_date": "Fecha de inicio"
   },
   "profile": {
     "account": "Cuenta",

@@ -111,7 +111,8 @@
     "auto_prefix": "Авто",
     "selection_mode": "Режим выбора",
     "selected_count": "{{count}} выбрано",
-    "total_selected": "Всего выбрано"
+    "total_selected": "Всего выбрано",
+    "start_date": "Дата начала"
   },
   "profile": {
     "account": "Аккаунт",

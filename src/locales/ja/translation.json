@@ -111,7 +111,8 @@
     "auto_prefix": "自動",
     "selection_mode": "選択モード",
     "selected_count": "{{count}} 件選択中",
-    "total_selected": "選択合計"
+    "total_selected": "選択合計",
+    "start_date": "開始日"
   },
   "profile": {
     "account": "アカウント",
