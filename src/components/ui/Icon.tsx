@@ -23,6 +23,8 @@ import {
   EyeOff,
   Palette,
   RotateCcw,
+  Download,
+  Calendar,
   type LucideIcon,
   type LucideProps
 } from 'lucide-react';
@@ -51,6 +53,8 @@ const ICON_MAP = {
   Hide: EyeOff,
   Palette,
   Reset: RotateCcw,
+  Download,
+  Calendar,
 } as const;
 
 export type IconName = keyof typeof ICON_MAP;

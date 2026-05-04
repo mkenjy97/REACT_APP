@@ -6,6 +6,8 @@ import { RoleBadge } from '@/components/ui/RoleBadge';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useThemeStore, type Palette } from '@/store/useThemeStore';
 import { PREDEFINED_THEMES } from '@/config/themes.config';
+import { useBudgetStore, getMonthKey } from '@/store/useBudgetStore';
+import { ExportService } from '@/services/ExportService';
 import { Icon } from '@/components/ui/Icon';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -44,6 +46,12 @@ export function ProfilePage() {
   // ─── Theme Personalization ──────────────────────────────────────────────────
   const [showThemeSection, setShowThemeSection] = useState(false);
   const [isSavingTheme, setIsSavingTheme] = useState(false);
+
+  // ─── Export Data ────────────────────────────────────────────────────────────
+  const { expenses, incomes, budget, settings } = useBudgetStore();
+  const [exportType, setExportType] = useState<'month' | 'year' | 'week'>('month');
+  const [exportTarget, setExportTarget] = useState(getMonthKey());
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleLogout = () => {
     resetAllStores();
@@ -123,6 +131,25 @@ export function ProfilePage() {
   const handleResetTheme = () => {
     resetPalettes();
     toast.success(t('common.success'));
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      await ExportService.generateReport({
+        expenses,
+        incomes,
+        budget,
+        settings,
+        reportType: exportType,
+        targetKey: exportTarget,
+      });
+      toast.success(t('common.success') || 'Report esportato con successo');
+    } catch (error) {
+      toast.error(t('auth.generic_error') || 'Errore durante l\'esportazione');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const isDirty =
@@ -429,6 +456,54 @@ export function ProfilePage() {
             <option value="ru">🇷🇺 Русский</option>
             <option value="zh">🇨🇳 中文</option>
           </select>
+        </GlassCard>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <h3 className="font-semibold text-lg">{t('profile.export_data')}</h3>
+        <GlassCard className="flex flex-col gap-4 p-6">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
+                <Icon name="Calendar" size={14} /> {t('profile.report_type')}
+              </label>
+              <select
+                value={exportType}
+                onChange={(e) => {
+                  const val = e.target.value as 'month' | 'year' | 'week';
+                  setExportType(val);
+                  if (val === 'year') setExportTarget(new Date().getFullYear().toString());
+                  else if (val === 'month') setExportTarget(getMonthKey());
+                  else setExportTarget(`${new Date().getFullYear()}-W01`); // fallback
+                }}
+                className="flex h-12 w-full rounded-full border border-glass-border bg-surface px-4 text-sm text-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 shadow-sm"
+              >
+                <option value="month">{t('profile.report_month')}</option>
+                <option value="year">{t('profile.report_year')}</option>
+                <option value="week">{t('profile.report_week')}</option>
+              </select>
+            </div>
+            
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
+                <Icon name="Calendar" size={14} /> {t('profile.select_period')}
+              </label>
+              <input
+                type={exportType === 'year' ? 'number' : exportType}
+                value={exportTarget}
+                onChange={(e) => setExportTarget(e.target.value)}
+                min={exportType === 'year' ? 2000 : undefined}
+                max={exportType === 'year' ? 2100 : undefined}
+                className="flex h-12 w-full rounded-full border border-glass-border bg-surface px-4 py-2 text-sm text-text transition-colors placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 shadow-sm"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end pt-2 border-t border-glass-border mt-2">
+            <Button size="sm" onClick={handleExport} disabled={isExporting || !exportTarget}>
+              {isExporting ? <Icon name="Info" size={15} className="animate-spin mr-1.5" /> : <Icon name="Download" size={15} className="mr-1.5" />}
+              {t('profile.export_pdf')}
+            </Button>
+          </div>
         </GlassCard>
       </section>
 
