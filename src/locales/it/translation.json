@@ -46,6 +46,7 @@
     "no_expenses": "Nessuna spesa registrata",
     "add_first": "Aggiungi la tua prima spesa con il pulsante +",
     "add_expense": "Nuova Spesa",
+    "add_income": "Nuova Entrata",
     "add_expense_subtitle": "Compila i campi o scansiona lo scontrino",
     "scan_receipt": "Scansiona lo scontrino con la fotocamera",
     "scan_btn": "Scansiona Scontrino",
@@ -76,6 +77,7 @@
     "total_installments": "Numero Rate",
     "current_installment": "Rata Attuale",
     "is_extra": "Entrata Extra?",
+    "badge_extra": "Entrata Extra",
     "normal_incomes": "Entrate Normali",
     "extra_incomes": "Entrate Extra",
     "income_details": "Dettaglio Entrate",
@@ -113,7 +115,10 @@
     "selected_count": "{{count}} selezionati",
     "total_selected": "Totale Selezionato",
     "start_date": "Data Inizio",
-    "starts_from": "Inizia da"
+    "starts_from": "Inizia da",
+    "fixed_incomes": "Entrate Fisse",
+    "fixed_incomes_total": "Totale Entrate Fisse",
+    "no_fixed_incomes": "Nessuna entrata fissa configurata"
   },
   "profile": {
     "account": "Account",

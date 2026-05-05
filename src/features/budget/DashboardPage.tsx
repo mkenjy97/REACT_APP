@@ -5,7 +5,7 @@ import { useBudgetStore, SPENDING_BADGE_CONFIG, getMonthKey } from '@/store/useB
 import { useAuthStore } from '@/store/useAuthStore';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { PAGE_VARIANTS, TRANSITIONS, STAGGER_CONTAINER, STAGGER_ITEM } from '@/constants/animations';
-import { Eye, EyeOff, Plus, TrendingDown, Calendar, Edit2, Check, X, Users, Copy, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Plus, TrendingDown, Calendar, Edit2, Check, X, Users, Copy, CheckCircle, TrendingUp } from 'lucide-react';
 import { cn } from '@/components/ui/GlassCard';
 import { DEFAULT_CATEGORIES } from '@/types/budget.types';
 import { toast } from 'sonner';
@@ -22,6 +22,7 @@ interface BudgetBarProps {
   currency?: string;
   onEdit?: (newLimit: number) => void;
   fixedSpent?: number;
+  mainValue?: 'remaining' | 'spent';
 }
 
 function getBarColor(pct: number) {
@@ -31,11 +32,25 @@ function getBarColor(pct: number) {
   return 'from-emerald-400 to-teal-500';
 }
 
-function BudgetProgressCard({ label, spent, limit, percentage, blurred, currency = '€', onEdit, fixedSpent }: BudgetBarProps) {
+function BudgetProgressCard({
+  label,
+  spent,
+  limit,
+  percentage,
+  blurred,
+  currency = '€',
+  onEdit,
+  fixedSpent,
+  mainValue = 'remaining',
+}: BudgetBarProps) {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(limit.toString());
   const color = getBarColor(percentage);
+
+  const remaining = Math.max(limit - spent, 0);
+  const showRemainingAsMain = mainValue === 'remaining';
+  const mainTextColor = showRemainingAsMain ? 'text-emerald-400' : 'text-red-400';
 
   const handleSave = () => {
     const val = parseFloat(editValue);
@@ -69,44 +84,79 @@ function BudgetProgressCard({ label, spent, limit, percentage, blurred, currency
 
       <div className="flex items-end justify-between">
         <div>
-          <p className={cn('text-3xl font-bold tabular-nums transition-all duration-300', {
-            'blur-md select-none': blurred,
-          })}>
-            {currency}{spent.toFixed(2)}
+          <p
+            className={cn('text-3xl font-bold tabular-nums transition-all duration-300', mainTextColor, {
+              'blur-md select-none': blurred,
+            })}
+          >
+            {showRemainingAsMain ? (
+              <>
+                {currency}
+                {remaining.toFixed(2)}
+              </>
+            ) : (
+              <>
+                {currency}
+                {spent.toFixed(2)}
+              </>
+            )}
           </p>
+
           {fixedSpent !== undefined && fixedSpent > 0 && (
-            <p className={cn("text-[10px] text-purple-400 font-medium", { 'blur-md': blurred })}>
-              {t('spendless.spent')} {t('spendless.nav_fixed').toLowerCase()}: {currency}{fixedSpent.toFixed(0)}
+            <p className={cn('text-[10px] text-purple-400 font-medium', { 'blur-md': blurred })}>
+              {t('spendless.spent')} {t('spendless.nav_fixed').toLowerCase()}: {currency}
+              {fixedSpent.toFixed(0)}
             </p>
           )}
+
           {isEditing ? (
             <div className="flex items-center gap-2 mt-1">
               <input
                 type="number"
                 value={editValue}
-                onChange={e => setEditValue(e.target.value)}
+                onChange={(e) => setEditValue(e.target.value)}
                 className="w-20 sm:w-24 bg-background border border-glass-border rounded px-2 py-1 text-sm font-bold"
                 autoFocus
-                onKeyDown={e => e.key === 'Enter' && handleSave()}
+                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
               />
-              <button onClick={handleSave} className="p-1 text-primary-500 shrink-0"><Check size={16} /></button>
-              <button onClick={() => { setIsEditing(false); setEditValue(limit.toString()); }} className="p-1 text-red-400 shrink-0"><X size={16} /></button>
+              <button onClick={handleSave} className="p-1 text-primary-500 shrink-0">
+                <Check size={16} />
+              </button>
+              <button
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditValue(limit.toString());
+                }}
+                className="p-1 text-red-400 shrink-0"
+              >
+                <X size={16} />
+              </button>
             </div>
           ) : (
             <p className="text-xs text-text-muted mt-0.5">
-              {t('spendless.budget')}: <span className={cn({ 'blur-md select-none': blurred })}>{currency}{limit.toFixed(2)}</span>
+              {t('spendless.budget')}:{' '}
+              <span className={cn({ 'blur-md select-none': blurred })}>
+                {currency}
+                {limit.toFixed(2)}
+              </span>
+              <span className={cn('ml-2', { 'blur-md select-none': blurred })}>
+                · {t('spendless.spent')}: {currency}
+                {spent.toFixed(2)}
+              </span>
             </p>
           )}
         </div>
+
         <div className="text-right">
-          <p className="text-xs text-text-muted">{t('spendless.remaining')}</p>
-          <p className={cn('text-lg font-bold', {
-            'text-primary-400': percentage < 70,
-            'text-amber-400': percentage >= 70 && percentage < 90,
-            'text-red-400': percentage >= 90,
-            'blur-md select-none': blurred,
-          })}>
-            {currency}{Math.max(limit - spent, 0).toFixed(2)}
+          <p className="text-xs text-text-muted">{t('spendless.spent')}</p>
+          <p
+            className={cn('text-lg font-bold', {
+              'text-red-400': true,
+              'blur-md select-none': blurred,
+            })}
+          >
+            {currency}
+            {spent.toFixed(2)}
           </p>
         </div>
       </div>
@@ -155,9 +205,11 @@ import { useState, useEffect } from 'react';
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 export function DashboardPage() {
   const { user } = useAuthStore();
-  const { summary, budget, expenses, incomes, privacyMode, togglePrivacyMode, settings, saveSettings, removeFamilyMember, updateFamilyBudget } = useBudgetStore();
+  const { summary, budget, expenses, incomes, privacyMode, togglePrivacyMode, settings, saveSettings, removeFamilyMember, updateFamilyBudget, deleteIncome } =
+    useBudgetStore();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+
   const [showFamilyCode, setShowFamilyCode] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [copied, setCopied] = useState(false);
@@ -234,7 +286,15 @@ export function DashboardPage() {
   const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   const daysRemaining = lastDayOfMonth.getDate() - now.getDate();
 
-  const totalNormalIncome = incomes.filter(i => i.date.startsWith(monthKey) && !i.isExtra).reduce((acc, i) => acc + i.amount, 0);
+  const totalNormalIncome = incomes.filter((i) => i.date.startsWith(monthKey) && !i.isExtra).reduce((acc, i) => acc + i.amount, 0);
+
+  // Current month incomes
+  const currentMonthIncomes = incomes.filter((i) => i.date.startsWith(monthKey));
+  const totalIncomeCurrentMonth = currentMonthIncomes.reduce((acc, i) => acc + i.amount, 0);
+  const normalIncomes = currentMonthIncomes.filter((i) => !i.isExtra);
+  const extraIncomes = currentMonthIncomes.filter((i) => i.isExtra);
+  const totalNormalCurrentMonth = normalIncomes.reduce((acc, i) => acc + i.amount, 0);
+  const totalExtraCurrentMonth = extraIncomes.reduce((acc, i) => acc + i.amount, 0);
 
   // Last 5 non-fixed expenses
   const recentExpenses = [...expenses]
@@ -244,6 +304,8 @@ export function DashboardPage() {
 
   const badge = summary?.spendingBadge;
   const badgeConf = badge ? SPENDING_BADGE_CONFIG[badge] : null;
+
+  const [showFabMenu, setShowFabMenu] = useState(false);
 
   return (
     <>
@@ -309,12 +371,7 @@ export function DashboardPage() {
         </div>
 
         {/* ── Budget Cards ── */}
-        <motion.div
-          variants={STAGGER_CONTAINER}
-          initial="initial"
-          animate="animate"
-          className="grid gap-4"
-        >
+        <motion.div variants={STAGGER_CONTAINER} initial="initial" animate="animate" className="grid gap-4">
           <motion.div variants={STAGGER_ITEM}>
             <BudgetProgressCard
               label={t('spendless.weekly_budget')}
@@ -323,7 +380,8 @@ export function DashboardPage() {
               percentage={summary?.weeklyPercentage ?? 0}
               blurred={privacyMode}
               currency={currency}
-              onEdit={val => {
+              mainValue="remaining"
+              onEdit={(val) => {
                 if (user?.uid) {
                   updateFamilyBudget(user.uid, { ...budget, weeklyLimit: val });
                 }
@@ -338,10 +396,13 @@ export function DashboardPage() {
               percentage={summary?.monthlyPercentage ?? 0}
               blurred={privacyMode}
               currency={currency}
+              mainValue="remaining"
               fixedSpent={summary?.totalFixedThisMonth}
-              onEdit={val => {
+              onEdit={(val) => {
                 if (val > totalNormalIncome) {
-                  toast.error(`${t('spendless.monthly_budget')} > ${t('spendless.income_details')} (${currency}${totalNormalIncome.toFixed(2)})`);
+                  toast.error(
+                    `${t('spendless.monthly_budget')} > ${t('spendless.income_details')} (${currency}${totalNormalIncome.toFixed(2)})`
+                  );
                   return;
                 }
                 if (user?.uid) {
@@ -351,6 +412,80 @@ export function DashboardPage() {
             />
           </motion.div>
         </motion.div>
+
+        {/* ── Income Card ── */}
+        <section>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">{t('spendless.income_details')}</h2>
+          </div>
+
+          <GlassCard className="mb-3">
+            <p className="text-xs text-text-muted uppercase tracking-widest">
+              {t('spendless.income_details')} {t('spendless.this_month').toLowerCase()}
+            </p>
+            <div className="flex items-center justify-between gap-2 mt-1">
+              <p className={cn('text-3xl font-bold text-primary-400 tabular-nums', { 'blur-md select-none': privacyMode })}>
+                {currency}
+                {totalIncomeCurrentMonth.toFixed(2)}
+              </p>
+              <div className={cn('flex flex-col text-[10px] items-end leading-tight text-text-muted', { 'blur-sm': privacyMode })}>
+                <span>
+                  {t('spendless.normal_incomes')}: {currency}
+                  {totalNormalCurrentMonth.toFixed(2)}
+                </span>
+                <span className="text-purple-400 font-medium">
+                  {t('spendless.extra_incomes')}: {currency}
+                  {totalExtraCurrentMonth.toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            {/* Quick list current month incomes */}
+            {currentMonthIncomes.length > 0 && (
+              <div className="mt-3 border-t border-glass-border pt-3 flex flex-col gap-2">
+                {currentMonthIncomes
+                  .slice()
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .slice(0, 3)
+                  .map((inc) => (
+                    <div key={inc.id} className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <div
+                          className={cn(
+                            'w-7 h-7 rounded-lg flex items-center justify-center shrink-0',
+                            inc.isExtra ? 'bg-purple-500/20' : 'bg-primary-500/20'
+                          )}
+                        >
+                          <TrendingUp size={14} className={inc.isExtra ? 'text-purple-400' : 'text-primary-400'} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold truncate">{inc.description}</p>
+                          <p className="text-[10px] text-text-muted truncate">{new Date(inc.date).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span
+                          className={cn('text-xs font-bold tabular-nums', inc.isExtra ? 'text-purple-400' : 'text-primary-400', {
+                            'blur-sm': privacyMode,
+                          })}
+                        >
+                          +{currency}
+                          {inc.amount.toFixed(2)}
+                        </span>
+                        <button
+                          onClick={() => deleteIncome(inc.id)}
+                          className="p-1 text-red-400 hover:bg-red-500/10 rounded-full transition"
+                          aria-label={t('common.remove')}
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </GlassCard>
+        </section>
 
         {/* ── Quick Stats ── */}
         <div className="grid grid-cols-2 gap-3">
@@ -521,18 +656,67 @@ export function DashboardPage() {
       </motion.div>
 
       {/* ── FAB ── */}
+      <AnimatePresence>
+        {showFabMenu && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[55]"
+            onClick={() => setShowFabMenu(false)}
+          >
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showFabMenu && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.98 }}
+            transition={TRANSITIONS.spring}
+            className="fixed bottom-40 right-5 z-[60] flex flex-col gap-2"
+          >
+            <button
+              onClick={() => {
+                setShowFabMenu(false);
+                navigate('/add-expense');
+              }}
+              className="px-4 py-2.5 rounded-xl glass-button text-sm font-bold flex items-center gap-2"
+            >
+              <TrendingDown size={16} className="text-red-400" />
+              {t('spendless.add_expense')}
+            </button>
+            <button
+              onClick={() => {
+                setShowFabMenu(false);
+                navigate('/add-income');
+              }}
+              className="px-4 py-2.5 rounded-xl glass-button text-sm font-bold flex items-center gap-2"
+            >
+              <TrendingUp size={16} className="text-primary-400" />
+              {t('spendless.add_income')}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.button
-        onClick={() => navigate('/add-expense')}
-        className="fixed bottom-24 right-5 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center bg-gradient-to-br from-primary-400 to-primary-500 text-white"
+        onClick={() => setShowFabMenu((s) => !s)}
+        className="fixed bottom-24 right-5 z-[70] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center bg-gradient-to-br from-primary-400 to-primary-500 text-white"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={TRANSITIONS.bounce}
-        aria-label={t('spendless.add_expense')}
+        aria-label={t('common.manage')}
         id="fab-add-expense"
       >
-        <Plus size={26} strokeWidth={2.5} />
+        <motion.div animate={{ rotate: showFabMenu ? 45 : 0 }} transition={{ duration: 0.15 }}>
+          <Plus size={26} strokeWidth={2.5} />
+        </motion.div>
       </motion.button>
     </>
   );

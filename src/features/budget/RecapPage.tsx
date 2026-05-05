@@ -1,87 +1,23 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, Plus, X, Edit2, TrendingUp, ToggleLeft, ToggleRight } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { incomeSchema, type IncomeFormData } from '@/validation/budget.schema';
-import { toast } from 'sonner';
+import { ChevronDown, TrendingUp, X } from 'lucide-react';
 
 import { useBudgetStore } from '@/store/useBudgetStore';
-import { useAuthStore } from '@/store/useAuthStore';
 import { GlassCard, cn } from '@/components/ui/GlassCard';
 import { PAGE_VARIANTS, STAGGER_CONTAINER, STAGGER_ITEM } from '@/constants/animations';
 import { DEFAULT_CATEGORIES } from '@/types/budget.types';
 
 export function RecapPage() {
   const { t, i18n } = useTranslation();
-  const { user } = useAuthStore();
-  const { expenses, incomes, settings, addIncome, deleteIncome, updateIncome, privacyMode } = useBudgetStore();
+  const { expenses, incomes, settings, deleteIncome, privacyMode } = useBudgetStore();
 
-  const [showIncomeForm, setShowIncomeForm] = useState(false);
   const [expandedExpenseMonths, setExpandedExpenseMonths] = useState<Record<string, boolean>>({});
   const [expandedIncomeMonths, setExpandedIncomeMonths] = useState<Record<string, boolean>>({});
-  const [editingIncome, setEditingIncome] = useState<string | null>(null);
 
   const currency = settings?.currency ?? '€';
   const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-  // -- Income Form --
-  const { register, handleSubmit, reset, watch, setValue } = useForm<IncomeFormData>({
-    resolver: zodResolver(incomeSchema),
-    defaultValues: {
-      amount: 0,
-      description: '',
-      date: now.toISOString().split('T')[0],
-      isExtra: false
-    }
-  });
-
-  const isExtraVal = watch('isExtra');
-
-  const onIncomeSubmit = async (data: IncomeFormData) => {
-    if (!user?.uid) return;
-    try {
-      if (editingIncome) {
-        await updateIncome(editingIncome, data);
-        toast.success(t('common.success'));
-        setEditingIncome(null);
-      } else {
-        await addIncome({
-          userId: user.uid,
-          amount: data.amount,
-          description: data.description,
-          date: data.date,
-          addedBy: user.displayName || user.email || 'Sconosciuto',
-          createdAt: Date.now(),
-          isExtra: data.isExtra ?? false
-        });
-        toast.success(t('common.success'));
-      }
-      reset();
-      setShowIncomeForm(false);
-    } catch {
-      toast.error(t('auth.generic_error'));
-    }
-  };
-
-  const startEditIncome = (income: any) => {
-    setEditingIncome(income.id);
-    reset({
-      amount: income.amount,
-      description: income.description,
-      date: income.date,
-      isExtra: income.isExtra ?? false
-    });
-    setShowIncomeForm(true);
-  };
-
-  const cancelEdit = () => {
-    setEditingIncome(null);
-    reset();
-    setShowIncomeForm(false);
-  };
 
   // Current month incomes
   const currentMonthIncomes = incomes.filter(i => i.date.startsWith(currentMonthKey));
@@ -117,7 +53,12 @@ export function RecapPage() {
   };
 
   const toggleIncomeMonth = (month: string) => {
-    setExpandedIncomeMonths(prev => ({ ...prev, [month]: !prev[month] }));
+    setExpandedIncomeMonths(prev => {
+      const isForcedOpen = month === currentMonthKey && prev[month] === undefined;
+      // allow first render open, but once user interacts we must be able to close it
+      const currentVal = isForcedOpen ? true : !!prev[month];
+      return { ...prev, [month]: !currentVal };
+    });
   };
 
   return (
@@ -132,94 +73,50 @@ export function RecapPage() {
       <div className="pt-2">
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <TrendingUp size={24} className="text-primary-400" />
-          {t('spendless.income_details')}
+          {t('spendless.nav_recap')}
         </h1>
         <p className="text-sm text-text-muted mt-0.5">{t('spendless.fixed_expenses_subtitle')}</p>
       </div>
 
-      {/* -- ENTRATE MENSILI -- */}
+      {/* -- ENTRATE + SPESE MENSILI -- */}
       <section>
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">
-            {t('spendless.income_details')} ({now.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' })})
+            {t('spendless.nav_recap')} ({now.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' })})
           </h2>
-          <button
-            onClick={() => {
-              if (showIncomeForm && !editingIncome) setShowIncomeForm(false);
-              else {
-                setEditingIncome(null);
-                reset({ amount: 0, description: '', date: now.toISOString().split('T')[0] });
-                setShowIncomeForm(true);
-              }
-            }}
-            className="flex items-center gap-1 text-xs font-bold text-primary-400 bg-primary-500/10 px-2 py-1 rounded-md"
-          >
-            {showIncomeForm && !editingIncome ? <X size={14} /> : <Plus size={14} />}
-            {showIncomeForm && !editingIncome ? t('common.close') : t('common.save')}
-          </button>
         </div>
 
-        <GlassCard className="mb-4">
-          <p className="text-xs text-text-muted uppercase tracking-widest">{t('spendless.income_details')} {t('spendless.this_month').toLowerCase()}</p>
-          <div className="flex items-center justify-between gap-2 mt-1">
-            <p className={cn("text-3xl font-bold text-primary-400 tabular-nums", { 'blur-md select-none': privacyMode })}>
-              {currency}{totalIncomeCurrentMonth.toFixed(2)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <GlassCard>
+            <p className="text-xs text-text-muted uppercase tracking-widest">
+              {t('spendless.income_details')} {t('spendless.this_month').toLowerCase()}
             </p>
-            <div className={cn("flex flex-col text-[10px] items-end leading-tight text-text-muted", { 'blur-sm': privacyMode })}>
-              <span>{t('spendless.normal_incomes')}: {currency}{totalNormalCurrentMonth.toFixed(2)}</span>
-              <span className="text-purple-400 font-medium">{t('spendless.extra_incomes')}: {currency}{totalExtraCurrentMonth.toFixed(2)}</span>
+            <div className="flex items-center justify-between gap-2 mt-1">
+              <p className={cn("text-3xl font-bold text-primary-400 tabular-nums", { 'blur-md select-none': privacyMode })}>
+                {currency}{totalIncomeCurrentMonth.toFixed(2)}
+              </p>
+              <div className={cn("flex flex-col text-[10px] items-end leading-tight text-text-muted", { 'blur-sm': privacyMode })}>
+                <span>{t('spendless.normal_incomes')}: {currency}{totalNormalCurrentMonth.toFixed(2)}</span>
+                <span className="text-purple-400 font-medium">{t('spendless.extra_incomes')}: {currency}{totalExtraCurrentMonth.toFixed(2)}</span>
+              </div>
             </div>
-          </div>
-        </GlassCard>
+          </GlassCard>
 
-        <AnimatePresence>
-          {showIncomeForm && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden mb-4"
-            >
-              <GlassCard className="border-primary-500/30">
-                <form onSubmit={handleSubmit(onIncomeSubmit)} className="flex flex-col gap-3">
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <input
-                      type="number" step="0.01"
-                      placeholder={t('spendless.amount')}
-                      className="w-full sm:w-1/3 px-3 py-2 rounded-xl bg-glass-bg border border-glass-border focus:outline-none focus:ring-2 focus:ring-primary-400"
-                      {...register('amount', { valueAsNumber: true })}
-                    />
-                    <input
-                      type="date"
-                      className="w-full sm:w-2/3 px-3 py-2 rounded-xl bg-glass-bg border border-glass-border focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
-                      {...register('date')}
-                    />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder={t('spendless.description')}
-                    className="w-full px-3 py-2 rounded-xl bg-glass-bg border border-glass-border focus:outline-none focus:ring-2 focus:ring-primary-400"
-                    {...register('description')}
-                  />
-                  <div className="flex items-center justify-between p-2 bg-glass-bg rounded-xl border border-glass-border">
-                    <span className="text-sm font-semibold text-text-muted">{t('spendless.is_extra')}</span>
-                    <button type="button" onClick={() => setValue('isExtra', !isExtraVal)} className="text-primary-500">
-                      {isExtraVal ? <ToggleRight size={32} className="text-primary-400" /> : <ToggleLeft size={32} className="text-text-muted" />}
-                    </button>
-                  </div>
-                  <div className="flex justify-end gap-2 mt-2">
-                    <button type="button" onClick={cancelEdit} className="px-4 py-2 text-sm font-medium rounded-xl glass-button text-text-muted">
-                      {t('common.cancel')}
-                    </button>
-                    <button type="submit" className="px-4 py-2 text-sm font-bold rounded-xl bg-gradient-to-r from-primary-400 to-primary-500 text-white">
-                      {editingIncome ? t('common.edit') : t('common.save')}
-                    </button>
-                  </div>
-                </form>
-              </GlassCard>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          <GlassCard>
+            <p className="text-xs text-text-muted uppercase tracking-widest">
+              {t('spendless.history')} {t('spendless.this_month').toLowerCase()}
+            </p>
+            <div className="flex items-center justify-between gap-2 mt-1">
+              <p className={cn("text-3xl font-bold text-red-400 tabular-nums", { 'blur-md select-none': privacyMode })}>
+                {currency}{(expensesByMonth[currentMonthKey]?.reduce((acc, e) => acc + e.amount, 0) ?? 0).toFixed(2)}
+              </p>
+              <div className={cn("flex flex-col text-[10px] items-end leading-tight text-text-muted", { 'blur-sm': privacyMode })}>
+                <span>{(expensesByMonth[currentMonthKey]?.length ?? 0)} {t('spendless.nav_history').toLowerCase()}</span>
+              </div>
+            </div>
+          </GlassCard>
+        </div>
+
 
         <motion.div variants={STAGGER_CONTAINER} initial="initial" animate="animate" className="flex flex-col gap-3">
           {sortedIncomeMonths.map(monthKey => {
@@ -228,7 +125,7 @@ export function RecapPage() {
             const [year, month] = monthKey.split('-');
             const monthDate = new Date(parseInt(year), parseInt(month) - 1, 1);
             const monthName = monthDate.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' });
-            const isExpanded = expandedIncomeMonths[monthKey] || monthKey === currentMonthKey;
+            const isExpanded = expandedIncomeMonths[monthKey] ?? (monthKey === currentMonthKey);
 
             return (
               <motion.div key={monthKey} variants={STAGGER_ITEM}>
@@ -273,7 +170,7 @@ export function RecapPage() {
                                   </p>
                                   {inc.isExtra && (
                                     <span className="inline-block mt-1 px-1.5 py-0.5 rounded-md bg-purple-500/20 text-purple-400 text-[8px] font-bold uppercase tracking-wider">
-                                      {t('spendless.is_extra')}
+                                      {t('spendless.badge_extra')}
                                     </span>
                                   )}
                                 </div>
@@ -282,9 +179,6 @@ export function RecapPage() {
                                 <span className={cn('text-sm font-semibold tabular-nums shrink-0', inc.isExtra ? "text-purple-400" : "text-primary-400", { 'blur-sm': privacyMode })}>
                                   +{currency}{inc.amount.toFixed(2)}
                                 </span>
-                                <button onClick={() => startEditIncome(inc)} className="p-1.5 text-text-muted hover:bg-glass-border rounded-full transition">
-                                  <Edit2 size={14} />
-                                </button>
                                 <button onClick={() => deleteIncome(inc.id)} className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-full transition">
                                   <X size={14} />
                                 </button>

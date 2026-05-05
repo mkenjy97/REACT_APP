@@ -36,6 +36,8 @@ import { FixedExpensesPage } from '@/features/budget/FixedExpensesPage';
 import { ExpenseHistoryPage } from '@/features/budget/ExpenseHistoryPage';
 import { RecapPage } from '@/features/budget/RecapPage';
 import { FixedExpenseFormPage } from '@/features/budget/FixedExpenseFormPage';
+import { IncomeFormPage } from '@/features/budget/IncomeFormPage';
+import { FixedIncomeFormPage } from '@/features/budget/FixedIncomeFormPage';
 
 // Layouts
 import { FullScreenLayout } from '@/components/layout/FullScreenLayout';
@@ -96,6 +98,8 @@ function App() {
               {/* SpendLess routes */}
               <Route path="/" element={<DashboardPage />} />
               <Route path="/add-expense" element={<ExpenseFormPage />} />
+              <Route path="/add-income" element={<IncomeFormPage />} />
+              <Route path="/add-fixed-income" element={<FixedIncomeFormPage />} />
               <Route path="/history" element={<ExpenseHistoryPage />} />
               <Route path="/fixed-expenses" element={<FixedExpensesPage />} />
               <Route path="/add-fixed-expense" element={<FixedExpenseFormPage />} />

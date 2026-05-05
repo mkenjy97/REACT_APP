@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Plus, Trash2, RepeatIcon, ChevronLeft, Edit2, X, Check, ToggleLeft, ToggleRight, Calculator, CheckSquare, Square } from 'lucide-react';
+import { Plus, Trash2, RepeatIcon, ChevronLeft, Edit2, X, Check, ToggleLeft, ToggleRight, Calculator, CheckSquare, Square, TrendingUp } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useBudgetStore } from '@/store/useBudgetStore';
@@ -212,16 +212,24 @@ function FixedExpenseRow({
 export function FixedExpensesPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { expenses, deleteExpense, updateExpense, settings } = useBudgetStore();
+  const { expenses, incomes, deleteExpense, updateExpense, settings, deleteIncome } = useBudgetStore();
   const [groupBy, setGroupBy] = useState<'financing' | 'account' | 'category'>('financing');
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showFabMenu, setShowFabMenu] = useState(false);
 
   const currency = settings?.currency ?? '€';
   const monthKey = new Date().toISOString().substring(0, 7);
+
   const fixedExpenses = expenses.filter(e => e.isFixed);
   const activeFixedExpenses = fixedExpenses.filter(e => !e.startDate || e.startDate.substring(0, 7) <= monthKey);
   const totalFixed = activeFixedExpenses.reduce((s, e) => s + e.amount, 0);
+
+  // ── Fixed incomes (new section) ───────────────────────────────────────────
+  const fixedIncomes = useMemo(() => incomes.filter(i => i.isFixed), [incomes]);
+  const activeFixedIncomes = useMemo(() => fixedIncomes.filter(i => i.date.substring(0, 7) <= monthKey), [fixedIncomes, monthKey]);
+  const totalFixedIncome = useMemo(() => activeFixedIncomes.reduce((s, i) => s + i.amount, 0), [activeFixedIncomes]);
+
 
 
   const groupedFixedExpenses = fixedExpenses.reduce((acc, expense) => {
@@ -296,9 +304,9 @@ export function FixedExpensesPage() {
           <div className="flex-1">
             <h1 className="text-xl font-bold flex items-center gap-2">
               <RepeatIcon size={20} className="text-purple-400" />
-              {t('spendless.fixed_expenses')}
+              {t('spendless.recurring')}
             </h1>
-            <p className="text-xs text-text-muted">{t('spendless.fixed_expenses_subtitle')}</p>
+            <p className="text-xs text-text-muted">{t('spendless.recurring_desc')}</p>
           </div>
           <button
             onClick={() => {
@@ -315,17 +323,73 @@ export function FixedExpensesPage() {
           </button>
         </div>
 
-        {/* Summary card */}
-        <GlassCard className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-text-muted uppercase tracking-widest">{t('spendless.total_fixed')}</p>
-            <p className="text-3xl font-bold text-purple-400 tabular-nums mt-1">
-              {currency}{totalFixed.toFixed(2)}
-            </p>
-            <p className="text-xs text-text-muted mt-1">{t('spendless.auto_added')}</p>
+        {/* Summary cards */}
+        <div className="grid grid-cols-2 gap-3">
+          <GlassCard className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-text-muted uppercase tracking-widest">{t('spendless.fixed_expenses')}</p>
+              <p className="text-2xl font-bold text-purple-400 tabular-nums mt-1">
+                {currency}{totalFixed.toFixed(2)}
+              </p>
+              <p className="text-[10px] text-text-muted mt-1">{t('spendless.auto_added')}</p>
+            </div>
+            <span className="text-4xl">🔄</span>
+          </GlassCard>
+
+          <GlassCard className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-text-muted uppercase tracking-widest">{t('spendless.fixed_incomes')}</p>
+              <p className="text-2xl font-bold text-primary-400 tabular-nums mt-1">
+                {currency}{totalFixedIncome.toFixed(2)}
+              </p>
+              <p className="text-[10px] text-text-muted mt-1">{t('spendless.auto_added')}</p>
+            </div>
+            <span className="text-4xl">💰</span>
+          </GlassCard>
+        </div>
+
+
+        {/* Recurring incomes */}
+        <section>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">{t('spendless.fixed_incomes')}</h2>
           </div>
-          <span className="text-5xl">🔄</span>
-        </GlassCard>
+
+          <GlassCard className="mt-2">
+            {fixedIncomes.length === 0 ? (
+              <p className="text-xs text-text-muted">{t('spendless.no_fixed_incomes')}</p>
+            ) : (
+              <div className="flex flex-col">
+                {fixedIncomes
+                  .slice()
+                  .sort((a, b) => b.amount - a.amount)
+                  .map((inc) => (
+                    <div key={inc.id} className="flex items-center justify-between py-3 border-b border-glass-border last:border-0 gap-2">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary-500/20 shrink-0">
+                          <TrendingUp size={16} className="text-primary-400" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold truncate">{inc.description}</p>
+                          <p className="text-[10px] text-text-muted truncate">
+                            {t('spendless.date')}: {new Date(inc.date).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-sm font-bold tabular-nums text-primary-400">
+                          +{currency}{inc.amount.toFixed(2)}
+                        </span>
+                        <button onClick={() => deleteIncome(inc.id)} className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-full transition" aria-label={t('common.delete')}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </GlassCard>
+        </section>
 
         {/* Grouping Toggle */}
         {fixedExpenses.length > 0 && (
@@ -410,18 +474,67 @@ export function FixedExpensesPage() {
       </motion.div>
 
       {/* ── FAB ── */}
+      <AnimatePresence>
+        {showFabMenu && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[55]"
+            onClick={() => setShowFabMenu(false)}
+          >
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showFabMenu && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.98 }}
+            transition={TRANSITIONS.spring}
+            className="fixed bottom-40 right-5 z-[60] flex flex-col gap-2"
+          >
+            <button
+              onClick={() => {
+                setShowFabMenu(false);
+                navigate('/add-fixed-expense');
+              }}
+              className="px-4 py-2.5 rounded-xl glass-button text-sm font-bold flex items-center gap-2"
+            >
+              <RepeatIcon size={16} className="text-purple-400" />
+              {t('spendless.add_fixed')}
+            </button>
+            <button
+              onClick={() => {
+                setShowFabMenu(false);
+                navigate('/add-fixed-income');
+              }}
+              className="px-4 py-2.5 rounded-xl glass-button text-sm font-bold flex items-center gap-2"
+            >
+              <TrendingUp size={16} className="text-primary-400" />
+              {t('spendless.fixed_incomes') || t('spendless.add_income')}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.button
-        onClick={() => navigate('/add-fixed-expense')}
-        className="fixed bottom-24 right-5 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-600 text-white"
+        onClick={() => setShowFabMenu((s) => !s)}
+        className="fixed bottom-24 right-5 z-[70] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-600 text-white"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={TRANSITIONS.bounce}
-        aria-label={t('spendless.add_fixed')}
+        aria-label={t('common.manage')}
         id="fab-add-fixed-expense"
       >
-        <Plus size={26} strokeWidth={2.5} />
+        <motion.div animate={{ rotate: showFabMenu ? 45 : 0 }} transition={{ duration: 0.15 }}>
+          <Plus size={26} strokeWidth={2.5} />
+        </motion.div>
       </motion.button>
 
       {/* Floating Selection Sum Bar (Fixed at bottom) */}

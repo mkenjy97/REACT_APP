@@ -48,6 +48,7 @@ export interface Income {
   addedBy: string;
   createdAt: number;
   isExtra?: boolean;
+  isFixed?: boolean;
 }
 
 // ─── Category Config ──────────────────────────────────────────────────────────
