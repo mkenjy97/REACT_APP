@@ -24,6 +24,7 @@
     "remove": "削除"
   },
   "spendless": {
+    "fixed_incomes": "固定収入",
     "greeting": "こんにちは、{{name}} 👋",
     "days_left": "今月の残り日数",
     "month_progress": "月間の進捗",

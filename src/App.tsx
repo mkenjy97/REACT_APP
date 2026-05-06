@@ -38,6 +38,7 @@ import { RecapPage } from '@/features/budget/RecapPage';
 import { FixedExpenseFormPage } from '@/features/budget/FixedExpenseFormPage';
 import { IncomeFormPage } from '@/features/budget/IncomeFormPage';
 import { FixedIncomeFormPage } from '@/features/budget/FixedIncomeFormPage';
+import { ExportPage } from '@/features/budget/ExportPage';
 
 // Layouts
 import { FullScreenLayout } from '@/components/layout/FullScreenLayout';
@@ -104,6 +105,7 @@ function App() {
               <Route path="/fixed-expenses" element={<FixedExpensesPage />} />
               <Route path="/add-fixed-expense" element={<FixedExpenseFormPage />} />
               <Route path="/recap" element={<RecapPage />} />
+              <Route path="/export" element={<ExportPage />} />
 
               {APP_CONFIG.features.hasSearch && (
                 <Route path="/search" element={<SearchPage />} />

@@ -24,6 +24,7 @@
     "remove": "Удалить"
   },
   "spendless": {
+    "fixed_incomes": "Фиксированные доходы",
     "greeting": "Привет, {{name}} 👋",
     "days_left": "дней до конца месяца",
     "month_progress": "Прогресс месяца",

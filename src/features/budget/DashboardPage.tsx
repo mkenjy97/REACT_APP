@@ -5,12 +5,10 @@ import { useBudgetStore, SPENDING_BADGE_CONFIG, getMonthKey } from '@/store/useB
 import { useAuthStore } from '@/store/useAuthStore';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { PAGE_VARIANTS, TRANSITIONS, STAGGER_CONTAINER, STAGGER_ITEM } from '@/constants/animations';
-import { Eye, EyeOff, Plus, TrendingDown, Calendar, Edit2, Check, X, Users, Copy, CheckCircle, TrendingUp } from 'lucide-react';
+import { Eye, EyeOff, Plus, TrendingDown, Calendar, Edit2, Check, X, TrendingUp } from 'lucide-react';
 import { cn } from '@/components/ui/GlassCard';
 import { DEFAULT_CATEGORIES } from '@/types/budget.types';
 import { toast } from 'sonner';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
-import { db } from '@/services/firebase';
 
 // ─── Budget Bar ───────────────────────────────────────────────────────────────
 interface BudgetBarProps {
@@ -64,28 +62,29 @@ function BudgetProgressCard({
 
   return (
     <GlassCard className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-text-muted uppercase tracking-widest">{label}</span>
+      {/* Header row (compact for 2-up layout) */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-xs font-semibold text-text-muted uppercase tracking-widest truncate">{label}</span>
           {onEdit && !isEditing && (
-            <button onClick={() => setIsEditing(true)} className="p-1 rounded-md text-text-muted hover:bg-glass-border transition-colors">
+            <button
+              onClick={() => setIsEditing(true)}
+              className="p-1 rounded-md text-text-muted hover:bg-glass-border transition-colors shrink-0"
+            >
               <Edit2 size={12} />
             </button>
           )}
         </div>
-        <span className={cn('text-xs font-bold px-2 py-0.5 rounded-full', {
-          'bg-primary-500/20 text-primary-400': percentage < 70,
-          'bg-amber-500/20 text-amber-400': percentage >= 70 && percentage < 90,
-          'bg-red-500/20 text-red-400': percentage >= 90,
-        })}>
+        <span className="text-[10px] font-bold text-text-muted tabular-nums shrink-0">
           {Math.round(percentage)}%
         </span>
       </div>
 
-      <div className="flex items-end justify-between">
-        <div>
+      {/* Main value */}
+      <div className="flex items-end justify-between gap-2">
+        <div className="min-w-0">
           <p
-            className={cn('text-3xl font-bold tabular-nums transition-all duration-300', mainTextColor, {
+            className={cn('text-2xl sm:text-3xl font-bold tabular-nums transition-all duration-300', mainTextColor, {
               'blur-md select-none': blurred,
             })}
           >
@@ -102,11 +101,13 @@ function BudgetProgressCard({
             )}
           </p>
 
-          {fixedSpent !== undefined && fixedSpent > 0 && (
+          {fixedSpent !== undefined && fixedSpent > 0 ? (
             <p className={cn('text-[10px] text-purple-400 font-medium', { 'blur-md': blurred })}>
               {t('spendless.spent')} {t('spendless.nav_fixed').toLowerCase()}: {currency}
               {fixedSpent.toFixed(0)}
             </p>
+          ) : (
+            <div className="h-[14px]" />
           )}
 
           {isEditing ? (
@@ -139,36 +140,33 @@ function BudgetProgressCard({
                 {currency}
                 {limit.toFixed(2)}
               </span>
-              <span className={cn('ml-2', { 'blur-md select-none': blurred })}>
-                · {t('spendless.spent')}: {currency}
-                {spent.toFixed(2)}
-              </span>
             </p>
           )}
         </div>
 
-        <div className="text-right">
-          <p className="text-xs text-text-muted">{t('spendless.spent')}</p>
-          <p
-            className={cn('text-lg font-bold', {
-              'text-red-400': true,
-              'blur-md select-none': blurred,
-            })}
-          >
+        {/* Optional: keep spent visible but compact (good for 2-up layout) */}
+        <div className="text-right shrink-0">
+          <p className="text-[10px] text-text-muted">{t('spendless.spent')}</p>
+          <p className={cn('text-sm font-bold text-red-400 tabular-nums', { 'blur-md select-none': blurred })}>
             {currency}
-            {spent.toFixed(2)}
+            {spent.toFixed(0)}
           </p>
         </div>
       </div>
 
-      {/* Animated progress bar */}
-      <div className="h-3 bg-glass-bg rounded-full overflow-hidden">
+      {/* Progress bar with percentage integrated */}
+      <div className="relative h-3 bg-glass-bg rounded-full overflow-hidden">
         <motion.div
           className={cn('h-full rounded-full bg-gradient-to-r', color)}
           initial={{ width: '0%' }}
           animate={{ width: `${Math.min(percentage, 100)}%` }}
           transition={{ ...TRANSITIONS.spring, delay: 0.2 }}
         />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className={cn('text-[10px] font-black tracking-wider text-white/90 drop-shadow', { 'blur-sm': blurred })}>
+            {Math.round(percentage)}%
+          </span>
+        </div>
       </div>
     </GlassCard>
   );
@@ -200,84 +198,14 @@ function ExpenseRow({ amount, description, category, blurred, currency = '€', 
   );
 }
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 export function DashboardPage() {
   const { user } = useAuthStore();
-  const { summary, budget, expenses, incomes, privacyMode, togglePrivacyMode, settings, saveSettings, removeFamilyMember, updateFamilyBudget, deleteIncome } =
-    useBudgetStore();
+  const { summary, budget, expenses, incomes, privacyMode, togglePrivacyMode, settings, updateFamilyBudget, deleteIncome } = useBudgetStore();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-
-  const [showFamilyCode, setShowFamilyCode] = useState(false);
-  const [joinCode, setJoinCode] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [familyMembers, setFamilyMembers] = useState<{ uid: string, email: string, displayName?: string }[]>([]);
-  const [loadingMembers, setLoadingMembers] = useState(false);
-
-  useEffect(() => {
-    const fetchMembers = async () => {
-      const currentFamilyId = settings?.familyId || user?.uid;
-      if (!currentFamilyId) {
-        setFamilyMembers([]);
-        return;
-      }
-      setLoadingMembers(true);
-      try {
-        const q = query(collection(db, 'userSettings'), where('familyId', '==', currentFamilyId));
-        const snap = await getDocs(q);
-        const members: any[] = [];
-        let adminFound = false;
-
-        for (const d of snap.docs) {
-          const uId = d.data().userId;
-          const uSnap = await getDoc(doc(db, 'users', uId));
-          if (uSnap.exists()) {
-            members.push({ uid: uId, ...uSnap.data() });
-            if (uId === currentFamilyId) adminFound = true;
-          }
-        }
-        
-        if (!adminFound && currentFamilyId === user?.uid) {
-          const uSnap = await getDoc(doc(db, 'users', currentFamilyId));
-          if (uSnap.exists()) {
-            members.push({ uid: currentFamilyId, ...uSnap.data() });
-          }
-        }
-
-        setFamilyMembers(members);
-      } catch (err) {
-        console.error('Error fetching family members:', err);
-      } finally {
-        setLoadingMembers(false);
-      }
-    };
-    if (showFamilyCode) {
-      fetchMembers();
-    }
-  }, [settings?.familyId, user?.uid, showFamilyCode]);
-
-  const handleJoinFamily = async () => {
-    if (!joinCode || !user?.uid) return;
-    try {
-      await saveSettings(user.uid, { familyId: joinCode.trim() });
-      toast.success(t('spendless.join_family_success'));
-      setJoinCode('');
-      setShowFamilyCode(false);
-      // Reload is handled by subscribeToExpenses taking new settings
-      window.location.reload();
-    } catch {
-      toast.error(t('auth.generic_error'));
-    }
-  };
-
-  const copyCode = () => {
-    if (!user?.uid) return;
-    navigator.clipboard.writeText(user.uid);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const currency = settings?.currency ?? '€';
   const now = new Date();
@@ -371,7 +299,12 @@ export function DashboardPage() {
         </div>
 
         {/* ── Budget Cards ── */}
-        <motion.div variants={STAGGER_CONTAINER} initial="initial" animate="animate" className="grid gap-4">
+        <motion.div
+          variants={STAGGER_CONTAINER}
+          initial="initial"
+          animate="animate"
+          className="grid grid-cols-2 gap-3"
+        >
           <motion.div variants={STAGGER_ITEM}>
             <BudgetProgressCard
               label={t('spendless.weekly_budget')}
@@ -556,102 +489,6 @@ export function DashboardPage() {
           </GlassCard>
         )}
 
-        {/* ── Family Group ── */}
-        <GlassCard>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Users size={18} className="text-purple-400" />
-              <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">
-                {t('spendless.family_group')}
-              </h2>
-            </div>
-            <button
-              onClick={() => setShowFamilyCode(!showFamilyCode)}
-              className="text-xs text-primary-400 font-medium"
-            >
-              {showFamilyCode ? t('common.close') : t('common.manage')}
-            </button>
-          </div>
-
-          <AnimatePresence>
-            {showFamilyCode && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="flex flex-col gap-3 mt-3 pt-3 border-t border-glass-border overflow-hidden"
-              >
-                <div className="bg-glass-bg p-3 rounded-xl border border-glass-border flex flex-col gap-2">
-                  <p className="text-xs text-text-muted">{t('spendless.invite_code')}:</p>
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-sm tracking-wider font-bold">{user?.uid}</span>
-                    <button onClick={copyCode} className="p-1.5 rounded-md glass-button text-text-muted">
-                      {copied ? <CheckCircle size={16} className="text-emerald-400" /> : <Copy size={16} />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder={t('spendless.family_code_placeholder')}
-                    value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-xl bg-glass-bg border border-glass-border text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
-                  />
-                  <button
-                    onClick={handleJoinFamily}
-                    disabled={!joinCode}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold text-sm disabled:opacity-50 shrink-0 whitespace-nowrap"
-                  >
-                    {t('spendless.join_btn')}
-                  </button>
-                </div>
-
-                {settings?.familyId && settings.familyId !== user?.uid && (
-                  <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
-                    <CheckCircle size={12} /> {t('spendless.in_shared_group')}
-                  </p>
-                )}
-
-                {(settings?.familyId || user?.uid) && (
-                  <div className="mt-2">
-                    <p className="text-xs text-text-muted mb-2 font-semibold uppercase tracking-widest">{t('spendless.group_members')}</p>
-                    {loadingMembers ? (
-                      <p className="text-xs text-text-muted">{t('common.loading')}</p>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        {familyMembers.map(m => (
-                          <div key={m.uid} className="flex items-center justify-between bg-glass-bg p-2 rounded-xl border border-glass-border gap-2">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{m.displayName || m.email}</p>
-                              <p className="text-[10px] text-text-muted truncate">{m.email}</p>
-                            </div>
-                            {m.uid !== (settings?.familyId || user?.uid) && (
-                              <button
-                                onClick={async () => {
-                                  await removeFamilyMember(m.uid);
-                                  setFamilyMembers(prev => prev.filter(u => u.uid !== m.uid));
-                                  toast.success(t('common.success'));
-                                }}
-                                className="text-xs text-red-400 p-1.5 rounded-md hover:bg-red-500/10 transition-colors shrink-0 whitespace-nowrap"
-                              >
-                                {t('common.remove')}
-                              </button>
-                            )}
-                            {m.uid === (settings?.familyId || user?.uid) && (
-                              <span className="text-[10px] px-2 py-1 bg-purple-500/20 text-purple-400 rounded-md font-bold uppercase tracking-wider shrink-0 whitespace-nowrap">{t('common.admin')}</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </GlassCard>
 
       </motion.div>
 

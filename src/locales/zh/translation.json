@@ -24,6 +24,7 @@
     "remove": "移除"
   },
   "spendless": {
+    "fixed_incomes": "固定收入",
     "greeting": "你好, {{name}} 👋",
     "days_left": "本月剩余天数",
     "month_progress": "本月进度",

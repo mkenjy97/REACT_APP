@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, TrendingUp, X } from 'lucide-react';
+import { ChevronDown, Printer, TrendingUp, X } from 'lucide-react';
 
 import { useBudgetStore } from '@/store/useBudgetStore';
 import { GlassCard, cn } from '@/components/ui/GlassCard';
@@ -10,6 +11,7 @@ import { DEFAULT_CATEGORIES } from '@/types/budget.types';
 
 export function RecapPage() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const { expenses, incomes, settings, deleteIncome, privacyMode } = useBudgetStore();
 
   const [expandedExpenseMonths, setExpandedExpenseMonths] = useState<Record<string, boolean>>({});
@@ -70,12 +72,22 @@ export function RecapPage() {
       className="flex flex-col gap-5 pb-24"
     >
       {/* Header */}
-      <div className="pt-2">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <TrendingUp size={24} className="text-primary-400" />
-          {t('spendless.nav_recap')}
-        </h1>
-        <p className="text-sm text-text-muted mt-0.5">{t('spendless.fixed_expenses_subtitle')}</p>
+      <div className="pt-2 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <TrendingUp size={24} className="text-primary-400" />
+            {t('spendless.nav_recap')}
+          </h1>
+          <p className="text-sm text-text-muted mt-0.5">{t('spendless.fixed_expenses_subtitle')}</p>
+        </div>
+
+        <button
+          onClick={() => navigate('/export')}
+          className="p-2 rounded-xl transition-all glass-button text-text-muted shrink-0"
+          aria-label={t('profile.export_data')}
+        >
+          <Printer size={20} />
+        </button>
       </div>
 
       {/* -- ENTRATE + SPESE MENSILI -- */}

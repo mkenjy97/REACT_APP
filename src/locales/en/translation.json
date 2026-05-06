@@ -24,6 +24,7 @@
     "remove": "Remove"
   },
   "spendless": {
+    "fixed_incomes": "Fixed incomes",
     "greeting": "Hello, {{name}} 👋",
     "days_left": "days left in the month",
     "month_progress": "Month Progress",

@@ -24,6 +24,7 @@
     "remove": "Retirer"
   },
   "spendless": {
+    "fixed_incomes": "Revenus fixes",
     "greeting": "Bonjour, {{name}} 👋",
     "days_left": "jours avant la fin du mois",
     "month_progress": "Progression du mois",

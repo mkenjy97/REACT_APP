@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -6,21 +6,23 @@ import { RoleBadge } from '@/components/ui/RoleBadge';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useThemeStore, type Palette } from '@/store/useThemeStore';
 import { PREDEFINED_THEMES } from '@/config/themes.config';
-import { useBudgetStore, getMonthKey } from '@/store/useBudgetStore';
-import { ExportService } from '@/services/ExportService';
 import { Icon } from '@/components/ui/Icon';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { authService } from '@/services/auth.service';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import {
   EmailAuthProvider,
   reauthenticateWithCredential,
   updatePassword,
 } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle, Copy, Users } from 'lucide-react';
 
 import { PAGE_VARIANTS } from '@/constants/animations';
 import { resetAllStores } from '@/store/resetStores';
+import { useBudgetStore } from '@/store/useBudgetStore';
+import { db } from '@/services/firebase';
 
 export function ProfilePage() {
   const { user, updateProfile } = useAuthStore();
@@ -47,11 +49,13 @@ export function ProfilePage() {
   const [showThemeSection, setShowThemeSection] = useState(false);
   const [isSavingTheme, setIsSavingTheme] = useState(false);
 
-  // ─── Export Data ────────────────────────────────────────────────────────────
-  const { expenses, incomes, budget, settings } = useBudgetStore();
-  const [exportType, setExportType] = useState<'month' | 'year' | 'week'>('month');
-  const [exportTarget, setExportTarget] = useState(getMonthKey());
-  const [isExporting, setIsExporting] = useState(false);
+  // ─── Family group ───────────────────────────────────────────────────────────
+  const { settings, saveSettings, removeFamilyMember } = useBudgetStore();
+  const [showFamilyCode, setShowFamilyCode] = useState(false);
+  const [joinCode, setJoinCode] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [familyMembers, setFamilyMembers] = useState<{ uid: string; email: string; displayName?: string }[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
 
   const handleLogout = () => {
     resetAllStores();
@@ -133,23 +137,66 @@ export function ProfilePage() {
     toast.success(t('common.success'));
   };
 
-  const handleExport = async () => {
-    setIsExporting(true);
-    try {
-      await ExportService.generateReport({
-        expenses,
-        incomes,
-        budget,
-        settings,
-        reportType: exportType,
-        targetKey: exportTarget,
-      });
-      toast.success(t('common.success') || 'Report esportato con successo');
-    } catch (error) {
-      toast.error(t('auth.generic_error') || 'Errore durante l\'esportazione');
-    } finally {
-      setIsExporting(false);
+  useEffect(() => {
+    const fetchMembers = async () => {
+      const currentFamilyId = settings?.familyId || user?.uid;
+      if (!currentFamilyId) {
+        setFamilyMembers([]);
+        return;
+      }
+      setLoadingMembers(true);
+      try {
+        const q = query(collection(db, 'userSettings'), where('familyId', '==', currentFamilyId));
+        const snap = await getDocs(q);
+        const members: any[] = [];
+        let adminFound = false;
+
+        for (const d of snap.docs) {
+          const uId = d.data().userId;
+          const uSnap = await getDoc(doc(db, 'users', uId));
+          if (uSnap.exists()) {
+            members.push({ uid: uId, ...uSnap.data() });
+            if (uId === currentFamilyId) adminFound = true;
+          }
+        }
+
+        if (!adminFound && currentFamilyId === user?.uid) {
+          const uSnap = await getDoc(doc(db, 'users', currentFamilyId));
+          if (uSnap.exists()) {
+            members.push({ uid: currentFamilyId, ...uSnap.data() });
+          }
+        }
+
+        setFamilyMembers(members);
+      } catch (err) {
+        console.error('Error fetching family members:', err);
+      } finally {
+        setLoadingMembers(false);
+      }
+    };
+    if (showFamilyCode) {
+      fetchMembers();
     }
+  }, [settings?.familyId, user?.uid, showFamilyCode]);
+
+  const handleJoinFamily = async () => {
+    if (!joinCode || !user?.uid) return;
+    try {
+      await saveSettings(user.uid, { familyId: joinCode.trim() });
+      toast.success(t('spendless.join_family_success'));
+      setJoinCode('');
+      setShowFamilyCode(false);
+      window.location.reload();
+    } catch {
+      toast.error(t('auth.generic_error'));
+    }
+  };
+
+  const copyCode = () => {
+    if (!user?.uid) return;
+    navigator.clipboard.writeText(user.uid);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const isDirty =
@@ -424,6 +471,114 @@ export function ProfilePage() {
       </section>
 
       <section className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-lg">{t('spendless.family_group')}</h3>
+          <button
+            onClick={() => setShowFamilyCode(!showFamilyCode)}
+            className="text-xs text-primary-400 font-medium"
+          >
+            {showFamilyCode ? t('common.close') : t('common.manage')}
+          </button>
+        </div>
+
+        <GlassCard>
+          <AnimatePresence>
+            {showFamilyCode && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex flex-col gap-3 overflow-hidden"
+              >
+                <div className="bg-glass-bg p-3 rounded-xl border border-glass-border flex flex-col gap-2">
+                  <p className="text-xs text-text-muted">{t('spendless.invite_code')}:</p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-sm tracking-wider font-bold">{user?.uid}</span>
+                    <button onClick={copyCode} className="p-1.5 rounded-md glass-button text-text-muted">
+                      {copied ? <CheckCircle size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder={t('spendless.family_code_placeholder')}
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-xl bg-glass-bg border border-glass-border text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  />
+                  <button
+                    onClick={handleJoinFamily}
+                    disabled={!joinCode}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold text-sm disabled:opacity-50 shrink-0 whitespace-nowrap"
+                  >
+                    {t('spendless.join_btn')}
+                  </button>
+                </div>
+
+                {settings?.familyId && settings.familyId !== user?.uid && (
+                  <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                    <CheckCircle size={12} /> {t('spendless.in_shared_group')}
+                  </p>
+                )}
+
+                {(settings?.familyId || user?.uid) && (
+                  <div className="mt-2">
+                    <p className="text-xs text-text-muted mb-2 font-semibold uppercase tracking-widest">{t('spendless.group_members')}</p>
+                    {loadingMembers ? (
+                      <p className="text-xs text-text-muted">{t('common.loading')}</p>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        {familyMembers.map((m) => (
+                          <div key={m.uid} className="flex items-center justify-between bg-glass-bg p-2 rounded-xl border border-glass-border gap-2">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <Users size={16} className="text-purple-400 shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium truncate">{m.displayName || m.email}</p>
+                                <p className="text-[10px] text-text-muted truncate">{m.email}</p>
+                              </div>
+                            </div>
+                            {m.uid !== (settings?.familyId || user?.uid) && (
+                              <button
+                                onClick={async () => {
+                                  await removeFamilyMember(m.uid);
+                                  setFamilyMembers((prev) => prev.filter((u) => u.uid !== m.uid));
+                                  toast.success(t('common.success'));
+                                }}
+                                className="text-xs text-red-400 p-1.5 rounded-md hover:bg-red-500/10 transition-colors shrink-0 whitespace-nowrap"
+                              >
+                                {t('common.remove')}
+                              </button>
+                            )}
+                            {m.uid === (settings?.familyId || user?.uid) && (
+                              <span className="text-[10px] px-2 py-1 bg-purple-500/20 text-purple-400 rounded-md font-bold uppercase tracking-wider shrink-0 whitespace-nowrap">
+                                {t('common.admin')}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {!showFamilyCode && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users size={18} className="text-purple-400" />
+                <p className="text-sm font-medium text-text-muted">{t('spendless.family_group')}</p>
+              </div>
+              <p className="text-xs text-text-muted">{t('common.manage')}</p>
+            </div>
+          )}
+        </GlassCard>
+      </section>
+
+      <section className="flex flex-col gap-4">
         <h3 className="font-semibold text-lg">{t('profile.appearance')}</h3>
         <GlassCard className="flex items-center justify-between p-4">
           <div>
@@ -459,53 +614,6 @@ export function ProfilePage() {
         </GlassCard>
       </section>
 
-      <section className="flex flex-col gap-4">
-        <h3 className="font-semibold text-lg">{t('profile.export_data')}</h3>
-        <GlassCard className="flex flex-col gap-4 p-6">
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
-                <Icon name="Calendar" size={14} /> {t('profile.report_type')}
-              </label>
-              <select
-                value={exportType}
-                onChange={(e) => {
-                  const val = e.target.value as 'month' | 'year' | 'week';
-                  setExportType(val);
-                  if (val === 'year') setExportTarget(new Date().getFullYear().toString());
-                  else if (val === 'month') setExportTarget(getMonthKey());
-                  else setExportTarget(`${new Date().getFullYear()}-W01`); // fallback
-                }}
-                className="flex h-12 w-full rounded-full border border-glass-border bg-surface px-4 text-sm text-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 shadow-sm"
-              >
-                <option value="month">{t('profile.report_month')}</option>
-                <option value="year">{t('profile.report_year')}</option>
-                <option value="week">{t('profile.report_week')}</option>
-              </select>
-            </div>
-            
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-text-muted flex items-center gap-2 ml-1">
-                <Icon name="Calendar" size={14} /> {t('profile.select_period')}
-              </label>
-              <input
-                type={exportType === 'year' ? 'number' : exportType}
-                value={exportTarget}
-                onChange={(e) => setExportTarget(e.target.value)}
-                min={exportType === 'year' ? 2000 : undefined}
-                max={exportType === 'year' ? 2100 : undefined}
-                className="flex h-12 w-full rounded-full border border-glass-border bg-surface px-4 py-2 text-sm text-text transition-colors placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 shadow-sm"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end pt-2 border-t border-glass-border mt-2">
-            <Button size="sm" onClick={handleExport} disabled={isExporting || !exportTarget}>
-              {isExporting ? <Icon name="Info" size={15} className="animate-spin mr-1.5" /> : <Icon name="Download" size={15} className="mr-1.5" />}
-              {t('profile.export_pdf')}
-            </Button>
-          </div>
-        </GlassCard>
-      </section>
 
       <div className="mt-4 flex justify-center">
         <Button variant="ghost" onClick={handleLogout} className="text-red-500 hover:text-red-600 hover:bg-red-500/10">
