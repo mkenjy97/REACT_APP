@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, Printer, TrendingUp, X } from 'lucide-react';
+import { ChevronDown, Printer, TrendingUp } from 'lucide-react';
 
 import { useBudgetStore } from '@/store/useBudgetStore';
 import { GlassCard, cn } from '@/components/ui/GlassCard';
@@ -12,7 +12,7 @@ import { DEFAULT_CATEGORIES } from '@/types/budget.types';
 export function RecapPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { expenses, incomes, settings, deleteIncome, privacyMode } = useBudgetStore();
+  const { expenses, incomes, settings, privacyMode } = useBudgetStore();
 
   const [expandedExpenseMonths, setExpandedExpenseMonths] = useState<Record<string, boolean>>({});
   const [expandedIncomeMonths, setExpandedIncomeMonths] = useState<Record<string, boolean>>({});
@@ -191,9 +191,6 @@ export function RecapPage() {
                                 <span className={cn('text-sm font-semibold tabular-nums shrink-0', inc.isExtra ? "text-purple-400" : "text-primary-400", { 'blur-sm': privacyMode })}>
                                   +{currency}{inc.amount.toFixed(2)}
                                 </span>
-                                <button onClick={() => deleteIncome(inc.id)} className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-full transition">
-                                  <X size={14} />
-                                </button>
                               </div>
                             </div>
                           ))}

@@ -10,8 +10,9 @@ import { useBudgetStore } from '@/store/useBudgetStore';
 import { expenseSchema, type ExpenseFormData } from '@/validation/budget.schema';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { PAGE_VARIANTS, TRANSITIONS } from '@/constants/animations';
-import { DEFAULT_CATEGORIES } from '@/types/budget.types';
+import { DEFAULT_CATEGORIES, type Income } from '@/types/budget.types';
 import { cn } from '@/components/ui/GlassCard';
+import { FixedIncomeRow } from '@/features/budget/FixedIncomeRow';
 
 
 // ─── Fixed Expense Row ────────────────────────────────────────────────────────
@@ -189,14 +190,24 @@ function FixedExpenseRow({
         </span>
         <div className="flex items-center gap-1">
           <button
-            onClick={() => setIsEditing(true)}
+            type="button"
+            onClick={(ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+              setIsEditing(true);
+            }}
             className="p-1.5 rounded-full text-text-muted hover:bg-glass-border transition"
             aria-label="Modifica spesa fissa"
           >
             <Edit2 size={16} />
           </button>
           <button
-            onClick={() => onDelete(id)}
+            type="button"
+            onClick={(ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+              onDelete(id);
+            }}
             className="p-1.5 rounded-full text-red-400 hover:bg-red-500/10 transition"
             aria-label="Elimina spesa fissa"
           >
@@ -212,7 +223,7 @@ function FixedExpenseRow({
 export function FixedExpensesPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { expenses, incomes, deleteExpense, updateExpense, settings, deleteIncome } = useBudgetStore();
+  const { expenses, incomes, deleteExpense, updateExpense, updateIncome, settings, deleteIncome } = useBudgetStore();
   const [groupBy, setGroupBy] = useState<'financing' | 'account' | 'category'>('financing');
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -364,32 +375,27 @@ export function FixedExpensesPage() {
                   .slice()
                   .sort((a, b) => b.amount - a.amount)
                   .map((inc) => (
-                    <div key={inc.id} className="flex items-center justify-between py-3 border-b border-glass-border last:border-0 gap-2">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary-500/20 shrink-0">
-                          <TrendingUp size={16} className="text-primary-400" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold truncate">{inc.description}</p>
-                          <p className="text-[10px] text-text-muted truncate">
-                            {t('spendless.date')}: {new Date(inc.date).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-sm font-bold tabular-nums text-primary-400">
-                          +{currency}{inc.amount.toFixed(2)}
-                        </span>
-                        <button onClick={() => deleteIncome(inc.id)} className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-full transition" aria-label={t('common.delete')}>
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
+                    <FixedIncomeRow
+                      key={inc.id}
+                      inc={inc}
+                      currency={currency}
+                      onDelete={deleteIncome}
+                      onEdit={async (id: string, data: Partial<Income>) => {
+                        try {
+                          await updateIncome(id, data);
+                          toast.success(t('common.success'));
+                        } catch {
+                          toast.error(t('auth.generic_error'));
+                        }
+                      }}
+                    />
                   ))}
               </div>
             )}
           </GlassCard>
         </section>
+
+        
 
         {/* Grouping Toggle */}
         {fixedExpenses.length > 0 && (

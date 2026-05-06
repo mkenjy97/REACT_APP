@@ -75,9 +75,6 @@ function BudgetProgressCard({
             </button>
           )}
         </div>
-        <span className="text-[10px] font-bold text-text-muted tabular-nums shrink-0">
-          {Math.round(percentage)}%
-        </span>
       </div>
 
       {/* Main value */}
@@ -91,24 +88,26 @@ function BudgetProgressCard({
             {showRemainingAsMain ? (
               <>
                 {currency}
-                {remaining.toFixed(2)}
+                {remaining.toFixed(0)}
               </>
             ) : (
               <>
                 {currency}
-                {spent.toFixed(2)}
+                {spent.toFixed(0)}
               </>
             )}
           </p>
 
-          {fixedSpent !== undefined && fixedSpent > 0 ? (
-            <p className={cn('text-[10px] text-purple-400 font-medium', { 'blur-md': blurred })}>
-              {t('spendless.spent')} {t('spendless.nav_fixed').toLowerCase()}: {currency}
-              {fixedSpent.toFixed(0)}
-            </p>
-          ) : (
-            <div className="h-[14px]" />
-          )}
+          <p className={cn('text-[10px] text-purple-400 font-medium truncate', { 'blur-md': blurred })}>
+            {fixedSpent !== undefined && fixedSpent > 0 ? (
+              <>
+                {t('spendless.spent')} {t('spendless.nav_fixed').toLowerCase()}: {currency}
+                {fixedSpent.toFixed(0)}
+              </>
+            ) : (
+              <span className="opacity-0">placeholder</span>
+            )}
+          </p>
 
           {isEditing ? (
             <div className="flex items-center gap-2 mt-1">
@@ -134,11 +133,11 @@ function BudgetProgressCard({
               </button>
             </div>
           ) : (
-            <p className="text-xs text-text-muted mt-0.5">
+            <p className="text-xs text-text-muted mt-0.5 truncate">
               {t('spendless.budget')}:{' '}
               <span className={cn({ 'blur-md select-none': blurred })}>
                 {currency}
-                {limit.toFixed(2)}
+                {limit.toFixed(0)}
               </span>
             </p>
           )}
@@ -203,7 +202,7 @@ import { useState } from 'react';
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 export function DashboardPage() {
   const { user } = useAuthStore();
-  const { summary, budget, expenses, incomes, privacyMode, togglePrivacyMode, settings, updateFamilyBudget, deleteIncome } = useBudgetStore();
+  const { summary, budget, expenses, incomes, privacyMode, togglePrivacyMode, settings, updateFamilyBudget } = useBudgetStore();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
@@ -250,7 +249,7 @@ export function DashboardPage() {
             <h1 className="text-2xl font-bold capitalize truncate">{t('spendless.greeting', { name: user?.displayName?.split(' ')[0] ?? '' })}</h1>
             <div className="flex flex-col gap-1 mt-0.5">
               <p className="text-sm text-text-muted capitalize truncate">
-                {monthName} · <span className="text-primary-400">{daysRemaining} {t('spendless.days_left')}</span>
+                {monthName} · <span className="text-primary-400">{daysRemaining} {t('spendless.days_remaining')}</span>
               </p>
               {/* Month Progress Bar */}
               <div className="w-full h-1 bg-glass-bg rounded-full overflow-hidden mt-1">
@@ -307,7 +306,7 @@ export function DashboardPage() {
         >
           <motion.div variants={STAGGER_ITEM}>
             <BudgetProgressCard
-              label={t('spendless.weekly_budget')}
+              label={t('spendless.week')}
               spent={summary?.totalSpentThisWeek ?? 0}
               limit={budget.weeklyLimit}
               percentage={summary?.weeklyPercentage ?? 0}
@@ -323,7 +322,7 @@ export function DashboardPage() {
           </motion.div>
           <motion.div variants={STAGGER_ITEM}>
             <BudgetProgressCard
-              label={t('spendless.monthly_budget')}
+              label={t('spendless.month')}
               spent={summary?.totalSpentThisMonth ?? 0}
               limit={budget.monthlyLimit}
               percentage={summary?.monthlyPercentage ?? 0}
@@ -405,13 +404,6 @@ export function DashboardPage() {
                           +{currency}
                           {inc.amount.toFixed(2)}
                         </span>
-                        <button
-                          onClick={() => deleteIncome(inc.id)}
-                          className="p-1 text-red-400 hover:bg-red-500/10 rounded-full transition"
-                          aria-label={t('common.remove')}
-                        >
-                          <X size={12} />
-                        </button>
                       </div>
                     </div>
                   ))}
