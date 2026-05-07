@@ -1,423 +1,95 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { ChevronLeft, MapPin, Loader2, Navigation, ArrowDownRight, ArrowUpRight } from 'lucide-react';
-import { useBudgetStore } from '@/store/useBudgetStore';
-import { type Income } from '@/types/budget.types';
-import { GlassCard } from '@/components/ui/GlassCard';
-import { PAGE_VARIANTS, STAGGER_CONTAINER, STAGGER_ITEM } from '@/constants/animations';
-import { DEFAULT_CATEGORIES } from '@/types/budget.types';
-import { cn } from '@/components/ui/GlassCard';
-import { Edit2, X as XIcon, Check } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { expenseSchema, type ExpenseFormData } from '@/validation/budget.schema';
-import { toast } from 'sonner';
+// PREMIUM REFACTORED HISTORY PAGE
 
-type GeoLocation = { lat: number; lng: number; label?: string };
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import {
+  ChevronLeft,
+  ArrowDownRight,
+  ArrowUpRight,
+} from "lucide-react";
+import { useBudgetStore } from "@/store/useBudgetStore";
+import { GlassCard } from "@/components/ui/GlassCard";
+import {
+  PAGE_VARIANTS,
+  STAGGER_CONTAINER,
+  STAGGER_ITEM,
+} from "@/constants/animations";
+import { cn } from "@/components/ui/GlassCard";
+import { FixedExpenseRow } from "@/features/budget/FixedExpenseRow";
+import { FixedIncomeRow } from "@/features/budget/FixedIncomeRow";
 
-async function reverseGeocode(lat: number, lng: number): Promise<string> {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-      { headers: { 'Accept-Language': 'it' } }
-    );
-    const data = await res.json();
-    const addr = data.address;
-    return (
-      addr?.road
-        ? `${addr.road}${addr.house_number ? ` ${addr.house_number}` : ''}, ${addr.city || addr.town || addr.village || ''}`
-        : data.display_name?.split(',').slice(0, 2).join(',').trim()
-    ) || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-  } catch {
-    return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-  }
-}
-
-function HistoryExpenseRow({ e, currency, privacyMode, onDelete, onEdit, allowEditDelete }: {
-  e: any;
-  currency: string;
-  privacyMode: boolean;
-  onDelete: (id: string) => void;
-  onEdit: (id: string, data: Partial<ExpenseFormData> & { location?: GeoLocation | null }) => void;
-  allowEditDelete?: boolean;
-}) {
-  const { t } = useTranslation();
-  const cat = DEFAULT_CATEGORIES.find(c => c.name === e.category);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editLocation, setEditLocation] = useState<GeoLocation | null>(e.location ?? null);
-  const [geoLoading, setGeoLoading] = useState(false);
-  const [manualAddress, setManualAddress] = useState(e.location?.label || '');
-
-  const { register, handleSubmit, reset } = useForm<ExpenseFormData>({
-    resolver: zodResolver(expenseSchema),
-    defaultValues: {
-      amount: e.amount,
-      category: e.category,
-      description: e.description,
-      date: e.date,
-      isFixed: e.isFixed || false
-    }
-  });
-
-  const handleGeolocate = async () => {
-    if (!navigator.geolocation) {
-      toast.error(t('spendless.geo_not_supported'));
-      return;
-    }
-    setGeoLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        const label = await reverseGeocode(lat, lng);
-        const geo: GeoLocation = { lat, lng, label };
-        setEditLocation(geo);
-        setManualAddress(label);
-        toast.success(`${t('spendless.location')}: ${label}`);
-        setGeoLoading(false);
-      },
-      (err) => {
-        toast.error(`${t('auth.generic_error')}: ${err.message}`);
-        setGeoLoading(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
-
-  const handleManualAddressChange = (val: string) => {
-    setManualAddress(val);
-    if (!val) {
-      setEditLocation(null);
-    } else {
-      const newLoc = editLocation ? { ...editLocation, label: val } : { lat: 0, lng: 0, label: val };
-      setEditLocation(newLoc);
-    }
-  };
-
-  const submitEdit = (data: any) => {
-    onEdit(e.id, { ...data, location: editLocation });
-    setIsEditing(false);
-  };
-
-  if (isEditing && allowEditDelete) {
-    return (
-      <div className="py-3 border-b border-glass-border">
-        <form onSubmit={handleSubmit(submitEdit as any)} className="flex flex-col gap-2">
-          <div className="flex gap-2">
-            <input type="number" step="0.01" {...register('amount', { valueAsNumber: true })} className="w-1/3 px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" />
-            <select {...register('category')} className="w-2/3 px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm">
-              {DEFAULT_CATEGORIES.map(c => <option key={c.name} value={c.name}>{c.icon} {c.name}</option>)}
-            </select>
-          </div>
-          <input type="text" {...register('description')} className="w-full px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" placeholder={t('spendless.description')} />
-          <input type="date" {...register('date')} className="w-full px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm" />
-
-          {/* Refined Geolocation in edit mode */}
-          <div className="flex flex-col gap-1.5 mt-1">
-            <div className="relative">
-              <MapPin size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-muted" />
-              <input
-                type="text"
-                placeholder={t('spendless.location')}
-                value={manualAddress}
-                onChange={(e) => handleManualAddressChange(e.target.value)}
-                className="w-full pl-7 pr-7 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-xs focus:outline-none focus:ring-1 focus:ring-primary-400"
-              />
-              {manualAddress && (
-                <button type="button" onClick={() => { setManualAddress(''); setEditLocation(null); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted">
-                  <XIcon size={12} />
-                </button>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={handleGeolocate}
-              disabled={geoLoading}
-              className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-primary-500/10 border border-primary-500/30 text-primary-400 text-[10px] font-bold transition hover:bg-primary-500/20 disabled:opacity-50"
-            >
-              {geoLoading ? <Loader2 size={12} className="animate-spin" /> : <Navigation size={12} />}
-              {geoLoading ? `${t('common.loading')}...` : t('spendless.detect_location')}
-            </button>
-          </div>
-
-          <div className="flex justify-end gap-2 mt-1">
-            <button type="button" onClick={() => { setIsEditing(false); reset(); setEditLocation(e.location ?? null); setManualAddress(e.location?.label || ''); }} className="p-1.5 rounded-lg text-text-muted hover:bg-glass-border"><XIcon size={16}/></button>
-            <button type="submit" className="p-1.5 rounded-lg text-primary-400 hover:bg-primary-500/10"><Check size={16}/></button>
-          </div>
-        </form>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center justify-between py-3 border-b border-glass-border last:border-0">
-      <div className="flex items-center gap-3">
-        <span className="text-xl">{cat?.icon ?? '📦'}</span>
-        <div>
-          <p className="text-sm font-medium">{e.description}</p>
-          <p className="text-xs text-text-muted capitalize">
-            {t(`spendless.categories.${e.category}`)} {e.addedBy && ` • ${e.addedBy}`}
-          </p>
-          {e.location && (
-            <p className="text-xs text-primary-400 flex items-center gap-0.5 mt-0.5">
-              <MapPin size={10} />
-              {e.location.label ?? `${e.location.lat.toFixed(4)}, ${e.location.lng.toFixed(4)}`}
-            </p>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className={cn('text-sm font-bold text-red-400', { 'blur-sm': privacyMode })}>
-          -{currency}{e.amount.toFixed(2)}
-        </span>
-        {allowEditDelete && (
-          <>
-            <button
-              type="button"
-              onClick={(ev) => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                setIsEditing(true);
-              }}
-              className="p-1 rounded-full text-text-muted hover:bg-glass-border transition"
-              aria-label={t('common.edit')}
-            >
-              <Edit2 size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={(ev) => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                onDelete(e.id);
-              }}
-              className="p-1 rounded-full text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition"
-              aria-label={t('common.remove')}
-            >
-              ×
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── History Income Row ──────────────────────────────────────────────────────
-function HistoryIncomeRow({
-  tx,
-  currency,
-  privacyMode,
-  onDelete,
-  onEdit,
-  allowEditDelete,
-}: {
-  tx: any;
-  currency: string;
-  privacyMode: boolean;
-  onDelete: (id: string) => void;
-  onEdit: (id: string, data: Partial<Income>) => void;
-  allowEditDelete?: boolean;
-}) {
-  const { t } = useTranslation();
-  const [isEditing, setIsEditing] = useState(false);
-
-  const { register, handleSubmit, reset } = useForm<Partial<Income>>({
-    defaultValues: {
-      amount: tx.amount,
-      description: tx.description,
-      date: tx.date,
-    },
-  });
-
-  const submitEdit = (data: Partial<Income>) => {
-    onEdit(tx.id, data);
-    setIsEditing(false);
-  };
-
-  if (isEditing && allowEditDelete) {
-    return (
-      <div className="py-3 border-b border-glass-border">
-        <form onSubmit={handleSubmit(submitEdit)} className="flex flex-col gap-2">
-          <div className="flex gap-2">
-            <input
-              type="number"
-              step="0.01"
-              {...register('amount', { valueAsNumber: true })}
-              className="w-1/3 px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm"
-            />
-            <input
-              type="date"
-              {...register('date')}
-              className="w-2/3 px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm"
-            />
-          </div>
-          <input
-            type="text"
-            {...register('description')}
-            className="w-full px-2 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm"
-            placeholder={t('spendless.description')}
-          />
-
-          <div className="flex justify-end gap-2 mt-1">
-            <button
-              type="button"
-              onClick={() => {
-                setIsEditing(false);
-                reset();
-              }}
-              className="p-1.5 rounded-lg text-text-muted hover:bg-glass-border"
-            >
-              <XIcon size={16} />
-            </button>
-            <button
-              type="submit"
-              className="p-1.5 rounded-lg text-emerald-400 hover:bg-emerald-500/10"
-            >
-              <Check size={16} />
-            </button>
-          </div>
-        </form>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center justify-between py-3 border-b border-glass-border last:border-0">
-      <div className="flex items-center gap-3 min-w-0">
-        <span className="text-xl">💰</span>
-        <div className="min-w-0">
-          <p className="text-sm font-medium truncate">{tx.description}</p>
-          <p className="text-xs text-text-muted truncate">
-            {new Date(tx.date).toLocaleDateString()}
-          </p>
-        </div>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <span
-          className={cn('text-sm font-bold text-emerald-400', {
-            'blur-sm': privacyMode,
-          })}
-        >
-          +{currency}
-          {tx.amount.toFixed(2)}
-        </span>
-        {allowEditDelete && (
-          <>
-            <button
-              type="button"
-              onClick={(ev) => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                setIsEditing(true);
-              }}
-              className="p-1 rounded-full text-text-muted hover:bg-glass-border transition"
-              aria-label={t('common.edit')}
-            >
-              <Edit2 size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={(ev) => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                onDelete(tx.id);
-              }}
-              className="p-1 rounded-full text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition"
-              aria-label={t('common.remove')}
-            >
-              ×
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-type FilterPeriod = 'week' | 'month' | 'all';
+type FilterPeriod = "week" | "month" | "all";
 
 export function ExpenseHistoryPage() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const { expenses, incomes, deleteExpense, deleteIncome, updateExpense, updateIncome, privacyMode, settings } = useBudgetStore();
-  const [period, setPeriod] = useState<FilterPeriod>('month');
-  const [txType, setTxType] = useState<'all' | 'expenses' | 'incomes'>('all');
+  const {
+    expenses,
+    incomes,
+    deleteExpense,
+    deleteIncome,
+    updateExpense,
+    updateIncome,
+    privacyMode,
+    settings,
+  } = useBudgetStore();
 
-  const currency = settings?.currency ?? '€';
+  const [period] = useState<FilterPeriod>("month");
+  const [txType] = useState<"all" | "expenses" | "incomes">("all");
+
+  const currency = settings?.currency ?? "€";
   const now = new Date();
 
   const variableExpenses = expenses.filter((e) => !e.isFixed);
-  const txExpenses = variableExpenses.map((e) => ({ ...e, _type: 'expense' as const }));
-  const txIncomes = incomes.map((i) => ({ ...i, _type: 'income' as const }));
+  const txExpenses = variableExpenses.map((e) => ({
+    ...e,
+    _type: "expense" as const,
+  }));
+  const txIncomes = incomes.map((i) => ({
+    ...i,
+    _type: "income" as const,
+  }));
 
   const txAll = [...txExpenses, ...txIncomes]
     .filter((tx) => {
-      if (txType === 'expenses') return tx._type === 'expense';
-      if (txType === 'incomes') return tx._type === 'income';
+      if (txType === "expenses") return tx._type === "expense";
+      if (txType === "incomes") return tx._type === "income";
       return true;
     })
     .filter((tx) => {
-      if (period === 'all') return true;
+      if (period === "all") return true;
       const d = new Date(tx.date);
-      if (period === 'week') {
-        const day = now.getDay();
-        const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-        const weekStart = new Date(now);
-        weekStart.setDate(diff);
-        weekStart.setHours(0, 0, 0, 0);
-        return d >= weekStart;
-      }
-      if (period === 'month') {
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      if (period === "month") {
+        return (
+          d.getMonth() === now.getMonth() &&
+          d.getFullYear() === now.getFullYear()
+        );
       }
       return true;
     })
-    .sort((a, b) => {
-      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
-      if (dateDiff !== 0) return dateDiff;
-      return (b.createdAt ?? 0) - (a.createdAt ?? 0);
-    });
+    .sort(
+      (a, b) =>
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
 
-  const totalExpenses = txAll.filter((tx) => tx._type === 'expense').reduce((s, tx) => s + tx.amount, 0);
-  const totalIncomes = txAll.filter((tx) => tx._type === 'income').reduce((s, tx) => s + tx.amount, 0);
+  const totalExpenses = txAll
+    .filter((tx) => tx._type === "expense")
+    .reduce((s, tx) => s + tx.amount, 0);
 
-  // Group by date
-  const grouped = txAll.reduce<Record<string, typeof txAll>>((acc, tx) => {
-    const key = tx.date;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(tx);
-    return acc;
-  }, {});
+  const totalIncomes = txAll
+    .filter((tx) => tx._type === "income")
+    .reduce((s, tx) => s + tx.amount, 0);
 
-  const handleEdit = async (id: string, data: Partial<ExpenseFormData> & { location?: GeoLocation | null }) => {
-    try {
-      const partialExpense: any = { ...data };
-      if (partialExpense.billingDay === null) partialExpense.billingDay = undefined;
-      if (partialExpense.accountSource === null) partialExpense.accountSource = undefined;
-      if (partialExpense.location === null) partialExpense.location = null; // explicit null = removed
-
-      await updateExpense(id, partialExpense);
-      toast.success(t('common.success'));
-    } catch {
-      toast.error(t('auth.generic_error'));
-    }
-  };
-
-  const handleDeleteTx = (tx: any) => {
-    if (tx._type === 'income') return deleteIncome(tx.id);
-    return deleteExpense(tx.id);
-  };
-
-  const handleEditIncome = async (id: string, data: Partial<Income>) => {
-    try {
-      await updateIncome(id, data);
-      toast.success(t('common.success'));
-    } catch {
-      toast.error(t('auth.generic_error'));
-    }
-  };
+  const grouped = txAll.reduce<Record<string, typeof txAll>>(
+    (acc, tx) => {
+      if (!acc[tx.date]) acc[tx.date] = [];
+      acc[tx.date].push(tx);
+      return acc;
+    },
+    {}
+  );
 
   return (
     <motion.div
@@ -429,85 +101,41 @@ export function ExpenseHistoryPage() {
     >
       {/* Header */}
       <div className="flex items-center gap-3 pt-2">
-        <button onClick={() => navigate(-1)} className="p-2 glass-button" aria-label={t('common.back')}>
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 glass-button"
+        >
           <ChevronLeft size={20} />
         </button>
         <div>
-          <h1 className="text-xl font-bold">{t('spendless.nav_history')}</h1>
-          <p className="text-xs text-text-muted">{t('spendless.history_subtitle')}</p>
+          <h1 className="text-xl font-bold">
+            {t("spendless.nav_history")}
+          </h1>
         </div>
       </div>
 
-      {/* Period filter pills */}
-      <div className="flex flex-col gap-2">
-        <p className="text-[10px] text-text-muted uppercase tracking-widest px-1">Periodo</p>
-        <div className="flex gap-2">
-        {(['week', 'month', 'all'] as FilterPeriod[]).map((p) => (
-          <button
-            key={p}
-            onClick={() => setPeriod(p)}
-            className={cn(
-              'px-4 py-1.5 rounded-full text-xs font-semibold transition-all',
-              period === p ? 'bg-gradient-to-r from-primary-400 to-primary-500 text-white shadow' : 'glass-button'
-            )}
-          >
-            {p === 'week' ? t('spendless.this_week') : p === 'month' ? t('spendless.this_month') : t('spendless.all')}
-          </button>
-        ))}
-        </div>
-      </div>
-
-      {/* Type filter pills */}
-      <div className="flex flex-col gap-2">
-        <p className="text-[10px] text-text-muted uppercase tracking-widest px-1">Movimenti</p>
-        <div className="flex gap-2">
-        {(['all', 'expenses', 'incomes'] as const).map((k) => (
-          <button
-            key={k}
-            onClick={() => setTxType(k)}
-            className={cn(
-              'px-4 py-1.5 rounded-full text-xs font-semibold transition-all',
-              txType === k ? 'bg-gradient-to-r from-primary-400 to-primary-500 text-white shadow' : 'glass-button'
-            )}
-          >
-            {k === 'all' ? t('spendless.all') : k === 'expenses' ? t('spendless.spent') : t('spendless.income_details')}
-          </button>
-        ))}
-        </div>
-      </div>
-
-      {/* Total */}
-      <GlassCard className="flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-xs text-text-muted uppercase tracking-widest">
-            {t('spendless.nav_history')}
+      {/* Totals */}
+      <GlassCard className="flex justify-between">
+        <div>
+          <p className="text-xs text-text-muted uppercase">
+            {t("spendless.nav_history")}
           </p>
           <p
-            className={cn('text-3xl font-bold tabular-nums mt-1', {
-              'blur-md select-none': privacyMode,
+            className={cn("text-3xl font-bold", {
+              "blur-md": privacyMode,
             })}
           >
             {currency}
             {(totalIncomes - totalExpenses).toFixed(2)}
           </p>
-          <p className={cn('text-[10px] text-text-muted mt-1 flex gap-3', { 'blur-sm': privacyMode })}>
-            <span className="text-red-400 font-bold">
-              -{currency}
-              {totalExpenses.toFixed(2)}
-            </span>
-            <span className="text-emerald-400 font-bold">
-              +{currency}
-              {totalIncomes.toFixed(2)}
-            </span>
-          </p>
         </div>
-        <div className={cn('flex flex-col items-end gap-1 shrink-0', { 'blur-sm': privacyMode })}>
-          <div className="flex items-center gap-1 text-emerald-400 text-xs font-bold tabular-nums">
+        <div className="flex flex-col items-end">
+          <div className="text-emerald-400 text-sm font-bold">
             <ArrowUpRight size={14} />
             +{currency}
             {totalIncomes.toFixed(0)}
           </div>
-          <div className="flex items-center gap-1 text-red-400 text-xs font-bold tabular-nums">
+          <div className="text-red-400 text-sm font-bold">
             <ArrowDownRight size={14} />
             -{currency}
             {totalExpenses.toFixed(0)}
@@ -515,77 +143,50 @@ export function ExpenseHistoryPage() {
         </div>
       </GlassCard>
 
-      {/* Grouped List */}
-      {Object.keys(grouped).length === 0 ? (
-        <GlassCard className="text-center py-10">
-          <p className="text-4xl mb-3">🗓️</p>
-          <p className="font-medium text-text-muted">{t('spendless.no_expenses')}</p>
-        </GlassCard>
-      ) : (
-        <motion.div variants={STAGGER_CONTAINER} initial="initial" animate="animate" className="flex flex-col gap-4">
-          {Object.entries(grouped).map(([date, items]) => {
-            const dateLabel = new Date(date).toLocaleDateString(i18n.language, {
-              weekday: 'short', day: 'numeric', month: 'short',
-            });
-            const dayExpenses = items.filter((tx) => tx._type === 'expense').reduce((s, tx) => s + tx.amount, 0);
-            const dayIncomes = items.filter((tx) => tx._type === 'income').reduce((s, tx) => s + tx.amount, 0);
+      {/* List */}
+      <motion.div
+        variants={STAGGER_CONTAINER}
+        initial="initial"
+        animate="animate"
+        className="flex flex-col gap-4"
+      >
+        {Object.entries(grouped).map(([date, items]) => (
+          <motion.div key={date} variants={STAGGER_ITEM}>
+            <GlassCard className="!p-0 overflow-hidden">
+              <div className="px-4 py-2 bg-glass-bg border-b border-glass-border text-xs font-bold">
+                {new Date(date).toLocaleDateString(i18n.language)}
+              </div>
 
-            return (
-              <motion.div key={date} variants={STAGGER_ITEM}>
-                <GlassCard className="!p-0 overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-2.5 bg-glass-bg border-b border-glass-border gap-2">
-                    <span className="text-xs font-bold text-text-muted uppercase tracking-wide truncate">{dateLabel}</span>
-
-                    <div className={cn('flex items-center gap-2 tabular-nums shrink-0', { 'blur-sm': privacyMode })}>
-                      {/* Box somma positiva */}
-                      {txType !== 'expenses' && (
-                        <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-black text-emerald-400">
-                          +{currency}
-                          {dayIncomes.toFixed(0)}
-                        </span>
-                      )}
-
-                      {/* Box somma negativa */}
-                      {txType !== 'incomes' && (
-                        <span className="px-2 py-0.5 rounded-md bg-red-500/10 border border-red-500/20 text-[10px] font-black text-red-400">
-                          -{currency}
-                          {dayExpenses.toFixed(0)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="px-4">
-                    {items.map((tx) =>
-                      tx._type === 'expense' ? (
-                        <HistoryExpenseRow
-                          key={`expense-${tx.id}`}
-                          e={tx}
-                          currency={currency}
-                          privacyMode={privacyMode}
-                          onDelete={handleDeleteTx}
-                          onEdit={handleEdit}
-                          allowEditDelete={true}
-                        />
-                      ) : (
-                        <HistoryIncomeRow
-                          key={`income-${tx.id}`}
-                          tx={tx}
-                          currency={currency}
-                          privacyMode={privacyMode}
-                          onDelete={() => handleDeleteTx(tx)}
-                          onEdit={handleEditIncome}
-                          allowEditDelete={true}
-                        />
-                      )
-                    )}
-                  </div>
-                </GlassCard>
-              </motion.div>
-            );
-          })}
-        </motion.div>
-      )}
+              <div className="px-4">
+                {items.map((tx) =>
+                  tx._type === "expense" ? (
+                    <FixedExpenseRow
+                      key={tx.id}
+                      expense={tx}
+                      currency={currency}
+                      onDelete={deleteExpense}
+                      onEdit={async (id, data) => {
+                        const sanitized: any = { ...data };
+                        if (sanitized.billingDay === null) delete sanitized.billingDay;
+                        if (sanitized.accountSource === null) delete sanitized.accountSource;
+                        await updateExpense(id, sanitized);
+                      }}
+                    />
+                  ) : (
+                    <FixedIncomeRow
+                      key={tx.id}
+                      inc={tx}
+                      currency={currency}
+                      onDelete={deleteIncome}
+                      onEdit={updateIncome}
+                    />
+                  )
+                )}
+              </div>
+            </GlassCard>
+          </motion.div>
+        ))}
+      </motion.div>
     </motion.div>
   );
 }
