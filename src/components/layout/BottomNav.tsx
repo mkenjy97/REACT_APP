@@ -17,9 +17,9 @@ export function BottomNav() {
 
   const links: NavItem[] = [
     { to: '/',                icon: LayoutDashboard, label: t('spendless.nav_dashboard') },
-    { to: '/history',         icon: History,         label: t('spendless.nav_history') },
     { to: '/fixed-expenses',  icon: RepeatIcon,      label: t('spendless.nav_fixed') },
     { to: '/recap',           icon: TrendingUp,      label: t('spendless.nav_recap') },
+    { to: '/history',         icon: History,         label: t('spendless.nav_history') },
   ];
 
   return (

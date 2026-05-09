@@ -29,8 +29,14 @@ export function RecapPage() {
   const totalNormalCurrentMonth = normalIncomes.reduce((acc, i) => acc + i.amount, 0);
   const totalExtraCurrentMonth = extraIncomes.reduce((acc, i) => acc + i.amount, 0);
 
+  // Filter only active incomes (fixed ones only from their start month)
+  const activeIncomes = incomes.filter(i => {
+    if (!i.isFixed) return true;
+    return i.date.substring(0, 7) <= currentMonthKey;
+  });
+
   // Group incomes by month
-  const incomesByMonth = incomes.reduce((acc, i) => {
+  const incomesByMonth = activeIncomes.reduce((acc, i) => {
     const monthKey = i.date.substring(0, 7);
     if (!acc[monthKey]) acc[monthKey] = [];
     acc[monthKey].push(i);
@@ -39,9 +45,16 @@ export function RecapPage() {
 
   const sortedIncomeMonths = Object.keys(incomesByMonth).sort((a, b) => b.localeCompare(a));
 
+  // Filter only active expenses (fixed ones only from their start month)
+  const activeExpenses = expenses.filter(e => {
+    if (!e.isFixed) return true;
+    if (!e.startDate) return true;
+    return e.startDate.substring(0, 7) <= currentMonthKey;
+  });
+
   // Group expenses by month (YYYY-MM)
-  const expensesByMonth = expenses.reduce((acc, e) => {
-    const monthKey = e.date.substring(0, 7); // e.g. 2026-05
+  const expensesByMonth = activeExpenses.reduce((acc, e) => {
+    const monthKey = e.date.substring(0, 7);
     if (!acc[monthKey]) acc[monthKey] = [];
     acc[monthKey].push(e);
     return acc;
@@ -63,6 +76,7 @@ export function RecapPage() {
     });
   };
 
+
   return (
     <motion.div
       variants={PAGE_VARIANTS}
@@ -75,10 +89,9 @@ export function RecapPage() {
       <div className="pt-2 flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <TrendingUp size={24} className="text-primary-400" />
+            <TrendingUp size={24} className="text-emerald-400" />
             {t('spendless.nav_recap')}
           </h1>
-          <p className="text-sm text-text-muted mt-0.5">{t('spendless.fixed_expenses_subtitle')}</p>
         </div>
 
         <button
@@ -94,7 +107,7 @@ export function RecapPage() {
       <section>
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">
-            {t('spendless.nav_recap')} ({now.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' })})
+            {t('spendless.this_month')}
           </h2>
         </div>
 
@@ -104,7 +117,7 @@ export function RecapPage() {
               {t('spendless.income_details')} {t('spendless.this_month').toLowerCase()}
             </p>
             <div className="flex items-center justify-between gap-2 mt-1">
-              <p className={cn("text-3xl font-bold text-primary-400 tabular-nums", { 'blur-md select-none': privacyMode })}>
+              <p className={cn("text-3xl font-bold text-emerald-400 tabular-nums", { 'blur-md select-none': privacyMode })}>
                 {currency}{totalIncomeCurrentMonth.toFixed(2)}
               </p>
               <div className={cn("flex flex-col text-[10px] items-end leading-tight text-text-muted", { 'blur-sm': privacyMode })}>
@@ -130,6 +143,11 @@ export function RecapPage() {
         </div>
 
 
+        {/* -- STORICO ENTRATE MENSILI -- */}
+        <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest mb-3">
+          {t('spendless.income_details')}
+        </h2>
+
         <motion.div variants={STAGGER_CONTAINER} initial="initial" animate="animate" className="flex flex-col gap-3">
           {sortedIncomeMonths.map(monthKey => {
             const monthIncomes = incomesByMonth[monthKey].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -151,7 +169,7 @@ export function RecapPage() {
                       <p className="text-xs text-text-muted">{monthIncomes.length} {t('spendless.income_details').toLowerCase()}</p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className={cn("font-bold text-primary-400 tabular-nums", { 'blur-md': privacyMode })}>
+                      <span className={cn("font-bold text-emerald-400 tabular-nums", { 'blur-md': privacyMode })}>
                         +{currency}{monthTotal.toFixed(2)}
                       </span>
                       <motion.div animate={{ rotate: isExpanded ? 180 : 0 }}>
@@ -172,8 +190,8 @@ export function RecapPage() {
                           {monthIncomes.map(inc => (
                             <div key={inc.id} className="flex items-center justify-between gap-2">
                               <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", inc.isExtra ? "bg-purple-500/20" : "bg-primary-500/20")}>
-                                  <TrendingUp size={16} className={inc.isExtra ? "text-purple-400" : "text-primary-400"} />
+                                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", inc.isExtra ? "bg-purple-500/20" : "bg-emerald-500/20")}>
+                                  <TrendingUp size={16} className={inc.isExtra ? "text-purple-400" : "text-emerald-400"} />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-medium truncate">{inc.description}</p>
@@ -188,7 +206,7 @@ export function RecapPage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className={cn('text-sm font-semibold tabular-nums shrink-0', inc.isExtra ? "text-purple-400" : "text-primary-400", { 'blur-sm': privacyMode })}>
+                                <span className={cn('text-sm font-semibold tabular-nums shrink-0', inc.isExtra ? "text-purple-400" : "text-emerald-400", { 'blur-sm': privacyMode })}>
                                   +{currency}{inc.amount.toFixed(2)}
                                 </span>
                               </div>
@@ -219,7 +237,9 @@ export function RecapPage() {
         ) : (
           <motion.div variants={STAGGER_CONTAINER} initial="initial" animate="animate" className="flex flex-col gap-3">
             {sortedMonths.map(monthKey => {
-              const monthExpenses = expensesByMonth[monthKey].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+              const monthExpenses = expensesByMonth[monthKey].sort(
+                (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+              );
               const monthTotal = monthExpenses.reduce((acc, e) => acc + e.amount, 0);
               const [year, month] = monthKey.split('-');
               const monthDate = new Date(parseInt(year), parseInt(month) - 1, 1);

@@ -42,11 +42,58 @@ export function ExpenseHistoryPage() {
   const currency = settings?.currency ?? "€";
   const now = new Date();
 
+  // Variabili
   const variableExpenses = expenses.filter((e) => !e.isFixed);
-  const txExpenses = variableExpenses.map((e) => ({
-    ...e,
-    _type: "expense" as const,
-  }));
+
+  // Fisse → mostrate con data di scalatura (billingDay nel mese corrente)
+  const fixedExpensesWithDate = expenses
+    .filter((e) => e.isFixed)
+    .map((e) => {
+      let billingDay: number | undefined;
+
+      if (typeof e.billingDay === "number" && !isNaN(e.billingDay)) {
+        billingDay = e.billingDay;
+      } else if (e.startDate) {
+        const parsed = new Date(e.startDate);
+        if (!isNaN(parsed.getTime())) {
+          billingDay = parsed.getDate();
+        }
+      }
+
+      if (!billingDay || billingDay < 1 || billingDay > 31) {
+        billingDay = 1; // fallback sicuro
+      }
+
+      const lastDayOfMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        0
+      ).getDate();
+
+      const safeDay = Math.min(billingDay, lastDayOfMonth);
+
+      const generatedDate = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        safeDay
+      );
+
+      const safeDate = isNaN(generatedDate.getTime())
+        ? now.toISOString().substring(0, 10)
+        : generatedDate.toISOString().substring(0, 10);
+
+      return {
+        ...e,
+        date: safeDate,
+      };
+    });
+
+  const txExpenses = [...variableExpenses, ...fixedExpensesWithDate].map(
+    (e) => ({
+      ...e,
+      _type: "expense" as const,
+    })
+  );
   const txIncomes = incomes.map((i) => ({
     ...i,
     _type: "income" as const,

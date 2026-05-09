@@ -28,14 +28,15 @@ export const ExportService = {
     let periodIncomes: Income[] = [];
 
     if (reportType === 'month' || reportType === 'year') {
-      periodExpenses = expenses.filter(e => e.date.startsWith(targetKey) && !e.isFixed);
+      periodExpenses = expenses.filter(e => e.date.startsWith(targetKey));
       periodIncomes = incomes.filter(i => i.date.startsWith(targetKey));
     } else if (reportType === 'week') {
-      periodExpenses = expenses.filter(e => getWeekKey(new Date(e.date)) === targetKey && !e.isFixed);
+      periodExpenses = expenses.filter(e => getWeekKey(new Date(e.date)) === targetKey);
       periodIncomes = incomes.filter(i => getWeekKey(new Date(i.date)) === targetKey);
     }
 
-    const fixedTemplates = expenses.filter(e => e.isFixed);
+    // Spese fisse limitate al periodo selezionato
+    const fixedTemplates = periodExpenses.filter(e => e.isFixed);
     
     const totalIncome = periodIncomes.reduce((acc, curr) => acc + curr.amount, 0);
     const totalSpent = periodExpenses.reduce((acc, curr) => acc + curr.amount, 0);

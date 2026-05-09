@@ -225,7 +225,7 @@ export function FixedExpenseRow({
                 "text-sm font-bold tabular-nums",
                 isFuture
                   ? "text-text-muted line-through"
-                  : "text-red-400"
+                  : "text-purple-400"
               )}
             >
               {currency}

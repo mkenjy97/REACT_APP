@@ -32,8 +32,7 @@ export function FixedExpensesPage() {
 
   // ── Fixed incomes (new section) ───────────────────────────────────────────
   const fixedIncomes = useMemo(() => incomes.filter(i => i.isFixed), [incomes]);
-  const activeFixedIncomes = useMemo(() => fixedIncomes.filter(i => i.date.substring(0, 7) <= monthKey), [fixedIncomes, monthKey]);
-  const totalFixedIncome = useMemo(() => activeFixedIncomes.reduce((s, i) => s + i.amount, 0), [activeFixedIncomes]);
+  const totalFixedIncome = useMemo(() => fixedIncomes.reduce((s, i) => s + i.amount, 0), [fixedIncomes]);
 
 
 
@@ -110,7 +109,7 @@ export function FixedExpensesPage() {
           <div className="flex-1">
             <h1 className="text-xl font-bold flex items-center gap-2">
               <RepeatIcon size={20} className="text-purple-400" />
-              {t('spendless.recurring')}
+              Flussi ricorrenti
             </h1>
             <p className="text-xs text-text-muted">{t('spendless.recurring_desc')}</p>
           </div>
@@ -139,18 +138,16 @@ export function FixedExpensesPage() {
               </p>
               <p className="text-[10px] text-text-muted mt-1">{t('spendless.auto_added')}</p>
             </div>
-            <span className="text-4xl">🔄</span>
           </GlassCard>
 
           <GlassCard className="flex items-center justify-between">
             <div>
               <p className="text-xs text-text-muted uppercase tracking-widest">{t('spendless.fixed_incomes')}</p>
-              <p className="text-2xl font-bold text-primary-400 tabular-nums mt-1">
+              <p className="text-2xl font-bold text-teal-400 tabular-nums mt-1">
                 {currency}{totalFixedIncome.toFixed(2)}
               </p>
               <p className="text-[10px] text-text-muted mt-1">{t('spendless.auto_added')}</p>
             </div>
-            <span className="text-4xl">💰</span>
           </GlassCard>
         </div>
 
@@ -191,6 +188,15 @@ export function FixedExpensesPage() {
         </section>
 
         
+
+        {/* ── Fixed Expenses Title ── */}
+        <section>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-text-muted uppercase tracking-widest">
+              {t('spendless.fixed_expenses')}
+            </h2>
+          </div>
+        </section>
 
         {/* Grouping Toggle */}
         {fixedExpenses.length > 0 && (
